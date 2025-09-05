@@ -1497,7 +1497,7 @@ try {
                 <p class="hero-subtitle">
                     At QUICKBILL 360, we're committed to empowering assembly management with 
                     comprehensive billing solutions, automated payment systems, and real-time analytics 
-                    for efficient revenue collection.echo "Hello, CI/CD is working!";
+                    for efficient revenue collection.
                 </p>
                 <div class="hero-buttons">
                     <a href="auth/login.php" class="btn btn-primary">
