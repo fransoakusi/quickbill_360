@@ -1,0 +1,745 @@
+[2025-07-14 15:32:23] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:32:23] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:32:23] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:32:23] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:32:23] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:32:23] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:32:23] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:32:23] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:32:23] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:32:23] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:32:24] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:32:24] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:32:24] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:32:24] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:32:24] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:32:24] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:32:24] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:32:24] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:32:24] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:32:24] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:32:24] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:32:24] [ERROR] ❌ Function 'generatePaymentReference' not found
+[2025-07-14 13:32:24] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:32:24] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:32:24] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:32:46] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:32:46] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:32:46] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:32:46] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:32:46] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:32:46] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:32:46] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:32:46] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:32:46] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:32:46] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:32:46] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:32:46] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:32:46] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:32:46] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:32:46] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:32:46] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:32:46] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:32:46] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:32:46] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:32:46] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:32:46] [INFO] POST Data: {
+    "account_type": "Business",
+    "account_number": "BIZ000001",
+    "test_account_search": ""
+}
+[2025-07-14 13:32:46] [INFO] Testing account search for: BIZ000001 (Business)
+[2025-07-14 13:32:46] [SUCCESS] ✅ Business account found: KabTech Consulting
+[2025-07-14 13:32:46] [SUCCESS] ✅ Bill found for business: BILL2025B000006
+[2025-07-14 13:32:46] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:32:46] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:32:46] [ERROR] ❌ Function 'generatePaymentReference' not found
+[2025-07-14 13:32:46] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:32:46] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:32:46] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:34:00] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:34:00] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:34:00] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:34:00] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:34:00] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:34:00] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:34:00] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:34:00] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:34:00] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:34:00] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:34:00] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:34:00] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:34:00] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:34:00] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:34:00] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:34:00] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:34:00] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:34:00] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:34:00] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:34:00] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:34:00] [INFO] POST Data: {
+    "bill_id": "2025000006",
+    "amount_paid": "200",
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": "",
+    "test_payment_processing": ""
+}
+[2025-07-14 13:34:00] [INFO] === TESTING PAYMENT PROCESSING ===
+[2025-07-14 13:34:00] [INFO] Payment data: {
+    "bill_id": 2025000006,
+    "amount_paid": 200,
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": ""
+}
+[2025-07-14 13:34:00] [SUCCESS] ✅ Transaction started
+[2025-07-14 13:34:00] [INFO] Generated payment reference: PAY20250714133400598
+[2025-07-14 13:34:00] [ERROR] ❌ Failed to insert payment record
+[2025-07-14 13:34:00] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:34:00] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:34:00] [ERROR] ❌ Function 'generatePaymentReference' not found
+[2025-07-14 13:34:00] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:34:00] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:34:00] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:37:50] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:37:50] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:37:50] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:37:50] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:37:50] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:37:50] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:37:50] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:37:50] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:37:50] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:37:50] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:37:50] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:37:50] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:37:50] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:37:50] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:37:50] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:37:50] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:37:50] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:37:50] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:37:50] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:37:50] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:37:50] [INFO] POST Data: {
+    "bill_id": "2025000006",
+    "amount_paid": "200",
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": "",
+    "test_payment_processing": ""
+}
+[2025-07-14 13:37:50] [INFO] === TESTING PAYMENT PROCESSING ===
+[2025-07-14 13:37:50] [INFO] Payment data: {
+    "bill_id": 2025000006,
+    "amount_paid": 200,
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": ""
+}
+[2025-07-14 13:37:50] [SUCCESS] ✅ Transaction started
+[2025-07-14 13:37:50] [INFO] Generated payment reference: PAY20250714133750242
+[2025-07-14 13:37:50] [ERROR] ❌ Failed to insert payment record
+[2025-07-14 13:37:50] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:37:50] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:37:50] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:37:50] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:37:50] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:37:50] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:39:08] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:39:08] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:39:08] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:39:08] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:39:08] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:39:08] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:39:08] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:39:08] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:39:08] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:39:08] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:39:08] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:39:09] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:39:09] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:39:09] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:39:09] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:39:09] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:39:09] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:39:09] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:39:09] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:39:09] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:39:09] [INFO] POST Data: {
+    "bill_id": "2025000006",
+    "amount_paid": "200",
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": "",
+    "test_payment_processing": ""
+}
+[2025-07-14 13:39:09] [INFO] === TESTING PAYMENT PROCESSING ===
+[2025-07-14 13:39:09] [INFO] Payment data: {
+    "bill_id": 2025000006,
+    "amount_paid": 200,
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": ""
+}
+[2025-07-14 13:39:09] [SUCCESS] ✅ Transaction started
+[2025-07-14 13:39:09] [INFO] Generated payment reference: PAY20250714133909149
+[2025-07-14 13:39:09] [ERROR] ❌ Failed to insert payment record
+[2025-07-14 13:39:09] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:39:09] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:39:09] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:39:09] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:39:09] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:39:09] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:39:16] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:39:16] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:39:16] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:39:16] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:39:16] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:39:16] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:39:16] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:39:16] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:39:16] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:39:16] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:39:16] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:39:16] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:39:16] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:39:16] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:39:16] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:39:16] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:39:16] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:39:16] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:39:16] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:39:16] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:39:16] [INFO] POST Data: {
+    "account_type": "Business",
+    "account_number": "BIZ000001",
+    "test_account_search": ""
+}
+[2025-07-14 13:39:16] [INFO] Testing account search for: BIZ000001 (Business)
+[2025-07-14 13:39:16] [SUCCESS] ✅ Business account found: KabTech Consulting
+[2025-07-14 13:39:16] [SUCCESS] ✅ Bill found for business: BILL2025B000006
+[2025-07-14 13:39:16] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:39:16] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:39:16] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:39:16] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:39:16] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:39:16] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:39:43] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:39:43] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:39:43] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:39:43] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:39:43] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:39:43] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:39:43] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:39:43] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:39:43] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:39:43] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:39:43] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:39:43] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:39:43] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:39:43] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:39:43] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:39:43] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:39:43] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:39:43] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:39:43] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:39:43] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:39:43] [INFO] POST Data: {
+    "bill_id": "2025000006",
+    "amount_paid": "10",
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": "",
+    "test_payment_processing": ""
+}
+[2025-07-14 13:39:43] [INFO] === TESTING PAYMENT PROCESSING ===
+[2025-07-14 13:39:43] [INFO] Payment data: {
+    "bill_id": 2025000006,
+    "amount_paid": 10,
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": ""
+}
+[2025-07-14 13:39:43] [SUCCESS] ✅ Transaction started
+[2025-07-14 13:39:43] [INFO] Generated payment reference: PAY20250714133943202
+[2025-07-14 13:39:43] [ERROR] ❌ Failed to insert payment record
+[2025-07-14 13:39:43] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:39:43] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:39:43] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:39:43] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:39:43] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:39:43] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:48:49] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:48:49] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:48:49] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:48:49] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:48:49] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:48:49] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:48:49] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:48:49] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:48:49] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:48:49] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:48:49] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:48:49] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:48:49] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:48:49] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:48:49] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:48:49] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:48:49] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:48:49] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:48:49] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:48:49] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:48:49] [INFO] POST Data: {
+    "bill_id": "2025000006",
+    "amount_paid": "10",
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": "",
+    "test_payment_processing": ""
+}
+[2025-07-14 13:48:49] [INFO] === TESTING PAYMENT PROCESSING ===
+[2025-07-14 13:48:49] [INFO] Payment data: {
+    "bill_id": 2025000006,
+    "amount_paid": 10,
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": ""
+}
+[2025-07-14 13:48:49] [SUCCESS] ✅ Transaction started
+[2025-07-14 13:48:49] [INFO] Generated payment reference: PAY20250714134849128
+[2025-07-14 13:48:49] [ERROR] ❌ Failed to insert payment record
+[2025-07-14 13:48:49] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:48:49] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:48:49] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:48:49] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:48:49] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:48:49] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:54:24] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:54:24] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:54:24] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:54:24] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:54:24] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:54:24] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:54:24] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:54:24] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:54:24] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:54:24] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:54:24] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:54:24] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:54:24] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:54:24] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:54:24] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:54:24] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:54:24] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:54:24] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:54:24] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:54:24] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:54:24] [INFO] POST Data: {
+    "bill_id": "2025000006",
+    "amount_paid": "10",
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": "",
+    "test_payment_processing": ""
+}
+[2025-07-14 13:54:24] [INFO] === TESTING PAYMENT PROCESSING ===
+[2025-07-14 13:54:24] [INFO] Payment data: {
+    "bill_id": 2025000006,
+    "amount_paid": 10,
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": ""
+}
+[2025-07-14 13:54:24] [SUCCESS] ✅ Transaction started
+[2025-07-14 13:54:24] [INFO] Generated payment reference: PAY20250714135424252
+[2025-07-14 13:54:24] [ERROR] ❌ Failed to insert payment record
+[2025-07-14 13:54:24] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:54:24] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:54:24] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:54:24] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:54:24] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:54:24] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:54:35] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:54:35] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:54:35] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:54:35] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:54:35] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:54:35] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:54:35] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:54:35] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:54:35] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:54:35] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:54:35] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:54:35] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:54:35] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:54:35] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:54:35] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:54:35] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:54:35] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:54:35] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:54:35] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:54:35] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:54:35] [INFO] POST Data: {
+    "account_type": "Business",
+    "account_number": "00010001",
+    "test_account_search": ""
+}
+[2025-07-14 13:54:35] [INFO] Testing account search for: 00010001 (Business)
+[2025-07-14 13:54:35] [ERROR] ❌ Business account not found
+[2025-07-14 13:54:35] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:54:35] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:54:35] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:54:35] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:54:35] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:54:35] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:54:49] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:54:49] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:54:49] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:54:49] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:54:49] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:54:49] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:54:49] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:54:49] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:54:49] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:54:49] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:54:49] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:54:49] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:54:49] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:54:49] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:54:49] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:54:49] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:54:49] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:54:49] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:54:49] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:54:49] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:54:49] [INFO] POST Data: {
+    "account_type": "Business",
+    "account_number": "BIZ000001",
+    "test_account_search": ""
+}
+[2025-07-14 13:54:49] [INFO] Testing account search for: BIZ000001 (Business)
+[2025-07-14 13:54:49] [SUCCESS] ✅ Business account found: KabTech Consulting
+[2025-07-14 13:54:49] [SUCCESS] ✅ Bill found for business: BILL2025B000006
+[2025-07-14 13:54:49] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:54:49] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:54:49] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:54:49] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:54:49] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:54:49] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:55:08] [INFO] === PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:55:08] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:55:08] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:55:08] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:55:08] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:55:08] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:55:08] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:55:08] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:55:08] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:55:08] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:55:08] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:55:08] [SUCCESS] ✅ Table 'businesses' exists with 22 columns
+[2025-07-14 13:55:08] [SUCCESS] ✅ Table 'properties' exists with 24 columns
+[2025-07-14 13:55:08] [SUCCESS] ✅ Table 'bills' exists with 15 columns
+[2025-07-14 13:55:08] [SUCCESS] ✅ Table 'payments' exists with 13 columns
+[2025-07-14 13:55:08] [SUCCESS] ✅ Table 'users' exists with 13 columns
+[2025-07-14 13:55:08] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:55:08] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:55:08] [SUCCESS] ✅ Found 3 bills
+[2025-07-14 13:55:08] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:55:08] [INFO] POST Data: {
+    "bill_id": "2025000006",
+    "amount_paid": "10",
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": "",
+    "test_payment_processing": ""
+}
+[2025-07-14 13:55:08] [INFO] === TESTING PAYMENT PROCESSING ===
+[2025-07-14 13:55:08] [INFO] Payment data: {
+    "bill_id": 2025000006,
+    "amount_paid": 10,
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": ""
+}
+[2025-07-14 13:55:08] [SUCCESS] ✅ Transaction started
+[2025-07-14 13:55:08] [INFO] Generated payment reference: PAY20250714135508784
+[2025-07-14 13:55:08] [ERROR] ❌ Failed to insert payment record
+[2025-07-14 13:55:08] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:55:08] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:55:08] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:55:08] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:55:08] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:55:08] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:57:52] [INFO] === ENHANCED PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:57:52] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:57:52] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:57:52] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:57:52] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:57:52] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:57:52] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:57:52] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:57:52] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:57:52] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:57:52] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:57:52] [SUCCESS] ✅ Database method 'execute' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Database method 'fetchRow' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Database method 'fetchAll' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Database method 'beginTransaction' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Database method 'commit' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Database method 'rollback' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Database method 'lastInsertId' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:57:52] [INFO]   ↳ Test call returned: PAY20250714N1HJI8
+[2025-07-14 13:57:52] [SUCCESS] ✅ Function 'generateBillNumber' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Function 'validatePaymentAmount' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Function 'processPayment' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Function 'getPaymentMethods' exists
+[2025-07-14 13:57:52] [INFO]   ↳ Found 4 payment methods
+[2025-07-14 13:57:52] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:57:52] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:57:52] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:57:52] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:57:52] [INFO] POST Data: {
+    "bill_id": "2025000006",
+    "amount_paid": "10",
+    "payment_method": "Cash",
+    "payment_channel": "",
+    "transaction_id": "",
+    "notes": "",
+    "test_payment_processing": ""
+}
+[2025-07-14 13:57:52] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:58:06] [INFO] === ENHANCED PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:58:06] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:58:06] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:58:06] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:58:06] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:58:06] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:58:06] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:58:06] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:58:06] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:58:06] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:58:06] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:58:06] [SUCCESS] ✅ Database method 'execute' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Database method 'fetchRow' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Database method 'fetchAll' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Database method 'beginTransaction' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Database method 'commit' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Database method 'rollback' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Database method 'lastInsertId' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:58:06] [INFO]   ↳ Test call returned: PAY20250714SMNZ0O
+[2025-07-14 13:58:06] [SUCCESS] ✅ Function 'generateBillNumber' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Function 'validatePaymentAmount' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Function 'processPayment' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Function 'getPaymentMethods' exists
+[2025-07-14 13:58:06] [INFO]   ↳ Found 4 payment methods
+[2025-07-14 13:58:06] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:58:06] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:58:06] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:58:06] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:58:06] [INFO] POST Data: {
+    "account_type": "Business",
+    "account_number": "BIZ000001",
+    "test_account_search": ""
+}
+[2025-07-14 13:58:06] [INFO] Testing account search for: BIZ000001 (Business)
+[2025-07-14 13:58:06] [SUCCESS] ✅ Business account found: KabTech Consulting
+[2025-07-14 13:58:06] [SUCCESS] ✅ Bill found for business: BILL2025B000006
+[2025-07-14 13:58:06] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-14 15:58:33] [INFO] === ENHANCED PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-14 15:58:33] [INFO] PHP Version: 8.2.12
+[2025-07-14 15:58:33] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-14 13:58:33] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-14 13:58:33] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-14 13:58:33] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-14 13:58:33] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-14 13:58:33] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-14 13:58:33] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-14 13:58:33] [SUCCESS] ✅ Database connection established
+[2025-07-14 13:58:33] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-14 13:58:33] [SUCCESS] ✅ Database method 'execute' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Database method 'fetchRow' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Database method 'fetchAll' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Database method 'beginTransaction' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Database method 'commit' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Database method 'rollback' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Database method 'lastInsertId' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-14 13:58:33] [INFO]   ↳ Test call returned: PAY20250714ZBLOCX
+[2025-07-14 13:58:33] [SUCCESS] ✅ Function 'generateBillNumber' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Function 'validatePaymentAmount' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Function 'processPayment' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Function 'getPaymentMethods' exists
+[2025-07-14 13:58:33] [INFO]   ↳ Found 4 payment methods
+[2025-07-14 13:58:33] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-14 13:58:33] [SUCCESS] ✅ Found 1 businesses
+[2025-07-14 13:58:33] [SUCCESS] ✅ Found 1 properties
+[2025-07-14 13:58:33] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-14 13:58:33] [INFO] POST Data: {
+    "flow_account_type": "Business",
+    "flow_account_number": "BIZ000001",
+    "flow_amount": "10",
+    "flow_payment_method": "Cash",
+    "test_complete_payment_flow": ""
+}
+[2025-07-14 13:58:33] [INFO] === TESTING COMPLETE PAYMENT FLOW ===
+[2025-07-14 13:58:33] [INFO] Step 1: Finding account...
+[2025-07-14 13:58:33] [SUCCESS] ✅ Account found
+[2025-07-14 13:58:33] [INFO] Step 2: Finding bill...
+[2025-07-14 13:58:33] [SUCCESS] ✅ Bill found: BILL2025B000006
+[2025-07-14 13:58:33] [INFO] Step 3: Testing payment processing...
+[2025-07-14 13:58:33] [SUCCESS] ✅ Amount validation passed
+[2025-07-14 13:58:33] [INFO] Calling processPayment function...
+[2025-07-14 13:58:33] [SUCCESS] ✅ Payment processing test successful!
+[2025-07-14 13:58:33] [SUCCESS] Payment Reference: PAY202507148F20TP
+[2025-07-14 13:58:33] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-15 14:48:56] [INFO] === ENHANCED PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-15 14:48:56] [INFO] PHP Version: 8.2.12
+[2025-07-15 14:48:56] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-15 12:48:56] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-15 12:48:56] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-15 12:48:56] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-15 12:48:56] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-15 12:48:56] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-15 12:48:56] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-15 12:48:56] [SUCCESS] ✅ Database connection established
+[2025-07-15 12:48:56] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-15 12:48:56] [SUCCESS] ✅ Database method 'execute' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Database method 'fetchRow' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Database method 'fetchAll' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Database method 'beginTransaction' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Database method 'commit' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Database method 'rollback' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Database method 'lastInsertId' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-15 12:48:56] [INFO]   ↳ Test call returned: PAY20250715A49K27
+[2025-07-15 12:48:56] [SUCCESS] ✅ Function 'generateBillNumber' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Function 'validatePaymentAmount' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Function 'processPayment' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Function 'getPaymentMethods' exists
+[2025-07-15 12:48:56] [INFO]   ↳ Found 4 payment methods
+[2025-07-15 12:48:56] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-15 12:48:56] [SUCCESS] ✅ Found 1 businesses
+[2025-07-15 12:48:56] [SUCCESS] ✅ Found 1 properties
+[2025-07-15 12:48:56] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-15 14:49:14] [INFO] === ENHANCED PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-15 14:49:14] [INFO] PHP Version: 8.2.12
+[2025-07-15 14:49:14] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-15 12:49:14] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-15 12:49:14] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-15 12:49:14] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-15 12:49:14] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-15 12:49:14] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-15 12:49:14] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-15 12:49:14] [SUCCESS] ✅ Database connection established
+[2025-07-15 12:49:14] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-15 12:49:14] [SUCCESS] ✅ Database method 'execute' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Database method 'fetchRow' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Database method 'fetchAll' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Database method 'beginTransaction' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Database method 'commit' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Database method 'rollback' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Database method 'lastInsertId' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-15 12:49:14] [INFO]   ↳ Test call returned: PAY202507155CRP2T
+[2025-07-15 12:49:14] [SUCCESS] ✅ Function 'generateBillNumber' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Function 'validatePaymentAmount' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Function 'processPayment' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Function 'getPaymentMethods' exists
+[2025-07-15 12:49:14] [INFO]   ↳ Found 4 payment methods
+[2025-07-15 12:49:14] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-15 12:49:14] [SUCCESS] ✅ Found 1 businesses
+[2025-07-15 12:49:14] [SUCCESS] ✅ Found 1 properties
+[2025-07-15 12:49:14] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-15 12:49:14] [INFO] POST Data: {
+    "account_type": "Business",
+    "account_number": "BIZ000001",
+    "test_account_search": ""
+}
+[2025-07-15 12:49:14] [INFO] Testing account search for: BIZ000001 (Business)
+[2025-07-15 12:49:14] [SUCCESS] ✅ Business account found: KabTech Consulting
+[2025-07-15 12:49:14] [SUCCESS] ✅ Bill found for business: BILL2025B000006
+[2025-07-15 12:49:14] [INFO] === DEBUG SESSION COMPLETED ===
+[2025-07-15 14:49:47] [INFO] === ENHANCED PAYMENT PROCESSING DEBUG SESSION STARTED ===
+[2025-07-15 14:49:47] [INFO] PHP Version: 8.2.12
+[2025-07-15 14:49:47] [INFO] Server: Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+[2025-07-15 12:49:47] [SUCCESS] ✅ Successfully loaded: ../../config/config.php
+[2025-07-15 12:49:47] [SUCCESS] ✅ Successfully loaded: ../../config/database.php
+[2025-07-15 12:49:47] [SUCCESS] ✅ Successfully loaded: ../../includes/functions.php
+[2025-07-15 12:49:47] [SUCCESS] ✅ Successfully loaded: ../../includes/auth.php
+[2025-07-15 12:49:47] [SUCCESS] ✅ Successfully loaded: ../../includes/security.php
+[2025-07-15 12:49:47] [SUCCESS] 🎉 All required files loaded successfully!
+[2025-07-15 12:49:47] [SUCCESS] ✅ Database connection established
+[2025-07-15 12:49:47] [SUCCESS] ✅ Database query test successful. Found 6 users
+[2025-07-15 12:49:47] [SUCCESS] ✅ Database method 'execute' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Database method 'fetchRow' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Database method 'fetchAll' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Database method 'beginTransaction' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Database method 'commit' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Database method 'rollback' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Database method 'lastInsertId' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Function 'generatePaymentReference' exists
+[2025-07-15 12:49:47] [INFO]   ↳ Test call returned: PAY20250715QLPN73
+[2025-07-15 12:49:47] [SUCCESS] ✅ Function 'generateBillNumber' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Function 'validatePaymentAmount' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Function 'processPayment' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Function 'getPaymentMethods' exists
+[2025-07-15 12:49:47] [INFO]   ↳ Found 4 payment methods
+[2025-07-15 12:49:47] [SUCCESS] ✅ Function 'sanitizeInput' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Function 'writeLog' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Function 'getCurrentUser' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Function 'hasPermission' exists
+[2025-07-15 12:49:47] [SUCCESS] ✅ Found 1 businesses
+[2025-07-15 12:49:47] [SUCCESS] ✅ Found 1 properties
+[2025-07-15 12:49:47] [INFO] === FORM SUBMISSION DETECTED ===
+[2025-07-15 12:49:47] [INFO] POST Data: {
+    "flow_account_type": "Business",
+    "flow_account_number": "BIZ000001",
+    "flow_amount": "20",
+    "flow_payment_method": "Cash",
+    "test_complete_payment_flow": ""
+}
+[2025-07-15 12:49:47] [INFO] === TESTING COMPLETE PAYMENT FLOW ===
+[2025-07-15 12:49:47] [INFO] Step 1: Finding account...
+[2025-07-15 12:49:47] [SUCCESS] ✅ Account found
+[2025-07-15 12:49:47] [INFO] Step 2: Finding bill...
+[2025-07-15 12:49:47] [SUCCESS] ✅ Bill found: BILL2025B000006
+[2025-07-15 12:49:47] [INFO] Step 3: Testing payment processing...
+[2025-07-15 12:49:47] [SUCCESS] ✅ Amount validation passed
+[2025-07-15 12:49:47] [INFO] Calling processPayment function...
+[2025-07-15 12:49:47] [SUCCESS] ✅ Payment processing test successful!
+[2025-07-15 12:49:47] [SUCCESS] Payment Reference: PAY20250715XSTAOR
+[2025-07-15 12:49:47] [INFO] === DEBUG SESSION COMPLETED ===

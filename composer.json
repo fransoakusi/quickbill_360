@@ -1,0 +1,45 @@
+{
+    "name": "quickbill/quickbill-305",
+    "description": "QuickBill 305 - Municipal Billing Management System for Anloga District Assembly",
+    "type": "project",
+    "version": "3.0.5",
+    "authors": [
+        {
+            "name": "QuickBill Development Team",
+            "email": "dev@quickbill305.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=7.4",
+        "chillerlan/php-qrcode": "^5.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "QuickBill\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "QuickBill\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true
+        }
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "echo 'QuickBill 305 dependencies installed successfully!'"
+        ],
+        "post-update-cmd": [
+            "echo 'QuickBill 305 dependencies updated successfully!'"
+        ]
+    }
+}

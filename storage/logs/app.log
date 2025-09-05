@@ -1,0 +1,721 @@
+ 
+[2025-07-05 19:27:39] [INFO] User updated: ID 2, Username: Asante by User ID: 1
+[2025-07-09 19:03:22] [INFO] User created: ID 3, Username: Joojo by User ID: 1
+[2025-07-10 03:16:20] [INFO] Business created: KabTech Consulting (ID: 1) by user admin
+[2025-07-10 04:07:51] [INFO] Property created: Yaw Kusi property (ID: 1) by user admin
+[2025-07-10 09:00:51] [INFO] Business created: Kwabena Ewusi Enterprise (ID: 2) by user admin
+[2025-07-10 09:20:38] [INFO] Zone created: Eastern Zone (ID: 4) by user admin
+[2025-07-10 14:51:40] [INFO] Business fee created: Saloon - Large (GHS 100.00) as active by user Joojo
+[2025-07-10 14:52:18] [INFO] Business fee deactivated: Restaurant - Small Scale by user Joojo
+[2025-07-10 14:52:25] [INFO] Business fee activated: Restaurant - Small Scale by user Joojo
+[2025-07-10 19:51:49] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-10 19:51:49] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-10 19:51:49] [DEBUG] Existing bill found: BIL-BIZ2025-51A36E98
+[2025-07-10 19:51:49] [DEBUG] Account search successful
+[2025-07-10 19:53:46] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-10 19:53:46] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-10 19:53:46] [DEBUG] Existing bill found: BIL-BIZ2025-51A36E98
+[2025-07-10 19:53:46] [DEBUG] Account search successful
+[2025-07-10 19:55:51] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-10 19:55:51] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-10 19:55:51] [DEBUG] Existing bill found: BIL-BIZ2025-51A36E98
+[2025-07-10 19:55:51] [DEBUG] Account search successful
+[2025-07-10 20:03:37] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-10 20:03:37] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-10 20:03:37] [DEBUG] Existing bill found: BIL-BIZ2025-51A36E98
+[2025-07-10 20:03:37] [DEBUG] Account search successful
+[2025-07-11 01:03:36] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-11 01:03:36] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-11 01:03:36] [DEBUG] Existing bill found: BIL-BIZ2025-51A36E98
+[2025-07-11 01:03:36] [DEBUG] Account search successful
+[2025-07-11 01:24:17] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-11 01:24:17] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-11 01:24:17] [DEBUG] Existing bill found: BIL-BIZ2025-51A36E98
+[2025-07-11 01:24:17] [DEBUG] Account search successful
+[2025-07-11 02:32:02] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-11 02:32:02] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-11 02:32:02] [DEBUG] Existing bill found: BIL-BIZ2025-51A36E98
+[2025-07-11 02:32:02] [DEBUG] Account search successful
+[2025-07-11 09:55:32] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-11 09:55:32] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-11 09:55:32] [DEBUG] Existing bill found: BIL-BIZ2025-51A36E98
+[2025-07-11 09:55:32] [DEBUG] Account search successful
+[2025-07-11 11:52:59] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-11 11:52:59] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-11 11:52:59] [DEBUG] Existing bill found: BIL-BIZ2025-51A36E98
+[2025-07-11 11:52:59] [DEBUG] Account search successful
+[2025-07-11 11:53:27] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-11 11:53:27] [DEBUG] Business found: KabTech Consulting
+[2025-07-11 11:53:27] [DEBUG] Existing bill found: BILL2025B000001
+[2025-07-11 11:53:27] [DEBUG] Account search successful
+[2025-07-11 11:53:52] [DEBUG] Account search attempt - Number: BIZ000001, Type: Property
+[2025-07-11 11:53:52] [DEBUG] Account not found - Number: BIZ000001, Type: Property
+[2025-07-11 11:55:07] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-11 11:55:07] [DEBUG] Business found: KabTech Consulting
+[2025-07-11 11:55:07] [DEBUG] Existing bill found: BILL2025B000001
+[2025-07-11 11:55:07] [DEBUG] Account search successful
+[2025-07-11 15:21:00] [INFO] User created: ID 4, Username: Kusi by User ID: 1
+[2025-07-12 05:12:52] [INFO] User created: ID 5, Username: Aseye by User ID: 1
+[2025-07-12 07:18:33] [INFO] User created: ID 6, Username: David by User ID: 1
+[2025-07-12 19:47:53] [DEBUG] Account search attempt - Number: Prop0001, Type: Property
+[2025-07-12 19:47:53] [DEBUG] Account not found - Number: Prop0001, Type: Property
+[2025-07-12 19:48:46] [DEBUG] Account search attempt - Number: PROP000003, Type: Property
+[2025-07-12 19:48:46] [DEBUG] Property found: Martin Kpebu
+[2025-07-12 19:48:46] [DEBUG] Creating new bill for property ID: 3
+[2025-07-12 19:48:46] [DEBUG] Bill created successfully with number: BIL-PROP2025-C1EEC11F
+[2025-07-12 19:48:46] [DEBUG] Account search successful
+[2025-07-12 19:49:34] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-12 19:49:34] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-12 19:49:34] [DEBUG] Existing bill found: BIL-BIZ2025-51A36E98
+[2025-07-12 19:49:34] [DEBUG] Account search successful
+[2025-07-12 19:58:34] [INFO] Business fee updated: Restaurant - Large Scale (GHS 2100.00) as active by user Joojo
+[2025-07-12 20:17:28] [INFO] Property updated: Yaw Kusi property (ID: 1) by user Joojo
+[2025-07-13 13:01:57] [INFO] Property created: Joojo property (ID: 4) by user Joojo
+[2025-07-13 13:06:23] [DEBUG] Account search attempt - Number: 1, Type: Property
+[2025-07-13 13:06:23] [DEBUG] Account not found - Number: 1, Type: Property
+[2025-07-13 13:06:47] [DEBUG] Account search attempt - Number: Prop00001, Type: Property
+[2025-07-13 13:06:47] [DEBUG] Account not found - Number: Prop00001, Type: Property
+[2025-07-13 13:07:51] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-07-13 13:07:51] [DEBUG] Property found: Joojo
+[2025-07-13 13:07:51] [DEBUG] Creating new bill for property ID: 4
+[2025-07-13 13:07:51] [DEBUG] Bill created successfully with number: BIL-PROP2025-FA783C05
+[2025-07-13 13:07:51] [DEBUG] Account search successful
+[2025-07-14 11:25:40] [INFO] Business created: KabTech Consulting (ID: 6) by user admin
+[2025-07-14 11:26:20] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-14 11:26:20] [DEBUG] Business found: KabTech Consulting
+[2025-07-14 11:26:20] [DEBUG] Existing bill found: BILL2025B000006
+[2025-07-14 11:26:20] [DEBUG] Account search successful
+[2025-07-14 13:24:53] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-14 13:24:53] [DEBUG] Business found: KabTech Consulting
+[2025-07-14 13:24:53] [DEBUG] Bill found: BILL2025B000006
+[2025-07-14 13:24:53] [DEBUG] Account search successful with valid bill
+[2025-07-14 13:27:19] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-14 13:27:19] [DEBUG] Business found: KabTech Consulting
+[2025-07-14 13:27:19] [DEBUG] Bill found: BILL2025B000006
+[2025-07-14 13:27:19] [DEBUG] Account search successful with valid bill
+[2025-07-14 13:40:16] [INFO] Account search: BIZ000001 (Business)
+[2025-07-14 13:40:16] [INFO] Account found successfully: KabTech Consulting
+[2025-07-14 13:48:28] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-14 13:48:28] [DEBUG] Business found: KabTech Consulting
+[2025-07-14 13:48:28] [DEBUG] Bill found: BILL2025B000006
+[2025-07-14 13:48:28] [DEBUG] Account search successful with valid bill
+[2025-07-14 13:52:48] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-07-14 13:52:48] [DEBUG] Property found: Joojo
+[2025-07-14 13:52:48] [DEBUG] Bill found: BIL-PROP2025-FA783C0
+[2025-07-14 13:52:48] [DEBUG] Account search successful with valid bill
+[2025-07-14 13:59:52] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-07-14 13:59:52] [DEBUG] Property found: Joojo
+[2025-07-14 13:59:52] [DEBUG] Bill found: BIL-PROP2025-FA783C0
+[2025-07-14 13:59:52] [DEBUG] Account search successful with valid bill
+[2025-07-14 14:12:24] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-14 14:12:24] [DEBUG] Business found: KabTech Consulting
+[2025-07-14 14:12:24] [DEBUG] Bill found: BILL2025B000006
+[2025-07-14 14:12:24] [DEBUG] Account search successful with valid bill
+[2025-07-15 08:40:17] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-07-15 08:40:17] [DEBUG] Property found: Joojo
+[2025-07-15 08:40:17] [DEBUG] Bill found: BIL-PROP2025-FA783C0
+[2025-07-15 08:40:17] [DEBUG] Account search successful with valid bill
+[2025-07-15 08:56:41] [DEBUG] Database connection established successfully
+[2025-07-15 08:56:41] [DEBUG] Database connection test passed
+[2025-07-15 08:56:48] [DEBUG] Database connection established successfully
+[2025-07-15 08:56:48] [DEBUG] Database connection test passed
+[2025-07-15 08:56:48] [DEBUG] === ACCOUNT SEARCH STARTED ===
+[2025-07-15 08:56:48] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-07-15 08:56:48] [DEBUG] Searching for property account...
+[2025-07-15 08:56:48] [DEBUG] Executing property query: 
+                    SELECT 
+                        p.*,
+                        z.zone_name,
+                        pfs.fee_per_room
+                    FROM properties p
+                    LEFT JOIN zones z ON p.zone_id = z.zone_id
+                    LEFT JOIN property_fee_structure pfs ON p.structure = pfs.structure AND p.property_use = pfs.property_use
+                    WHERE p.property_number = ?
+                
+[2025-07-15 08:56:48] [DEBUG] Property found: Joojo
+[2025-07-15 08:56:48] [DEBUG] Property data: {"property_id":4,"property_number":"PROP000001","owner_name":"Joojo","telephone":"+233545041428","gender":"Male","location":"GPS: 5.593020, -0.077100","latitude":"5.59302000","longitude":"-0.07710000","structure":"Concrete Block","ownership_type":"Self","property_type":"Modern","number_of_rooms":5,"property_use":"Residential","old_bill":"0.00","previous_payments":"110.00","arrears":"0.00","current_bill":"250.00","amount_payable":"140.00","batch":"","zone_id":1,"sub_zone_id":1,"created_by":3,"created_at":"2025-07-13 13:01:57","updated_at":"2025-07-14 13:51:15","zone_name":"Central Zone","fee_per_room":"50.00"}
+[2025-07-15 08:56:48] [DEBUG] Checking for property bill in year: 2025
+[2025-07-15 08:56:48] [DEBUG] Executing property bill query: 
+                        SELECT * FROM bills 
+                        WHERE bill_type = 'Property' AND reference_id = ? AND billing_year = ?
+                    
+[2025-07-15 08:56:48] [DEBUG] Property bill query parameters: [4, 2025]
+[2025-07-15 08:56:48] [DEBUG] Property bill found: BIL-PROP2025-FA783C0
+[2025-07-15 08:56:48] [DEBUG] Property bill data: {"bill_id":16,"bill_number":"BIL-PROP2025-FA783C0","bill_type":"Property","reference_id":4,"billing_year":"2025","old_bill":"0.00","previous_payments":"0.00","arrears":"0.00","current_bill":"250.00","amount_payable":"250.00","qr_code":null,"status":"Partially Paid","generated_by":3,"generated_at":"2025-07-13 13:07:51","due_date":null}
+[2025-07-15 08:56:48] [DEBUG] Account search successful with valid bill
+[2025-07-15 08:56:48] [DEBUG] === ACCOUNT SEARCH COMPLETED ===
+[2025-07-15 08:57:14] [DEBUG] Database connection established successfully
+[2025-07-15 08:57:14] [DEBUG] Database connection test passed
+[2025-07-15 09:00:17] [DEBUG] Database connection established successfully
+[2025-07-15 09:00:17] [DEBUG] Database connection test passed
+[2025-07-15 09:00:25] [DEBUG] Database connection established successfully
+[2025-07-15 09:00:25] [DEBUG] Database connection test passed
+[2025-07-15 09:00:25] [DEBUG] === ACCOUNT SEARCH STARTED ===
+[2025-07-15 09:00:25] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 09:00:25] [DEBUG] Searching for business account...
+[2025-07-15 09:00:25] [DEBUG] Executing business query: 
+                    SELECT 
+                        b.*,
+                        z.zone_name,
+                        sz.sub_zone_name,
+                        bfs.fee_amount
+                    FROM businesses b
+                    LEFT JOIN zones z ON b.zone_id = z.zone_id
+                    LEFT JOIN sub_zones sz ON b.sub_zone_id = sz.sub_zone_id
+                    LEFT JOIN business_fee_structure bfs ON b.business_type = bfs.business_type AND b.category = bfs.category
+                    WHERE b.account_number = ?
+                
+[2025-07-15 09:00:25] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 09:00:25] [DEBUG] Business data: {"business_id":6,"account_number":"BIZ000001","business_name":"KabTech Consulting","owner_name":"Joojo Megas","business_type":"Restaurant","category":"Large Scale","telephone":"","exact_location":"GPS: 6.046436, 0.400592","latitude":"6.04643561","longitude":"0.40059174","old_bill":"0.00","previous_payments":"1540.00","arrears":"0.00","current_bill":"2100.00","amount_payable":"560.00","batch":"","status":"Active","zone_id":1,"sub_zone_id":2,"created_by":1,"created_at":"2025-07-14 11:25:40","updated_at":"2025-07-14 15:41:28","zone_name":"Central Zone","sub_zone_name":"Government Area","fee_amount":"2100.00"}
+[2025-07-15 09:00:25] [DEBUG] Checking for bill in year: 2025
+[2025-07-15 09:00:25] [DEBUG] Executing bill query: 
+                        SELECT * FROM bills 
+                        WHERE bill_type = 'Business' AND reference_id = ? AND billing_year = ?
+                    
+[2025-07-15 09:00:25] [DEBUG] Bill query parameters: [6, 2025]
+[2025-07-15 09:00:25] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 09:00:25] [DEBUG] Bill data: {"bill_id":17,"bill_number":"BILL2025B000006","bill_type":"Business","reference_id":6,"billing_year":"2025","old_bill":"0.00","previous_payments":"0.00","arrears":"0.00","current_bill":"2100.00","amount_payable":"2060.00","qr_code":null,"status":"Partially Paid","generated_by":1,"generated_at":"2025-07-14 11:25:58","due_date":null}
+[2025-07-15 09:00:25] [DEBUG] Account search successful with valid bill
+[2025-07-15 09:00:25] [DEBUG] === ACCOUNT SEARCH COMPLETED ===
+[2025-07-15 09:00:41] [DEBUG] Database connection established successfully
+[2025-07-15 09:00:41] [DEBUG] Database connection test passed
+[2025-07-15 09:06:34] [DEBUG] Database connection established successfully
+[2025-07-15 09:06:34] [DEBUG] Database connection test passed
+[2025-07-15 09:18:03] [DEBUG] === PAYMENT SYSTEM STARTING ===
+[2025-07-15 09:18:03] [DEBUG] POST data received: []
+[2025-07-15 09:18:03] [DEBUG] Current user: {"user_id":1,"username":"admin","email":"admin@quickbill305.com","password_hash":"$2y$10$e4YGmKebT13JFeJVTNJTr.oWNFXUzfTYqhmQEco1\/VF\/hVOSPCdYS","role_id":2,"first_name":"System","last_name":"Administrator","phone":"+233000000000","is_active":1,"first_login":0,"last_login":"2025-07-15 08:29:19","created_at":"2025-07-04 18:57:35","updated_at":"2025-07-15 08:29:19","role_name":"Admin"}
+[2025-07-15 09:18:03] [DEBUG] Attempting database connection...
+[2025-07-15 09:18:03] [DEBUG] Database connection established successfully
+[2025-07-15 09:18:03] [ERROR] ❌ Critical system error: Database connection test failed - no response from query
+[2025-07-15 09:18:19] [DEBUG] === PAYMENT SYSTEM STARTING ===
+[2025-07-15 09:18:19] [DEBUG] POST data received: []
+[2025-07-15 09:18:19] [DEBUG] Current user: {"user_id":1,"username":"admin","email":"admin@quickbill305.com","password_hash":"$2y$10$e4YGmKebT13JFeJVTNJTr.oWNFXUzfTYqhmQEco1\/VF\/hVOSPCdYS","role_id":2,"first_name":"System","last_name":"Administrator","phone":"+233000000000","is_active":1,"first_login":0,"last_login":"2025-07-15 08:29:19","created_at":"2025-07-04 18:57:35","updated_at":"2025-07-15 08:29:19","role_name":"Admin"}
+[2025-07-15 09:18:19] [DEBUG] Attempting database connection...
+[2025-07-15 09:18:19] [DEBUG] Database connection established successfully
+[2025-07-15 09:18:19] [ERROR] ❌ Critical system error: Database connection test failed - no response from query
+[2025-07-15 09:18:55] [DEBUG] === PAYMENT SYSTEM STARTING ===
+[2025-07-15 09:18:55] [DEBUG] POST data received: {"account_type":"Business","account_number":"BIZ000001","search_account":""}
+[2025-07-15 09:18:55] [DEBUG] Current user: {"user_id":1,"username":"admin","email":"admin@quickbill305.com","password_hash":"$2y$10$e4YGmKebT13JFeJVTNJTr.oWNFXUzfTYqhmQEco1\/VF\/hVOSPCdYS","role_id":2,"first_name":"System","last_name":"Administrator","phone":"+233000000000","is_active":1,"first_login":0,"last_login":"2025-07-15 08:29:19","created_at":"2025-07-04 18:57:35","updated_at":"2025-07-15 08:29:19","role_name":"Admin"}
+[2025-07-15 09:18:55] [DEBUG] Attempting database connection...
+[2025-07-15 09:18:55] [DEBUG] Database connection established successfully
+[2025-07-15 09:18:55] [ERROR] ❌ Critical system error: Database connection test failed - no response from query
+[2025-07-15 09:19:08] [DEBUG] Database connection established successfully
+[2025-07-15 09:19:08] [DEBUG] Database connection test passed
+[2025-07-15 09:19:08] [DEBUG] === ACCOUNT SEARCH STARTED ===
+[2025-07-15 09:19:08] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 09:19:08] [DEBUG] Searching for business account...
+[2025-07-15 09:19:08] [DEBUG] Executing business query: 
+                    SELECT 
+                        b.*,
+                        z.zone_name,
+                        sz.sub_zone_name,
+                        bfs.fee_amount
+                    FROM businesses b
+                    LEFT JOIN zones z ON b.zone_id = z.zone_id
+                    LEFT JOIN sub_zones sz ON b.sub_zone_id = sz.sub_zone_id
+                    LEFT JOIN business_fee_structure bfs ON b.business_type = bfs.business_type AND b.category = bfs.category
+                    WHERE b.account_number = ?
+                
+[2025-07-15 09:19:08] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 09:19:08] [DEBUG] Business data: {"business_id":6,"account_number":"BIZ000001","business_name":"KabTech Consulting","owner_name":"Joojo Megas","business_type":"Restaurant","category":"Large Scale","telephone":"","exact_location":"GPS: 6.046436, 0.400592","latitude":"6.04643561","longitude":"0.40059174","old_bill":"0.00","previous_payments":"1540.00","arrears":"0.00","current_bill":"2100.00","amount_payable":"560.00","batch":"","status":"Active","zone_id":1,"sub_zone_id":2,"created_by":1,"created_at":"2025-07-14 11:25:40","updated_at":"2025-07-14 15:41:28","zone_name":"Central Zone","sub_zone_name":"Government Area","fee_amount":"2100.00"}
+[2025-07-15 09:19:08] [DEBUG] Checking for bill in year: 2025
+[2025-07-15 09:19:08] [DEBUG] Executing bill query: 
+                        SELECT * FROM bills 
+                        WHERE bill_type = 'Business' AND reference_id = ? AND billing_year = ?
+                    
+[2025-07-15 09:19:08] [DEBUG] Bill query parameters: [6, 2025]
+[2025-07-15 09:19:08] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 09:19:08] [DEBUG] Bill data: {"bill_id":17,"bill_number":"BILL2025B000006","bill_type":"Business","reference_id":6,"billing_year":"2025","old_bill":"0.00","previous_payments":"0.00","arrears":"0.00","current_bill":"2100.00","amount_payable":"2060.00","qr_code":null,"status":"Partially Paid","generated_by":1,"generated_at":"2025-07-14 11:25:58","due_date":null}
+[2025-07-15 09:19:08] [DEBUG] Account search successful with valid bill
+[2025-07-15 09:19:08] [DEBUG] === ACCOUNT SEARCH COMPLETED ===
+[2025-07-15 09:49:03] [DEBUG] Database connection established successfully
+[2025-07-15 09:49:03] [DEBUG] Database connection test passed
+[2025-07-15 09:49:11] [DEBUG] Database connection established successfully
+[2025-07-15 09:49:11] [DEBUG] Database connection test passed
+[2025-07-15 09:49:11] [DEBUG] === ACCOUNT SEARCH STARTED ===
+[2025-07-15 09:49:11] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 09:49:11] [DEBUG] Searching for business account...
+[2025-07-15 09:49:11] [DEBUG] Executing business query: 
+                    SELECT 
+                        b.*,
+                        z.zone_name,
+                        sz.sub_zone_name,
+                        bfs.fee_amount
+                    FROM businesses b
+                    LEFT JOIN zones z ON b.zone_id = z.zone_id
+                    LEFT JOIN sub_zones sz ON b.sub_zone_id = sz.sub_zone_id
+                    LEFT JOIN business_fee_structure bfs ON b.business_type = bfs.business_type AND b.category = bfs.category
+                    WHERE b.account_number = ?
+                
+[2025-07-15 09:49:11] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 09:49:11] [DEBUG] Business data: {"business_id":6,"account_number":"BIZ000001","business_name":"KabTech Consulting","owner_name":"Joojo Megas","business_type":"Restaurant","category":"Large Scale","telephone":"","exact_location":"GPS: 6.046436, 0.400592","latitude":"6.04643561","longitude":"0.40059174","old_bill":"0.00","previous_payments":"1540.00","arrears":"0.00","current_bill":"2100.00","amount_payable":"560.00","batch":"","status":"Active","zone_id":1,"sub_zone_id":2,"created_by":1,"created_at":"2025-07-14 11:25:40","updated_at":"2025-07-14 15:41:28","zone_name":"Central Zone","sub_zone_name":"Government Area","fee_amount":"2100.00"}
+[2025-07-15 09:49:11] [DEBUG] Checking for bill in year: 2025
+[2025-07-15 09:49:11] [DEBUG] Executing bill query: 
+                        SELECT * FROM bills 
+                        WHERE bill_type = 'Business' AND reference_id = ? AND billing_year = ?
+                    
+[2025-07-15 09:49:11] [DEBUG] Bill query parameters: [6, 2025]
+[2025-07-15 09:49:11] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 09:49:11] [DEBUG] Bill data: {"bill_id":17,"bill_number":"BILL2025B000006","bill_type":"Business","reference_id":6,"billing_year":"2025","old_bill":"0.00","previous_payments":"0.00","arrears":"0.00","current_bill":"2100.00","amount_payable":"2060.00","qr_code":null,"status":"Partially Paid","generated_by":1,"generated_at":"2025-07-14 11:25:58","due_date":null}
+[2025-07-15 09:49:11] [DEBUG] Account search successful with valid bill
+[2025-07-15 09:49:11] [DEBUG] === ACCOUNT SEARCH COMPLETED ===
+[2025-07-15 09:49:24] [DEBUG] Database connection established successfully
+[2025-07-15 09:49:24] [DEBUG] Database connection test passed
+[2025-07-15 12:43:46] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 12:43:46] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 12:43:46] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 12:43:46] [DEBUG] Account search successful with valid bill
+[2025-07-15 14:11:54] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 14:11:54] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 14:11:54] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 14:11:54] [DEBUG] Account search successful with valid bill
+[2025-07-15 14:13:02] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 14:13:02] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 14:13:02] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 14:13:02] [DEBUG] Account search successful with valid bill
+[2025-07-15 14:16:34] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-07-15 14:16:34] [DEBUG] Property found: Joojo
+[2025-07-15 14:16:34] [DEBUG] Bill found: BIL-PROP2025-FA783C0
+[2025-07-15 14:16:34] [DEBUG] Account search successful with valid bill
+[2025-07-15 14:21:55] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 14:21:55] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 14:21:55] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 14:21:55] [DEBUG] Account search successful with valid bill
+[2025-07-15 14:27:08] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 14:27:08] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 14:27:08] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 14:27:08] [DEBUG] Account search successful with valid bill
+[2025-07-15 14:29:48] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 14:29:48] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 14:29:48] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 14:29:48] [DEBUG] Account search successful with valid bill
+[2025-07-15 14:40:00] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-15 14:40:00] [DEBUG] Account not found - Number: BIZ000002, Type: Business
+[2025-07-15 14:40:20] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 14:40:20] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 14:40:21] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 14:40:21] [DEBUG] Account search successful with valid bill
+[2025-07-15 14:41:03] [INFO] Payment recorded: GHS 15 for KabTech Consulting (BIZ000001) via Cash by user admin
+[2025-07-15 14:52:15] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 14:52:15] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 14:52:15] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 14:52:15] [DEBUG] Account search successful with valid bill
+[2025-07-15 14:52:29] [INFO] Payment recorded: GHS 12 for KabTech Consulting (BIZ000001) via Cash by user admin
+[2025-07-15 14:53:45] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 14:53:45] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 14:53:45] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 14:53:45] [DEBUG] Account search successful with valid bill
+[2025-07-15 14:58:59] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-15 14:58:59] [DEBUG] Business found: KabTech Consulting
+[2025-07-15 14:58:59] [DEBUG] Bill found: BILL2025B000006
+[2025-07-15 14:58:59] [DEBUG] Account search successful with valid bill
+[2025-07-15 14:59:08] [INFO] Payment recorded: GHS 4 for KabTech Consulting (BIZ000001) via Cash by user admin
+[2025-07-15 15:04:07] [WARNING] User permanently deleted: ID 2, Username: abismark by User ID: 1
+[2025-07-16 08:42:19] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-07-16 08:42:19] [DEBUG] Property found: Joojo
+[2025-07-16 08:42:19] [DEBUG] Bill found: BIL-PROP2025-FA783C0
+[2025-07-16 08:42:19] [DEBUG] Account search successful with valid bill
+[2025-07-16 08:42:31] [INFO] Payment recorded: GHS 1 for Joojo (PROP000001) via Cash by user admin
+[2025-07-16 08:46:43] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-07-16 08:46:43] [DEBUG] Property found: Joojo
+[2025-07-16 08:46:43] [DEBUG] Bill found: BIL-PROP2025-FA783C0
+[2025-07-16 08:46:43] [DEBUG] Account search successful with valid bill
+[2025-07-16 08:46:55] [INFO] Payment recorded: GHS 30 for Joojo (PROP000001) via Cash by user admin
+[2025-07-16 08:58:27] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-07-16 08:58:27] [DEBUG] Property found: Joojo
+[2025-07-16 08:58:27] [DEBUG] Bill found: BIL-PROP2025-FA783C0
+[2025-07-16 08:58:27] [DEBUG] Account search successful with valid bill
+[2025-07-16 08:58:54] [INFO] Payment recorded: GHS 12 for Joojo (PROP000001) via Cash by user admin
+[2025-07-16 09:04:01] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-07-16 09:04:01] [DEBUG] Property found: Joojo
+[2025-07-16 09:04:01] [DEBUG] Bill found: BIL-PROP2025-FA783C0
+[2025-07-16 09:04:01] [DEBUG] Account search successful with valid bill
+[2025-07-16 09:04:24] [INFO] Payment recorded: GHS 50 for Joojo (PROP000001) via Cash by user admin
+[2025-07-16 11:27:11] [INFO] Business fee created: I.T firm - Small (GHS 500.00) as active by user Joojo
+[2025-07-16 11:28:15] [INFO] Business created: Kwabena Ewusi Enterprise (ID: 7) by user admin
+[2025-07-16 11:29:05] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-16 11:29:05] [DEBUG] Account not found - Number: BIZ000002, Type: Business
+[2025-07-16 11:29:34] [DEBUG] Account search attempt - Number: BIZ000007, Type: Business
+[2025-07-16 11:29:34] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-16 11:29:34] [DEBUG] Bill found: BILL2025B000007
+[2025-07-16 11:29:34] [DEBUG] Account search successful with valid bill
+[2025-07-16 11:29:52] [INFO] Payment recorded: GHS 250 for Kwabena Ewusi Enterprise (BIZ000007) via Cash by user admin
+[2025-07-16 12:42:00] [INFO] Business created: Media General (ID: 8) by user admin
+[2025-07-16 16:08:28] [DEBUG] Account search attempt - Number: BIZ000007, Type: Business
+[2025-07-16 16:08:28] [DEBUG] Business found: Kwabena Ewusi Enterprise
+[2025-07-16 16:08:28] [DEBUG] Bill found: BILL2025B000007
+[2025-07-16 16:08:28] [DEBUG] Account search successful with valid bill
+[2025-07-16 16:08:49] [INFO] Payment recorded: GHS 1 for Kwabena Ewusi Enterprise (BIZ000007) via Cash by user admin
+[2025-07-17 10:52:16] [INFO] Business created: Media General (ID: 9) by user admin
+[2025-07-17 10:53:24] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-17 10:53:24] [DEBUG] Business found: Media General
+[2025-07-17 10:53:24] [DEBUG] Bill found: BILL2025B000009
+[2025-07-17 10:53:24] [DEBUG] Account search successful with valid bill
+[2025-07-17 10:53:44] [INFO] Payment recorded: GHS 200 for Media General (BIZ000001) via Cash by user admin
+[2025-07-17 12:56:22] [INFO] Business created: Bel Aqua (ID: 10) by user admin
+[2025-07-17 12:57:37] [DEBUG] Account search attempt - Number: BIZ000002, Type: Business
+[2025-07-17 12:57:37] [DEBUG] Account not found - Number: BIZ000002, Type: Business
+[2025-07-17 12:57:58] [DEBUG] Account search attempt - Number: BIZ0000010, Type: Business
+[2025-07-17 12:57:58] [DEBUG] Account not found - Number: BIZ0000010, Type: Business
+[2025-07-17 12:58:20] [DEBUG] Account search attempt - Number: BIZ000010, Type: Business
+[2025-07-17 12:58:20] [DEBUG] Business found: Bel Aqua
+[2025-07-17 12:58:20] [DEBUG] Bill found: BILL2025B000010
+[2025-07-17 12:58:20] [DEBUG] Account search successful with valid bill
+[2025-07-17 12:58:32] [INFO] Payment recorded: GHS 500 for Bel Aqua (BIZ000010) via Cash by user admin
+[2025-07-17 14:08:53] [INFO] Business created: KabTech Consulting (ID: 11) by user admin
+[2025-07-17 14:09:46] [DEBUG] Account search attempt - Number: BIZ000011, Type: Business
+[2025-07-17 14:09:46] [DEBUG] Business found: KabTech Consulting
+[2025-07-17 14:09:46] [DEBUG] Bill found: BILL2025B000011
+[2025-07-17 14:09:46] [DEBUG] Account search successful with valid bill
+[2025-07-17 14:10:03] [INFO] Payment recorded: GHS 500 for KabTech Consulting (BIZ000011) via Cash by user admin
+[2025-07-17 14:18:55] [INFO] Business created: NTDA (ID: 12) by user admin
+[2025-07-17 14:19:42] [DEBUG] Account search attempt - Number: BIZ000012, Type: Business
+[2025-07-17 14:19:42] [DEBUG] Business found: NTDA
+[2025-07-17 14:19:42] [DEBUG] Bill found: BILL2025B000012
+[2025-07-17 14:19:42] [DEBUG] Account search successful with valid bill
+[2025-07-17 14:19:57] [INFO] Payment recorded: GHS 1000 for NTDA (BIZ000012) via Cash by user admin
+[2025-07-18 09:54:10] [INFO] Business created: FK Farms (ID: 13) by user admin
+[2025-07-18 09:58:49] [DEBUG] Account search attempt - Number: BIZ000013, Type: Business
+[2025-07-18 09:58:49] [DEBUG] Business found: FK Farms
+[2025-07-18 09:58:49] [DEBUG] Bill found: BILL2025B000013
+[2025-07-18 09:58:49] [DEBUG] Account search successful with valid bill
+[2025-07-18 10:02:29] [INFO] Payment recorded: GHS 500 for FK Farms (BIZ000013) via Cash by user admin
+[2025-07-19 13:22:24] [INFO] Business created: TV 3 (ID: 14) by user admin
+[2025-07-21 12:26:20] [INFO] Business created: Spare Parts Sales Outlets (Second-hand) (ID: 16) by user Joojo
+[2025-07-21 13:27:16] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 13:31:58] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 13:33:12] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 13:37:11] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 14:13:56] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 14:14:43] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 14:35:54] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 15:05:38] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 15:06:57] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 15:07:32] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 15:11:29] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 15:19:10] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 15:30:16] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 15:37:07] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 15:42:44] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 15:47:56] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 15:51:36] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-21 15:57:45] [INFO] Successfully generated 10 QR codes for bulk print
+[2025-07-22 07:35:39] [INFO] Business created: GTUC (ID: 17) by user Joojo
+[2025-07-22 09:05:16] [INFO] Successfully generated 13 QR codes for bulk print
+[2025-07-22 13:07:32] [INFO] Successfully generated 13 QR codes for bulk print
+[2025-07-22 13:07:52] [INFO] Successfully generated 1 QR codes for bulk print
+[2025-07-23 10:26:38] [INFO] Successfully generated 13 QR codes for bulk print
+[2025-07-23 10:27:24] [INFO] Successfully generated 1 QR codes for bulk print
+[2025-07-24 09:54:26] [INFO] Successfully generated 13 QR codes for bulk print
+[2025-07-24 10:00:21] [INFO] Successfully generated 13 QR codes for bulk print
+[2025-07-29 09:53:56] [INFO] QR code generated successfully for bill ID 32, file size: 6613 bytes
+[2025-07-29 10:04:28] [INFO] QR code generated successfully for bill ID 31, file size: 6559 bytes
+[2025-07-29 10:37:19] [INFO] QR code generated successfully for bill ID 33, file size: 6994 bytes
+[2025-07-29 10:42:31] [INFO] QR code generated successfully for bill ID 32, file size: 6613 bytes
+[2025-07-29 11:05:04] [INFO] QR code generated successfully for bill ID 29, file size: 6688 bytes
+[2025-07-29 11:05:17] [INFO] QR code generated successfully for bill ID 29, file size: 6688 bytes
+[2025-07-29 11:33:05] [INFO] Successfully generated 13 QR codes for bulk print
+[2025-07-29 12:35:08] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-07-29 12:35:08] [DEBUG] Business found: Media General
+[2025-07-29 12:35:08] [DEBUG] Bill found: BILL2025B000009
+[2025-07-29 12:35:08] [DEBUG] Account search successful with valid bill
+[2025-07-29 12:35:47] [INFO] Payment recorded: GHS 50 for Media General (BIZ000001) via Cash by user admin
+[2025-07-29 12:39:47] [INFO] User created: ID 7, Username: dufie by User ID: 1
+[2025-07-29 12:54:38] [INFO] Business created: Yaw Smocks (ID: 18) by user admin
+[2025-07-29 12:55:45] [DEBUG] Account search attempt - Number: BIZ000018, Type: Business
+[2025-07-29 12:55:45] [DEBUG] Business found: Yaw Smocks
+[2025-07-29 12:55:45] [DEBUG] Bill found: BILL2025B000018
+[2025-07-29 12:55:45] [DEBUG] Account search successful with valid bill
+[2025-07-29 13:29:47] [INFO] User created: ID 8, Username: Isacc by User ID: 1
+[2025-07-29 13:36:21] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-07-29 13:36:21] [DEBUG] Property found: Beatrice Akueteh
+[2025-07-29 13:36:21] [DEBUG] Bill found: BILL2025P000005
+[2025-07-29 13:36:21] [DEBUG] Account search successful with valid bill
+[2025-07-29 13:36:34] [INFO] Payment recorded: GHS 200 for Beatrice Akueteh (PROP000001) via Cash by user admin
+[2025-10-01 07:14:09] [INFO] Business created: KabTech Consulting (ID: 18) by user Joojo
+[2025-11-05 07:18:17] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-11-05 07:18:17] [DEBUG] Business found: KabTech Consulting
+[2025-11-05 07:18:17] [DEBUG] Bill found: BILL2025B000018
+[2025-11-05 07:18:17] [DEBUG] Account search successful with valid bill
+[2025-11-05 07:18:38] [INFO] Payment recorded: GHS 300 for KabTech Consulting (BIZ000001) via Cash by user Joojo
+[2025-08-04 17:59:17] [ERROR] Error creating zone: Please update insert method for your Database class
+[2025-08-04 17:59:27] [ERROR] Error creating zone: Please update insert method for your Database class
+[2025-08-04 18:02:20] [ERROR] Error creating zone: Please update insert method for your Database class
+[2025-08-04 18:02:59] [ERROR] Error creating zone: Please update insert method for your Database class
+[2025-08-04 18:03:57] [INFO] Sub-zone created: Nungua (ID: 5) in zone Eastern Zone by user Joojo
+[2025-08-04 18:55:58] [INFO] Property fee created: The storey - Residential (GHS 35.00/room) as active by user Joojo
+[2025-08-04 18:59:21] [INFO] Property created: Afful Bismark property (ID: 6) by user Joojo
+[2025-08-07 10:35:24] [INFO] Hubtel config check - Enabled: true, Config present: true
+[2025-08-07 17:12:59] ERROR: Hubtel payment failed: Payment request failed
+[2025-08-07 17:16:24] DEBUG: Hubtel API ID: 2OWJOov
+[2025-08-07 17:16:24] DEBUG: Hubtel Base URL: https://api.hubtel.com
+[2025-08-07 17:16:24] DEBUG: Hubtel Request Data: {"CustomerName":"Yaw Kusi","CustomerMsisdn":"+233545041428","CustomerEmail":"kabslink@gmail.com","Channel":"mtn-gh","Amount":5,"PrimaryCallbackUrl":"http:\/\/localhost\/quickbill_305\/public_portal\/api\/hubtel_callback.php","Description":"Bill Payment - BILL2025B000018","ClientReference":"PAY202508071716246726","Meta":{"bill_id":35,"bill_number":"BILL2025B000018","account_number":"BIZ000001"}}
+[2025-08-07 17:16:25] DEBUG: Hubtel API Response Code: 404
+[2025-08-07 17:16:25] DEBUG: Hubtel API Raw Response: 
+[2025-08-07 17:16:25] ERROR: Invalid JSON response from Hubtel API
+[2025-08-07 17:17:35] DEBUG: Hubtel API ID: 2OWJOov
+[2025-08-07 17:17:35] DEBUG: Hubtel Base URL: https://api.hubtel.com
+[2025-08-07 17:17:35] DEBUG: Hubtel Request Data: {"CustomerName":"Yaw Kusi","CustomerMsisdn":"+233545041428","CustomerEmail":"kabslink@gmail.com","Channel":"mtn-mobile-money-gh","Amount":10,"PrimaryCallbackUrl":"http:\/\/localhost\/quickbill_305\/public_portal\/api\/hubtel_callback.php","Description":"Bill Payment - BILL2025B000018","ClientReference":"PAY202508071717351603","Meta":{"bill_id":35,"bill_number":"BILL2025B000018","account_number":"BIZ000001"}}
+[2025-08-07 17:17:36] DEBUG: Hubtel API Response Code: 404
+[2025-08-07 17:17:36] DEBUG: Hubtel API Raw Response: 
+[2025-08-07 17:17:36] ERROR: Invalid JSON response from Hubtel API
+[2025-08-07 17:21:18] DEBUG: Hubtel API ID: 2OWJOov
+[2025-08-07 17:21:18] DEBUG: Hubtel Base URL: https://api.hubtel.com
+[2025-08-07 17:21:18] DEBUG: Formatted Phone: 233545041428
+[2025-08-07 17:21:18] DEBUG: Hubtel Request Data: {"CustomerName":"Yaw Kusi","CustomerMsisdn":"233545041428","CustomerEmail":"kabslink@gmail.com","Channel":"mtn-mobile-money-gh","Amount":5,"PrimaryCallbackUrl":"http:\/\/localhost\/quickbill_305\/public_portal\/hubtel_callback.php","Description":"Bill Payment - BILL2025B000018","ClientReference":"PAY202508071721188905"}
+[2025-08-07 17:21:18] DEBUG: API URL: https://api.hubtel.com/v1/services/payments/receive-mobile-money
+[2025-08-07 17:21:19] DEBUG: Hubtel API Response Code: 404
+[2025-08-07 17:21:19] DEBUG: Content Type: 
+[2025-08-07 17:21:19] DEBUG: Hubtel API Raw Response: 
+[2025-08-07 17:21:19] ERROR: Empty response from Hubtel API
+[2025-08-07 17:51:58] DEBUG: Hubtel payment initiated for phone: 233545041428
+[2025-08-07 17:51:58] DEBUG: Amount: 5, Provider: mtn-mobile-money-gh
+[2025-08-07 17:51:58] DEBUG: Hubtel Request: {"CustomerName":"Yaw Kusi","CustomerMsisdn":"233545041428","CustomerEmail":"kabslink@gmail.com","Channel":"mtn-mobile-money-gh","Amount":5,"PrimaryCallbackUrl":"http:\/\/localhost\/quickbill_305\/public_portal\/hubtel_callback.php","Description":"Bill Payment - BILL2025B000018","ClientReference":"PAY202508071751587411"}
+[2025-08-07 17:51:58] DEBUG: Hubtel Response Code: 0
+[2025-08-07 17:51:58] DEBUG: Content Type: 
+[2025-08-07 17:51:58] DEBUG: Raw Response: 
+[2025-08-07 17:51:58] ERROR: CURL Error: Could not resolve host: api.hubtel.com
+[2025-08-07 17:52:59] DEBUG: Hubtel payment initiated for phone: 233545041428
+[2025-08-07 17:52:59] DEBUG: Amount: 5, Provider: mtn-gh
+[2025-08-07 17:52:59] DEBUG: Hubtel Request: {"CustomerName":"Yaw Kusi","CustomerMsisdn":"233545041428","CustomerEmail":"kabslink@gmail.com","Channel":"mtn-gh","Amount":5,"PrimaryCallbackUrl":"http:\/\/localhost\/quickbill_305\/public_portal\/hubtel_callback.php","Description":"Bill Payment - BILL2025B000018","ClientReference":"PAY202508071752594872"}
+[2025-08-07 17:52:59] DEBUG: Hubtel Response Code: 0
+[2025-08-07 17:52:59] DEBUG: Content Type: 
+[2025-08-07 17:52:59] DEBUG: Raw Response: 
+[2025-08-07 17:52:59] ERROR: CURL Error: Could not resolve host: api.hubtel.com
+[2025-08-07 17:54:02] DEBUG: Hubtel payment initiated for phone: 233545041428
+[2025-08-07 17:54:02] DEBUG: Amount: 5, Provider: mtn-gh
+[2025-08-07 17:54:02] DEBUG: Hubtel Request: {"CustomerName":"Yaw Kusi","CustomerMsisdn":"233545041428","CustomerEmail":"kabslink@gmail.com","Channel":"mtn-gh","Amount":5,"PrimaryCallbackUrl":"http:\/\/localhost\/quickbill_305\/public_portal\/hubtel_callback.php","Description":"Bill Payment - BILL2025B000018","ClientReference":"PAY202508071754024420"}
+[2025-08-07 17:54:03] DEBUG: Hubtel Response Code: 404
+[2025-08-07 17:54:03] DEBUG: Content Type: 
+[2025-08-07 17:54:03] DEBUG: Raw Response: 
+[2025-08-07 17:54:03] ERROR: Empty response from Hubtel
+[2025-08-07 17:54:33] DEBUG: Hubtel payment initiated for phone: 233545041428
+[2025-08-07 17:54:33] DEBUG: Amount: 600, Provider: mtn-gh
+[2025-08-07 17:54:33] DEBUG: Hubtel Request: {"CustomerName":"Yaw Kusi","CustomerMsisdn":"233545041428","CustomerEmail":"kabslink@gmail.com","Channel":"mtn-gh","Amount":600,"PrimaryCallbackUrl":"http:\/\/localhost\/quickbill_305\/public_portal\/hubtel_callback.php","Description":"Bill Payment - BILL2025B000018","ClientReference":"PAY202508071754334038"}
+[2025-08-07 17:54:34] DEBUG: Hubtel Response Code: 404
+[2025-08-07 17:54:34] DEBUG: Content Type: 
+[2025-08-07 17:54:34] DEBUG: Raw Response: 
+[2025-08-07 17:54:34] ERROR: Empty response from Hubtel
+[2025-08-07 17:55:54] DEBUG: Hubtel payment initiated for phone: 233545041428
+[2025-08-07 17:55:54] DEBUG: Amount: 10, Provider: mtn-gh
+[2025-08-07 17:55:54] DEBUG: Hubtel Request: {"CustomerName":"Yaw Kusi","CustomerMsisdn":"233545041428","CustomerEmail":"kabtechconsulting@gmail.com","Channel":"mtn-gh","Amount":10,"PrimaryCallbackUrl":"http:\/\/localhost\/quickbill_305\/public_portal\/hubtel_callback.php","Description":"Bill Payment - BILL2025B000018","ClientReference":"PAY202508071755545028"}
+[2025-08-07 17:55:55] DEBUG: Hubtel Response Code: 404
+[2025-08-07 17:55:55] DEBUG: Content Type: 
+[2025-08-07 17:55:55] DEBUG: Raw Response: 
+[2025-08-07 17:55:55] ERROR: Empty response from Hubtel
+[2025-08-07 18:00:30] [ERROR] Error creating zone: Please update insert method for your Database class
+[2025-08-07 18:09:33] [ERROR] Error creating zone: Failed to insert zone record
+[2025-08-07 18:10:09] [ERROR] Error creating zone: Failed to insert zone record
+[2025-08-08 08:11:00] [INFO] Sub-zone created: Mepe (ID: 6) in zone Eastern Zone by user Joojo
+[2025-08-08 08:13:46] [ERROR] Error creating zone: Please update insert method for your Database class
+[2025-08-08 08:19:33] [ERROR] Database insertion error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'status' in 'field list'
+[2025-08-08 08:19:33] [ERROR] Error creating zone: Database insertion failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'status' in 'field list'
+[2025-08-08 08:22:19] [INFO] Zone created: Juapong (ID: 5) by user Joojo
+[2025-08-08 10:02:05] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 10:02:05] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 10:09:41] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 10:09:41] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 10:10:32] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 10:10:32] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 10:11:07] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 10:11:07] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 10:21:27] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 10:21:27] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 10:21:30] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 10:21:30] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 14:14:17] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 14:17:24] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 14:17:24] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 14:17:24] [DEBUG] Hubtel payment initiated for phone: 233545041428
+[2025-08-08 14:17:24] [DEBUG] Amount: 300, Provider: mtn-gh
+[2025-08-08 14:17:24] [DEBUG] Hubtel Request: {"CustomerName":"Yaw Kusi","CustomerMsisdn":"233545041428","CustomerEmail":"kabslink@gmail.com","Channel":"mtn-gh","Amount":300,"PrimaryCallbackUrl":"http:\/\/localhost\/quickbill_305\/public_portal\/hubtel_callback.php","Description":"Bill Payment - BILL2025B000018","ClientReference":"PAY202508081417241294"}
+[2025-08-08 14:17:26] [DEBUG] Hubtel Response Code: 404
+[2025-08-08 14:17:26] [DEBUG] Content Type: 
+[2025-08-08 14:17:26] [DEBUG] Raw Response: 
+[2025-08-08 14:17:26] [ERROR] Empty response from Hubtel
+[2025-08-08 14:17:26] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 14:17:55] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 14:17:55] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-08 14:17:55] [DEBUG] Hubtel payment initiated for phone: 233543258791
+[2025-08-08 14:17:55] [DEBUG] Amount: 300, Provider: mtn-gh
+[2025-08-08 14:17:55] [DEBUG] Hubtel Request: {"CustomerName":"Yaw Kusi","CustomerMsisdn":"233543258791","CustomerEmail":"kabslink@gmail.com","Channel":"mtn-gh","Amount":300,"PrimaryCallbackUrl":"http:\/\/localhost\/quickbill_305\/public_portal\/hubtel_callback.php","Description":"Bill Payment - BILL2025B000018","ClientReference":"PAY202508081417554200"}
+[2025-08-08 14:17:57] [DEBUG] Hubtel Response Code: 404
+[2025-08-08 14:17:57] [DEBUG] Content Type: 
+[2025-08-08 14:17:57] [DEBUG] Raw Response: 
+[2025-08-08 14:17:57] [ERROR] Empty response from Hubtel
+[2025-08-08 14:17:57] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-09 09:15:35] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-09 09:15:35] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-09 09:15:46] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-18 15:04:59] [INFO] Business created: TV 3 (ID: 19) by user admin
+[2025-08-20 13:51:57] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 13:51:57] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 13:52:04] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 13:55:03] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 14:29:12] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 14:29:12] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 14:29:17] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 14:30:09] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 14:30:09] [INFO] PayStack payment processed successfully: PAY20250820GVLWPH for bill BILL2025B000019
+[2025-08-20 14:52:10] [INFO] Payment Success Debug - Reference: PAY20250820GVLWPH, Bill ID: 36, Found Payment: Yes
+[2025-08-20 14:52:10] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 14:52:20] [INFO] Payment Success Debug - Reference: PAY20250820GVLWPH, Bill ID: 36, Found Payment: Yes
+[2025-08-20 14:52:20] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 14:53:23] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 14:53:23] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 15:12:16] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 15:26:00] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 15:26:00] [INFO] PayStack payment processed successfully: PAY202508202ZS4O8 for bill BILL2025P000006
+[2025-08-20 15:26:00] [INFO] Payment Success Debug - Reference: PAY1755703534831PN2P2, Bill ID: 37, Found Payment: Yes
+[2025-08-20 15:26:00] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 15:28:47] [INFO] Payment Success Debug - Reference: PAY1755703534831PN2P2, Bill ID: 37, Found Payment: Yes
+[2025-08-20 15:30:41] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 15:30:41] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 15:30:49] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 15:31:34] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 15:31:34] [INFO] PayStack payment processed successfully: PAY20250820HMK5OL for bill BILL2025P000006
+[2025-08-20 15:31:34] [INFO] Payment Success Debug - Reference: PAY1755703864058EHZ8W, Bill ID: 37, Found Payment: Yes
+[2025-08-20 15:37:35] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 16:44:19] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 16:47:20] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 16:48:26] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 16:48:26] [INFO] PayStack payment processed successfully: PAY20250820AZ7SIF for bill BILL2025P000006
+[2025-08-20 16:48:26] [INFO] Payment Success Debug - Reference: PAY1755708481248YERAQ, Bill ID: 37, Found Payment: Yes
+[2025-08-20 18:57:22] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 18:57:22] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 18:58:42] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 18:58:42] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 18:58:52] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 18:58:52] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 18:59:38] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:02:15] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:02:15] [INFO] PayStack payment processed successfully: PAY2025082023KW4E for bill BILL2025P000006
+[2025-08-20 19:02:15] [INFO] Payment Success Debug - Reference: PAY1755716429903H2S2U, Bill ID: 37, Found Payment: Yes
+[2025-08-20 19:04:18] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:04:18] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:04:26] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:06:21] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:06:21] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:06:26] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:09:40] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:09:40] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:09:44] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:10:45] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:10:45] [INFO] PayStack payment processed successfully: PAY20250820AFCR0T for bill BILL2025B000018
+[2025-08-20 19:10:45] [INFO] Payment Success Debug - Reference: PAY1755717007134H2KJC, Bill ID: 35, Found Payment: Yes
+[2025-08-20 19:11:06] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:11:06] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:37:08] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:37:08] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:37:41] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:37:41] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:38:28] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:38:28] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:41:38] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-20 19:41:38] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-22 15:52:16] [INFO] Business created: Mankoe Photos (ID: 21) by user admin
+[2025-08-22 16:16:50] [INFO] Property updated: Afful Bismark property (ID: 6) by user admin
+[2025-08-22 16:18:22] [INFO] Property updated: Afful Bismark property (ID: 6) by user admin
+[2025-08-23 10:34:31] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 10:34:31] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 10:43:25] [INFO] Business created: KabTech Consulting (ID: 22) by user admin
+[2025-08-23 15:23:07] [INFO] Property created: Joojo Megas property (ID: 7) by user Joojo
+[2025-08-23 18:39:10] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 18:39:10] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 18:39:48] [DEBUG] Account search attempt - Number: BIZ000001, Type: Business
+[2025-08-23 18:39:48] [DEBUG] Business found: Gihoc
+[2025-08-23 18:39:48] [DEBUG] Bill found: BILL2025B000023
+[2025-08-23 18:39:48] [DEBUG] Account search successful with valid bill
+[2025-08-23 18:40:09] [INFO] Payment recorded: GHS 50 for Gihoc (BIZ000001) via Cash by user admin
+[2025-08-23 18:40:17] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 18:40:17] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 18:40:43] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 18:40:52] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 18:40:52] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 18:49:26] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 18:49:26] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 18:52:49] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 18:52:49] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 18:59:19] [INFO] Successfully generated 2 QR codes for bulk print
+[2025-08-23 19:03:10] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-23 19:03:10] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 06:25:11] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 06:25:11] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 06:25:26] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-08-24 06:25:26] [DEBUG] Property found: Joojo Megas
+[2025-08-24 06:25:26] [DEBUG] Bill found: BILL2025P000007
+[2025-08-24 06:25:26] [DEBUG] Account search successful with valid bill
+[2025-08-24 06:26:00] [INFO] Payment recorded: GHS 100 for Joojo Megas (PROP000001) via Cash by user admin
+[2025-08-24 06:26:26] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 06:26:26] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 06:37:53] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 06:37:53] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 06:39:00] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 06:47:13] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 07:19:09] [INFO] Successfully generated 2 QR codes for bulk print
+[2025-08-24 07:37:38] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 13:45:43] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 13:45:43] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 13:45:50] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 13:46:40] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-08-24 13:46:40] [INFO] PayStack payment processed successfully: PAY20250824NJWI7B for bill BILL2025P000007
+[2025-08-24 13:46:40] [INFO] Payment Success Debug - Reference: PAY1756043171632C6KZS, Bill ID: 39, Found Payment: Yes
+[2025-08-24 16:20:18] [ERROR] Error deleting property: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'status' in 'field list'
+[2025-08-24 16:20:24] [ERROR] Error deleting property: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'status' in 'field list'
+[2025-08-24 16:22:51] [INFO] Property deleted: Joojo Megas property (ID: 7) by user admin
+[2025-08-24 16:39:43] [INFO] Business deleted: Gihoc (ID: 23) by user admin
+[2025-08-24 17:04:41] [INFO] Business created: KabTech Consulting (ID: 24) by user admin
+[2025-08-24 17:05:32] [INFO] Business deleted: KabTech Consulting (ID: 24) and related records: 1 bill record(s) by user admin
+[2025-08-24 17:11:56] [INFO] Payment Success Debug - Reference: PAY1756043171632C6KZS, Bill ID: 39, Found Payment: No
+[2025-08-24 17:11:57] [ERROR] Payment success page error: There is no active transaction
+[2025-08-24 17:11:59] [INFO] Payment Success Debug - Reference: PAY1756043171632C6KZS, Bill ID: 39, Found Payment: No
+[2025-08-24 17:12:00] [ERROR] Payment success page error: There is no active transaction
+[2025-08-24 17:12:01] [INFO] Payment Success Debug - Reference: PAY1756043171632C6KZS, Bill ID: 39, Found Payment: No
+[2025-08-24 17:12:02] [ERROR] Payment success page error: There is no active transaction
+[2025-08-24 17:12:04] [INFO] Payment Success Debug - Reference: PAY1756043171632C6KZS, Bill ID: 39, Found Payment: No
+[2025-08-24 17:12:05] [ERROR] Payment success page error: There is no active transaction
+[2025-08-24 17:12:07] [INFO] Payment Success Debug - Reference: PAY1756043171632C6KZS, Bill ID: 39, Found Payment: No
+[2025-08-24 17:12:08] [ERROR] Payment success page error: There is no active transaction
+[2025-08-24 17:12:10] [INFO] Payment Success Debug - Reference: PAY1756043171632C6KZS, Bill ID: 39, Found Payment: No
+[2025-08-24 17:12:11] [ERROR] Payment success page error: There is no active transaction
+[2025-08-24 19:02:55] [INFO] Business created: KabTech Consulting (ID: 25) by user admin
+[2025-08-24 19:03:47] [INFO] Property created: Kusi Francis property (ID: 8) by user admin
+[2025-08-24 19:04:32] [INFO] Business deleted: KabTech Consulting (ID: 25) and related records: 1 bill record(s) by user admin
+[2025-08-24 19:04:53] [INFO] Property deleted: Kusi Francis property (ID: 8) by user admin
+[2025-08-24 21:19:31] [INFO] Property created: Joojo Megas property (ID: 9) by user admin
+[2025-08-24 21:20:41] [INFO] Property deleted: Joojo Megas property (ID: 9) and related records: 1 bill record(s) by user admin
+[2025-08-29 08:47:37] [INFO] Business created: KabTech Consulting (ID: 26) by user admin
+[2025-08-29 09:04:05] [INFO] Bill serving status updated - Bill ID: 44, Status: Served
+[2025-08-29 09:18:25] [INFO] Property created: Joojo Megas property (ID: 10) by user admin
+[2025-08-29 09:31:44] [DEBUG] Account search attempt - Number: PROP000001, Type: Property
+[2025-08-29 09:31:44] [DEBUG] Property found: Joojo Megas
+[2025-08-29 09:31:44] [DEBUG] Bill found: BILL2025P000010
+[2025-08-29 09:31:44] [DEBUG] Account search successful with valid bill
+[2025-08-29 09:32:00] [INFO] Payment recorded: GHS 250 for Joojo Megas (PROP000001) via Cash by user admin
+[2025-08-29 18:03:24] [INFO] Business created: KabTech (ID: 28) by user admin
+[2025-08-29 19:05:17] [INFO] Bill serving status updated - Bill ID: 45, Status: Served
+[2025-08-30 16:15:59] [INFO] Successfully generated 5 QR codes for bulk print
+[2025-08-30 16:16:43] [INFO] Successfully generated 5 QR codes for bulk print
+[2025-10-02 16:26:56] [INFO] Bill serving status updated - Bill ID: 53, Status: Served
+[2025-08-30 19:11:31] [INFO] Successfully generated 11 QR codes for bulk print
+[2025-08-30 19:13:36] [INFO] Successfully generated 11 QR codes for bulk print
+[2025-08-31 15:57:25] [INFO] Successfully generated 5 QR codes for bulk print
+[2025-08-31 15:58:52] [INFO] Successfully generated 5 QR codes for bulk print
+[2025-08-31 15:59:14] [INFO] Successfully generated 5 QR codes for bulk print
+[2025-09-01 10:19:59] [DEBUG] Account search attempt - Number: BIZ000007, Type: Business
+[2025-09-01 10:19:59] [DEBUG] Account not found - Number: BIZ000007, Type: Business
+[2025-09-01 10:20:33] [DEBUG] Account search attempt - Number: BIZ000027, Type: Business
+[2025-09-01 10:20:33] [DEBUG] Business found: Media General
+[2025-09-01 10:20:33] [DEBUG] Bill found: BILL2025B000027
+[2025-09-01 10:20:33] [DEBUG] Account search successful with valid bill
+[2025-09-01 14:02:05] [DEBUG] Account search attempt - Number: BIZ000028, Type: Business
+[2025-09-01 14:02:05] [DEBUG] Business found: KabTech
+[2025-09-01 14:02:05] [DEBUG] Bill found: BILL2025B000028
+[2025-09-01 14:02:05] [DEBUG] Account search successful with valid bill
+[2025-09-01 14:02:27] [INFO] Payment recorded: GHS 400 for KabTech (BIZ000028) via Cash by user admin
+[2025-09-02 11:55:55] [INFO] Bill serving status updated - Bill ID: 48, Status: Served
+[2025-09-02 11:57:13] [INFO] Business deleted: Media General (ID: 27) and related records: 1 bill record(s) by user admin
+[2025-09-02 12:46:50] [INFO] Property deleted: Yaw Kusi property (ID: 11) and related records: 1 bill record(s) by user admin
+[2025-09-02 12:47:02] [INFO] Property deleted: Joojo Megas property (ID: 10) and related records: 1 payment record(s), 1 bill record(s) by user admin
+[2025-09-02 12:47:14] [INFO] Business deleted: KabTech (ID: 28) and related records: 1 bill record(s) by user admin
+[2025-09-02 12:47:22] [INFO] Business deleted: KabTech Consulting (ID: 26) and related records: 1 payment record(s), 1 bill record(s) by user admin

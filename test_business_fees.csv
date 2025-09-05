@@ -1,0 +1,4 @@
+business_type,category,fee_amount,is_active
+Restaurant,Small Scale,500.00,1
+Shop,Medium Scale,800.00,1
+Salon,Large Scale,1200.00,1
