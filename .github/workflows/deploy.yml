@@ -1,0 +1,28 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master   # ✅ Deploy only when pushing to master branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /var/www/html
+            sudo git reset --hard
+            sudo git pull origin master
+            sudo chown -R www-data:www-data /var/www/html
+            sudo chmod -R 755 /var/www/html
+            sudo systemctl restart apache2
