@@ -5,7 +5,7 @@
  * 
  * NEW DEFAULTER LOGIC:
  * 1. Bill Must Be Served: Only accounts with served bills (served_status = 'Served')
- * 2. Grace Period: 30 days from bill serving date (served_at)
+ * 2. Grace Period: 90 days from bill serving date (served_at)
  * 3. Outstanding Amount: Must have amount_payable > 0 after grace period
  * 4. Persistent: Once flagged (after grace period), remains defaulter until full payment
  * 5. Multi-Year: Accounts with overdue bills from previous years
@@ -61,7 +61,7 @@ $selectedZone = isset($_GET['zone']) ? intval($_GET['zone']) : 0;
 $selectedType = isset($_GET['type']) ? $_GET['type'] : 'all'; // all, business, property
 $minAmount = isset($_GET['min_amount']) ? floatval($_GET['min_amount']) : 0;
 $sortBy = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'amount_desc'; // amount_desc, amount_asc, name_asc, days_overdue_desc
-$gracePeriodDays = 30; // 30 days grace period after bill serving
+$gracePeriodDays = 90; // 90 days grace period after bill serving (3 months)
 
 // Get current date info
 $currentDate = new DateTime();
@@ -185,8 +185,8 @@ try {
                     ELSE 'Current Year'
                 END as defaulter_type,
                 CASE 
-                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 90 THEN 'Critical'
-                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 60 THEN 'High'
+                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 180 THEN 'Critical'
+                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 150 THEN 'High'
                     ELSE 'Moderate'
                 END as urgency_level
             FROM businesses b
@@ -247,8 +247,8 @@ try {
                     ELSE 'Current Year'
                 END as defaulter_type,
                 CASE 
-                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 90 THEN 'Critical'
-                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 60 THEN 'High'
+                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 180 THEN 'Critical'
+                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 150 THEN 'High'
                     ELSE 'Moderate'
                 END as urgency_level
             FROM properties p
@@ -1470,7 +1470,7 @@ try {
             <div class="page-header">
                 <div>
                     <h1 class="page-title">⚠️ Defaulters Report</h1>
-                    <p class="page-subtitle">Bill serving-based defaulter detection with 30-day grace period</p>
+                    <p class="page-subtitle">Bill serving-based defaulter detection with 90-day grace period</p>
                 </div>
                 <div class="page-actions">
                     <a href="index.php" class="btn btn-outline">
@@ -1494,7 +1494,7 @@ try {
                     </div>
                     <div class="billing-status-info">
                         <h3>Bill Serving-Based Defaulter Detection</h3>
-                        <p>Only accounts with served bills past 30-day grace period are flagged</p>
+                        <p>Only accounts with served bills past 90-day grace period are flagged</p>
                     </div>
                 </div>
                 
@@ -1522,7 +1522,7 @@ try {
                     <div class="billing-detail">
                         <div class="billing-detail-label">Detection Logic</div>
                         <div class="billing-detail-value" style="font-size: 12px; line-height: 1.3;">
-                            Served + 30 Days<br>
+                            Served + 90 Days<br>
                             + Outstanding Balance
                         </div>
                     </div>
@@ -1535,13 +1535,13 @@ try {
                 <span class="icon-exclamation"></span>
                 <strong>Action Required:</strong> There are <?php echo number_format($totalDefaulters); ?> accounts 
                 with outstanding payments totaling ₵ <?php echo number_format($totalOutstanding, 2); ?> 
-                past the 30-day grace period from bill serving.
+                past the 90-day grace period from bill serving.
             </div>
             <?php else: ?>
             <!-- No Defaulters Alert -->
             <div class="alert alert-success">
                 <span class="icon-smile"></span>
-                <strong>Excellent!</strong> No accounts are defaulting past the 30-day grace period after bill serving.
+                <strong>Excellent!</strong> No accounts are defaulting past the 90-day grace period after bill serving.
             </div>
             <?php endif; ?>
 
@@ -1608,7 +1608,7 @@ try {
                         </div>
                     </div>
                     <div class="stat-value"><?php echo number_format($totalDefaulters); ?></div>
-                    <div class="stat-subtitle">Past 30-day grace period</div>
+                    <div class="stat-subtitle">Past 90-day grace period</div>
                 </div>
 
                 <div class="stat-card warning">
@@ -1630,7 +1630,7 @@ try {
                         </div>
                     </div>
                     <div class="stat-value"><?php echo number_format($criticalCount); ?></div>
-                    <div class="stat-subtitle">>90 days since served</div>
+                    <div class="stat-subtitle">>180 days since served</div>
                 </div>
 
                 <div class="stat-card success">
@@ -1641,7 +1641,7 @@ try {
                         </div>
                     </div>
                     <div class="stat-value"><?php echo number_format($highCount); ?></div>
-                    <div class="stat-subtitle">61-90 days since served</div>
+                    <div class="stat-subtitle">151-180 days since served</div>
                 </div>
             </div>
 
@@ -1756,8 +1756,8 @@ try {
                                         <td>
                                             <?php 
                                             $daysSinceServed = $defaulter['days_since_served'];
-                                            $daysClass = $daysSinceServed > 90 ? 'critical' : 
-                                                        ($daysSinceServed > 60 ? 'high' : 'moderate');
+                                            $daysClass = $daysSinceServed > 180 ? 'critical' : 
+                                                        ($daysSinceServed > 150 ? 'high' : 'moderate');
                                             ?>
                                             <span class="days-served <?php echo $daysClass; ?>">
                                                 <?php echo $daysSinceServed; ?> days
@@ -1802,7 +1802,7 @@ try {
                                 <span class="icon-smile"></span>
                             </div>
                             <h3>No defaulters found!</h3>
-                            <p>No accounts have outstanding payments past the 30-day grace period after bill serving.</p>
+                            <p>No accounts have outstanding payments past the 90-day grace period after bill serving.</p>
                         </div>
                     <?php endif; ?>
                 </div>

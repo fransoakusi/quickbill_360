@@ -1,7 +1,7 @@
 <?php
 /**
  * Zone Performance Report for QUICKBILL 305
- * Fixed Sidebar Responsiveness
+ * Enhanced with Export Functions
  */
 
 // Define application constant
@@ -54,11 +54,182 @@ $selectedYear = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 $selectedZone = isset($_GET['zone']) ? intval($_GET['zone']) : 0;
 $metricType = isset($_GET['metric']) ? $_GET['metric'] : 'revenue'; // revenue, collection_rate, transactions
 
-// Export handling
-if (isset($_GET['export']) && $_GET['export'] === 'pdf') {
-    // Export to PDF functionality would go here
-    setFlashMessage('info', 'PDF export functionality will be implemented soon.');
-    header('Location: zone_performance.php');
+// Export function for Zone Performance Report CSV
+function exportZonePerformanceCSV($zonePerformance, $subZonePerformance, $monthlyPerformance, $selectedYear, $selectedZone, $metricType, $availableZones, $totalZones, $totalAccounts, $totalBills, $totalCollected, $totalOutstanding) {
+    // Set headers for CSV download
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="Zone_Performance_Report_' . date('Y-m-d_H-i-s') . '.csv"');
+    
+    // Create file pointer
+    $output = fopen('php://output', 'w');
+    
+    // Add UTF-8 BOM for Excel compatibility
+    fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+    
+    // Report header
+    fputcsv($output, ['QUICKBILL 305 - ZONE PERFORMANCE REPORT']);
+    fputcsv($output, ['Generated on: ' . date('F j, Y g:i A')]);
+    
+    // Period information
+    $periodText = 'Report Period: ' . $selectedYear;
+    fputcsv($output, [$periodText]);
+    
+    // Filter information
+    $filterInfo = 'Filters Applied: ';
+    $filters = [];
+    if ($selectedZone > 0) {
+        $zoneName = 'Unknown Zone';
+        foreach ($availableZones as $zone) {
+            if ($zone['zone_id'] == $selectedZone) {
+                $zoneName = $zone['zone_name'];
+                break;
+            }
+        }
+        $filters[] = 'Zone: ' . $zoneName;
+    }
+    $filters[] = 'Metric Type: ' . ucfirst(str_replace('_', ' ', $metricType));
+    fputcsv($output, [$filterInfo . implode(', ', $filters)]);
+    fputcsv($output, []); // Empty line
+    
+    // Overall Statistics
+    fputcsv($output, ['OVERALL STATISTICS']);
+    fputcsv($output, ['Metric', 'Value']);
+    fputcsv($output, ['Total Zones', number_format($totalZones)]);
+    fputcsv($output, ['Total Accounts', number_format($totalAccounts)]);
+    fputcsv($output, ['Total Bills Amount', 'GH₵ ' . number_format($totalBills, 2)]);
+    fputcsv($output, ['Total Collected', 'GH₵ ' . number_format($totalCollected, 2)]);
+    fputcsv($output, ['Total Outstanding', 'GH₵ ' . number_format($totalOutstanding, 2)]);
+    
+    if ($totalBills > 0) {
+        $overallCollectionRate = ($totalCollected / $totalBills) * 100;
+        fputcsv($output, ['Overall Collection Rate', round($overallCollectionRate, 2) . '%']);
+    }
+    fputcsv($output, []); // Empty line
+    
+    // Zone Performance Summary
+    if (!empty($zonePerformance)) {
+        fputcsv($output, ['ZONE PERFORMANCE SUMMARY']);
+        fputcsv($output, [
+            'Zone Name', 'Zone Code', 'Total Accounts', 'Business Count', 'Property Count',
+            'Total Bills (GH₵)', 'Total Collected (GH₵)', 'Outstanding (GH₵)', 
+            'Collection Rate (%)', 'Compliance Rate (%)', 'Performance Rating'
+        ]);
+        
+        foreach ($zonePerformance as $zone) {
+            // Determine performance rating
+            $collectionRate = $zone['collection_rate'];
+            $complianceRate = $zone['compliance_rate'];
+            $avgRate = ($collectionRate + $complianceRate) / 2;
+            
+            if ($avgRate >= 80) {
+                $performanceText = 'Excellent';
+            } elseif ($avgRate >= 60) {
+                $performanceText = 'Good';
+            } elseif ($avgRate >= 40) {
+                $performanceText = 'Fair';
+            } else {
+                $performanceText = 'Poor';
+            }
+            
+            fputcsv($output, [
+                $zone['zone_name'],
+                $zone['zone_code'] ?? 'N/A',
+                number_format($zone['total_accounts']),
+                number_format($zone['business_count']),
+                number_format($zone['property_count']),
+                number_format($zone['total_bills'], 2),
+                number_format($zone['total_collected'], 2),
+                number_format($zone['total_outstanding'], 2),
+                round($zone['collection_rate'], 2),
+                round($zone['compliance_rate'], 2),
+                $performanceText
+            ]);
+        }
+        fputcsv($output, []); // Empty line
+    }
+    
+    // Sub-Zone Performance (if specific zone selected)
+    if (!empty($subZonePerformance)) {
+        fputcsv($output, ['SUB-ZONE PERFORMANCE']);
+        fputcsv($output, [
+            'Sub-Zone Name', 'Sub-Zone Code', 'Total Accounts', 'Business Count', 
+            'Property Count', 'Total Bills (GH₵)', 'Outstanding (GH₵)'
+        ]);
+        
+        foreach ($subZonePerformance as $subZone) {
+            fputcsv($output, [
+                $subZone['sub_zone_name'],
+                $subZone['sub_zone_code'] ?? 'N/A',
+                number_format($subZone['total_accounts']),
+                number_format($subZone['business_count']),
+                number_format($subZone['property_count']),
+                number_format($subZone['total_bills'], 2),
+                number_format($subZone['total_outstanding'], 2)
+            ]);
+        }
+        fputcsv($output, []); // Empty line
+    }
+    
+    // Monthly Performance (if data available)
+    if (!empty($monthlyPerformance)) {
+        fputcsv($output, ['MONTHLY PERFORMANCE - ' . $selectedYear]);
+        fputcsv($output, ['Zone Name', 'Month', 'Monthly Collections (GH₵)']);
+        
+        foreach ($monthlyPerformance as $monthly) {
+            $monthName = date('F', mktime(0, 0, 0, $monthly['month'], 1));
+            fputcsv($output, [
+                $monthly['zone_name'],
+                $monthName,
+                number_format($monthly['monthly_collected'], 2)
+            ]);
+        }
+        fputcsv($output, []); // Empty line
+    }
+    
+    // Top Performing Zones
+    if (!empty($zonePerformance)) {
+        $sortedByCollection = $zonePerformance;
+        usort($sortedByCollection, function($a, $b) {
+            return $b['total_collected'] <=> $a['total_collected'];
+        });
+        
+        fputcsv($output, ['TOP PERFORMING ZONES BY COLLECTION']);
+        fputcsv($output, ['Rank', 'Zone Name', 'Total Collected (GH₵)', 'Collection Rate (%)']);
+        
+        $rank = 1;
+        foreach (array_slice($sortedByCollection, 0, 10) as $zone) {
+            fputcsv($output, [
+                $rank,
+                $zone['zone_name'],
+                number_format($zone['total_collected'], 2),
+                round($zone['collection_rate'], 2)
+            ]);
+            $rank++;
+        }
+        fputcsv($output, []); // Empty line
+    }
+    
+    // Performance Distribution
+    if (!empty($zonePerformance)) {
+        $excellent = $good = $fair = $poor = 0;
+        
+        foreach ($zonePerformance as $zone) {
+            $avgRate = ($zone['collection_rate'] + $zone['compliance_rate']) / 2;
+            if ($avgRate >= 80) $excellent++;
+            elseif ($avgRate >= 60) $good++;
+            elseif ($avgRate >= 40) $fair++;
+            else $poor++;
+        }
+        
+        fputcsv($output, ['PERFORMANCE DISTRIBUTION']);
+        fputcsv($output, ['Performance Level', 'Number of Zones', 'Percentage']);
+        fputcsv($output, ['Excellent (80%+)', $excellent, round(($excellent / count($zonePerformance)) * 100, 1) . '%']);
+        fputcsv($output, ['Good (60-79%)', $good, round(($good / count($zonePerformance)) * 100, 1) . '%']);
+        fputcsv($output, ['Fair (40-59%)', $fair, round(($fair / count($zonePerformance)) * 100, 1) . '%']);
+        fputcsv($output, ['Poor (<40%)', $poor, round(($poor / count($zonePerformance)) * 100, 1) . '%']);
+    }
+    
+    fclose($output);
     exit();
 }
 
@@ -249,6 +420,18 @@ try {
     $totalOutstanding = 0;
     $availableZones = [];
     $availableYears = [];
+}
+
+// Handle Export Request - This MUST come after all data is loaded
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    exportZonePerformanceCSV($zonePerformance, $subZonePerformance, $monthlyPerformance, $selectedYear, $selectedZone, $metricType, $availableZones, $totalZones, $totalAccounts, $totalBills, $totalCollected, $totalOutstanding);
+}
+
+// Handle PDF Export placeholder
+if (isset($_GET['export']) && $_GET['export'] === 'pdf') {
+    setFlashMessage('info', 'PDF export functionality will be implemented soon. Use CSV export for now.');
+    header('Location: zone_performance.php?' . http_build_query(array_filter($_GET, function($key) { return $key !== 'export'; }, ARRAY_FILTER_USE_KEY)));
+    exit();
 }
 
 // Prepare chart data
@@ -628,6 +811,28 @@ if (!empty($monthlyPerformance)) {
             background: #f8f9fa;
             transition: all 0.3s ease;
             min-width: 0; /* Allows flex item to shrink */
+        }
+
+        /* Export Info Alert */
+        .export-info {
+            background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+            border: 1px solid #4fc3f7;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .export-info .info-icon {
+            color: #0277bd;
+            font-size: 20px;
+        }
+
+        .export-info .info-text {
+            color: #01579b;
+            font-weight: 500;
         }
 
         /* Page Header */
@@ -1227,10 +1432,18 @@ if (!empty($monthlyPerformance)) {
                         <span class="icon-back"></span>
                         Back to Reports
                     </a>
-                    <a href="?export=pdf&<?php echo http_build_query($_GET); ?>" class="btn btn-success">
+                    <a href="zone_performance.php?<?php echo http_build_query(array_merge($_GET, ['export' => 'csv'])); ?>" class="btn btn-success">
                         <span class="icon-download"></span>
-                        Export PDF
+                        Export CSV
                     </a>
+                </div>
+            </div>
+
+            <!-- Export Info -->
+            <div class="export-info">
+                <div class="info-icon">ℹ️</div>
+                <div class="info-text">
+                    <strong>Export Feature:</strong> Click "Export CSV" to download a comprehensive report containing zone performance summary, sub-zone details, monthly trends, top performers, and performance distribution analysis.
                 </div>
             </div>
 

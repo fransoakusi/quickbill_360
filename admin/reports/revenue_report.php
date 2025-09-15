@@ -53,12 +53,123 @@ $selectedYear = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 $selectedMonth = isset($_GET['month']) ? intval($_GET['month']) : 0; // 0 = all months
 $paymentMethod = isset($_GET['payment_method']) ? $_GET['payment_method'] : 'all';
 
-// Export handling
-if (isset($_GET['export']) && $_GET['export'] === 'pdf') {
-    // Export to PDF functionality would go here
-    // For now, we'll just redirect back with a message
-    setFlashMessage('info', 'PDF export functionality will be implemented soon.');
-    header('Location: revenue_report.php');
+// Simple PDF Export Function - No external libraries required
+function exportAsCSV($revenueData, $revenueByMethod, $monthlyRevenue, $revenueByBillType, $revenueByZone, $recentTransactions, $selectedYear, $selectedMonth, $paymentMethod) {
+    // Set headers for CSV download
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="Revenue_Report_' . date('Y-m-d_H-i-s') . '.csv"');
+    
+    // Create file pointer
+    $output = fopen('php://output', 'w');
+    
+    // Add UTF-8 BOM for Excel compatibility
+    fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+    
+    // Report header
+    fputcsv($output, ['QUICKBILL 305 - REVENUE REPORT']);
+    fputcsv($output, ['Generated on: ' . date('F j, Y g:i A')]);
+    
+    // Period information
+    $periodText = 'Period: ';
+    if ($selectedYear > 0) {
+        $periodText .= $selectedYear;
+        if ($selectedMonth > 0) {
+            $periodText .= ' - ' . date('F', mktime(0, 0, 0, $selectedMonth, 1));
+        }
+    } else {
+        $periodText .= 'All Years';
+    }
+    if ($paymentMethod !== 'all') {
+        $periodText .= ' | Payment Method: ' . $paymentMethod;
+    }
+    fputcsv($output, [$periodText]);
+    fputcsv($output, []); // Empty line
+    
+    // Revenue Summary
+    fputcsv($output, ['REVENUE SUMMARY']);
+    fputcsv($output, ['Metric', 'Value']);
+    fputcsv($output, ['Total Revenue', 'GH₵ ' . number_format($revenueData['total_revenue'], 2)]);
+    fputcsv($output, ['Total Transactions', number_format($revenueData['total_transactions'])]);
+    fputcsv($output, ['Average Transaction', 'GH₵ ' . number_format($revenueData['avg_transaction'], 2)]);
+    fputcsv($output, ['Minimum Transaction', 'GH₵ ' . number_format($revenueData['min_transaction'], 2)]);
+    fputcsv($output, ['Maximum Transaction', 'GH₵ ' . number_format($revenueData['max_transaction'], 2)]);
+    fputcsv($output, []); // Empty line
+    
+    // Revenue by Payment Method
+    if (!empty($revenueByMethod)) {
+        fputcsv($output, ['REVENUE BY PAYMENT METHOD']);
+        fputcsv($output, ['Payment Method', 'Total Amount', 'Transactions', 'Average Amount']);
+        foreach ($revenueByMethod as $method) {
+            fputcsv($output, [
+                $method['payment_method'],
+                'GH₵ ' . number_format($method['total_amount'], 2),
+                number_format($method['transaction_count']),
+                'GH₵ ' . number_format($method['avg_amount'], 2)
+            ]);
+        }
+        fputcsv($output, []); // Empty line
+    }
+    
+    // Revenue by Bill Type
+    if (!empty($revenueByBillType)) {
+        fputcsv($output, ['REVENUE BY BILL TYPE']);
+        fputcsv($output, ['Bill Type', 'Total Amount', 'Transactions', 'Average Amount']);
+        foreach ($revenueByBillType as $billType) {
+            fputcsv($output, [
+                $billType['bill_type'],
+                'GH₵ ' . number_format($billType['total_amount'], 2),
+                number_format($billType['transaction_count']),
+                'GH₵ ' . number_format($billType['avg_amount'], 2)
+            ]);
+        }
+        fputcsv($output, []); // Empty line
+    }
+    
+    // Top Revenue Zones
+    if (!empty($revenueByZone)) {
+        fputcsv($output, ['TOP REVENUE ZONES']);
+        fputcsv($output, ['Zone Name', 'Total Amount', 'Transactions']);
+        foreach ($revenueByZone as $zone) {
+            fputcsv($output, [
+                $zone['zone_name'],
+                'GH₵ ' . number_format($zone['total_amount'], 2),
+                number_format($zone['transaction_count'])
+            ]);
+        }
+        fputcsv($output, []); // Empty line
+    }
+    
+    // Monthly Revenue
+    if (!empty($monthlyRevenue)) {
+        fputcsv($output, ['MONTHLY REVENUE - ' . $selectedYear]);
+        fputcsv($output, ['Month', 'Total Amount', 'Transactions']);
+        foreach ($monthlyRevenue as $month) {
+            fputcsv($output, [
+                $month['month_name'],
+                'GH₵ ' . number_format($month['total_amount'], 2),
+                number_format($month['transaction_count'])
+            ]);
+        }
+        fputcsv($output, []); // Empty line
+    }
+    
+    // Recent Transactions
+    if (!empty($recentTransactions)) {
+        fputcsv($output, ['RECENT TRANSACTIONS']);
+        fputcsv($output, ['Payment Reference', 'Payer Name', 'Bill Number', 'Amount', 'Payment Method', 'Date']);
+        foreach ($recentTransactions as $transaction) {
+            fputcsv($output, [
+                $transaction['payment_reference'],
+                $transaction['payer_name'] ?? 'N/A',
+                $transaction['bill_number'],
+                'GH₵ ' . number_format($transaction['amount_paid'], 2),
+                $transaction['payment_method'],
+                date('M j, Y g:i A', strtotime($transaction['payment_date']))
+            ]);
+        }
+    }
+    
+    fclose($output);
     exit();
 }
 
@@ -218,6 +329,13 @@ try {
     $recentTransactions = [];
     $availableYears = [];
     $availableMethods = [];
+}
+
+// Handle Export Request - This MUST come after all data is loaded
+if (isset($_GET['export']) && $_GET['export'] === 'pdf') {
+    // For simplicity and reliability, we'll export as CSV instead of PDF
+    // This avoids dependency issues and works on all servers
+    exportAsCSV($revenueData, $revenueByMethod, $monthlyRevenue, $revenueByBillType, $revenueByZone, $recentTransactions, $selectedYear, $selectedMonth, $paymentMethod);
 }
 
 // Prepare chart data
@@ -860,6 +978,26 @@ $monthlyChartData = array_values($monthlyData);
             color: white;
         }
 
+        /* Alert */
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+        }
+
+        .alert-info {
+            background: #e6fffa;
+            color: #234e52;
+            border-color: #81e6d9;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #c53030;
+            border-color: #fc8181;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
@@ -1080,9 +1218,14 @@ $monthlyChartData = array_values($monthlyData);
                     </a>
                     <a href="?export=pdf&<?php echo http_build_query($_GET); ?>" class="btn btn-success">
                         <span class="icon-download"></span>
-                        Export PDF
+                        Export Report
                     </a>
                 </div>
+            </div>
+
+            <!-- Export Info -->
+            <div class="alert alert-info" style="margin-bottom: 25px;">
+                <strong>Note:</strong> The export function will download a comprehensive CSV file containing all revenue data, which can be opened in Excel or any spreadsheet application.
             </div>
 
             <!-- Filters -->
