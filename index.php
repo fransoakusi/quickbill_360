@@ -1,7 +1,7 @@
 <?php
 /**
  * Main Entry Point for QUICKBILL 305
- * Beautiful Landing Page with Advanced Graphics and Animations
+ * Beautiful Landing Page with Real Database Statistics
  */
 
 // Define application constant
@@ -51,38 +51,187 @@ if (isLoggedIn()) {
     exit();
 }
 
-// If not logged in, show the beautiful landing page
+// Get real statistics from the database
+$totalBusinesses = 0;
+$totalProperties = 0;
+$totalRevenue = 0;
+$totalPayments = 0;
+$activeUsers = 0;
+$pendingBills = 0;
+$totalBills = 0;
+$collectionRate = 0;
+$defaulters = 0;
+$recentPayments = [];
+$monthlyGrowth = [];
+
 try {
     $db = new Database();
     
-    // Get some basic stats for display (if database is available)
+    // Get total businesses
+    try {
+        $result = $db->fetchRow("SELECT COUNT(*) as count FROM businesses WHERE status = 'Active'");
+        $totalBusinesses = $result['count'] ?? 0;
+    } catch (Exception $e) {
+        error_log("Error fetching businesses count: " . $e->getMessage());
+    }
+    
+    // Get total properties
+    try {
+        $result = $db->fetchRow("SELECT COUNT(*) as count FROM properties");
+        $totalProperties = $result['count'] ?? 0;
+    } catch (Exception $e) {
+        error_log("Error fetching properties count: " . $e->getMessage());
+    }
+    
+    // Get total revenue from successful payments
+    try {
+        $result = $db->fetchRow("SELECT 
+            SUM(amount_paid) as total_revenue,
+            COUNT(*) as total_payments
+            FROM payments 
+            WHERE payment_status = 'Successful'");
+        $totalRevenue = $result['total_revenue'] ?? 0;
+        $totalPayments = $result['total_payments'] ?? 0;
+    } catch (Exception $e) {
+        error_log("Error fetching revenue: " . $e->getMessage());
+    }
+    
+    // Get active users
+    try {
+        $result = $db->fetchRow("SELECT COUNT(*) as count FROM users WHERE is_active = 1");
+        $activeUsers = $result['count'] ?? 0;
+    } catch (Exception $e) {
+        error_log("Error fetching active users: " . $e->getMessage());
+    }
+    
+    // Get bills statistics
+    try {
+        $result = $db->fetchRow("SELECT 
+            COUNT(*) as total_bills,
+            SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending_bills,
+            SUM(CASE WHEN status IN ('Paid', 'Partially Paid') THEN 1 ELSE 0 END) as paid_bills
+            FROM bills");
+        $totalBills = $result['total_bills'] ?? 0;
+        $pendingBills = $result['pending_bills'] ?? 0;
+        $paidBills = $result['paid_bills'] ?? 0;
+        
+        // Calculate collection rate
+        if ($totalBills > 0) {
+            $collectionRate = round(($paidBills / $totalBills) * 100, 1);
+        }
+    } catch (Exception $e) {
+        error_log("Error fetching bills statistics: " . $e->getMessage());
+    }
+    
+    // Get defaulters (businesses and properties with outstanding amounts)
+    try {
+        $businessDefaulters = $db->fetchRow("SELECT COUNT(*) as count FROM businesses WHERE amount_payable > 0");
+        $propertyDefaulters = $db->fetchRow("SELECT COUNT(*) as count FROM properties WHERE amount_payable > 0");
+        $defaulters = ($businessDefaulters['count'] ?? 0) + ($propertyDefaulters['count'] ?? 0);
+    } catch (Exception $e) {
+        error_log("Error fetching defaulters: " . $e->getMessage());
+    }
+    
+    // Get recent payments for activity feed
+    try {
+        $recentPaymentsQuery = "SELECT 
+            p.amount_paid,
+            p.payment_date,
+            p.payment_method,
+            b.bill_type,
+            CASE 
+                WHEN b.bill_type = 'Business' THEN bus.business_name
+                WHEN b.bill_type = 'Property' THEN prop.owner_name
+                ELSE 'Unknown'
+            END as payer_name
+            FROM payments p
+            JOIN bills b ON p.bill_id = b.bill_id
+            LEFT JOIN businesses bus ON b.bill_type = 'Business' AND b.reference_id = bus.business_id
+            LEFT JOIN properties prop ON b.bill_type = 'Property' AND b.reference_id = prop.property_id
+            WHERE p.payment_status = 'Successful'
+            ORDER BY p.payment_date DESC
+            LIMIT 5";
+        
+        $recentPayments = $db->fetchAll($recentPaymentsQuery);
+    } catch (Exception $e) {
+        error_log("Error fetching recent payments: " . $e->getMessage());
+        $recentPayments = [];
+    }
+    
+    // Get monthly growth data (last 12 months)
+    try {
+        $monthlyQuery = "SELECT 
+            DATE_FORMAT(payment_date, '%Y-%m') as month,
+            SUM(amount_paid) as revenue,
+            COUNT(*) as payments_count
+            FROM payments 
+            WHERE payment_status = 'Successful' 
+            AND payment_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+            GROUP BY DATE_FORMAT(payment_date, '%Y-%m')
+            ORDER BY month DESC
+            LIMIT 12";
+        
+        $monthlyData = $db->fetchAll($monthlyQuery);
+        
+        // Calculate growth percentage for current vs previous month
+        if (count($monthlyData) >= 2) {
+            $currentMonth = $monthlyData[0]['revenue'] ?? 0;
+            $previousMonth = $monthlyData[1]['revenue'] ?? 0;
+            
+            if ($previousMonth > 0) {
+                $monthlyGrowth['revenue'] = round((($currentMonth - $previousMonth) / $previousMonth) * 100, 1);
+            } else {
+                $monthlyGrowth['revenue'] = 0;
+            }
+        }
+        
+        // Business registration growth
+        $businessGrowthQuery = "SELECT COUNT(*) as current_count 
+            FROM businesses 
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)";
+        $currentMonthBusinesses = $db->fetchRow($businessGrowthQuery);
+        
+        $prevBusinessGrowthQuery = "SELECT COUNT(*) as prev_count 
+            FROM businesses 
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 2 MONTH) 
+            AND created_at < DATE_SUB(NOW(), INTERVAL 1 MONTH)";
+        $prevMonthBusinesses = $db->fetchRow($prevBusinessGrowthQuery);
+        
+        $currentBizCount = $currentMonthBusinesses['current_count'] ?? 0;
+        $prevBizCount = $prevMonthBusinesses['prev_count'] ?? 0;
+        
+        if ($prevBizCount > 0) {
+            $monthlyGrowth['businesses'] = round((($currentBizCount - $prevBizCount) / $prevBizCount) * 100, 1);
+        } else {
+            $monthlyGrowth['businesses'] = $currentBizCount > 0 ? 100 : 0;
+        }
+        
+    } catch (Exception $e) {
+        error_log("Error fetching monthly growth: " . $e->getMessage());
+        $monthlyGrowth = ['revenue' => 0, 'businesses' => 0];
+    }
+    
+    // Ensure all required keys exist with default values
+    $monthlyGrowth = array_merge([
+        'revenue' => 0,
+        'businesses' => 0
+    ], $monthlyGrowth ?? []);
+    
+} catch (Exception $e) {
+    error_log("Database connection failed: " . $e->getMessage());
+    // Use minimal fallback values only if database is completely unavailable
     $totalBusinesses = 0;
     $totalProperties = 0;
     $totalRevenue = 0;
     $activeUsers = 0;
-    
-    try {
-        $result = $db->fetchRow("SELECT COUNT(*) as count FROM businesses");
-        $totalBusinesses = $result['count'] ?? 0;
-    } catch (Exception $e) {}
-    
-    try {
-        $result = $db->fetchRow("SELECT COUNT(*) as count FROM properties");
-        $totalProperties = $result['count'] ?? 0;
-    } catch (Exception $e) {}
-    
-    try {
-        $result = $db->fetchRow("SELECT COUNT(*) as count FROM users WHERE is_active = 1");
-        $activeUsers = $result['count'] ?? 0;
-    } catch (Exception $e) {}
-    
-} catch (Exception $e) {
-    // Database not available, use default values
-    $totalBusinesses = 1250;
-    $totalProperties = 3400;
-    $totalRevenue = 125000;
-    $activeUsers = 45;
+    $collectionRate = 0;
+    $defaulters = 0;
+    $monthlyGrowth = ['revenue' => 0, 'businesses' => 0];
 }
+
+// Format numbers for display
+$formattedRevenue = number_format($totalRevenue, 2);
+$revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/1000, 0) . 'K' : '₵' . number_format($totalRevenue, 0);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -644,9 +793,20 @@ try {
         
         .stat-change {
             font-size: 0.75rem;
-            color: var(--success-green);
             margin-top: 0.25rem;
             font-weight: 600;
+        }
+        
+        .stat-change.positive {
+            color: var(--success-green);
+        }
+        
+        .stat-change.negative {
+            color: var(--danger-red);
+        }
+        
+        .stat-change.neutral {
+            color: var(--medium-gray);
         }
         
         .dashboard-main {
@@ -696,7 +856,7 @@ try {
             bottom: 0;
             left: 0;
             right: 0;
-            height: 60%;
+            /* Height will be set via inline style in HTML to avoid PHP in CSS */
             background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
             border-radius: 12px 12px 0 0;
             opacity: 0.8;
@@ -705,7 +865,7 @@ try {
         
         @keyframes chartGrow {
             from { height: 0%; }
-            to { height: 60%; }
+            to { /* Height will be set via inline style in HTML */ }
         }
         
         .activity-feed {
@@ -1400,7 +1560,6 @@ try {
             
             .chart-line {
                 animation: none;
-                height: 60%;
             }
             
             .activity-item {
@@ -1518,15 +1677,15 @@ try {
                 
                 <div class="hero-stats">
                     <div class="hero-stat">
-                        <span class="hero-stat-number"><?php echo number_format($totalBusinesses); ?>+</span>
+                        <span class="hero-stat-number" data-target="<?php echo $totalBusinesses; ?>"><?php echo number_format($totalBusinesses); ?>+</span>
                         <span class="hero-stat-label">Registered Businesses</span>
                     </div>
                     <div class="hero-stat">
-                        <span class="hero-stat-number"><?php echo number_format($totalProperties); ?>+</span>
+                        <span class="hero-stat-number" data-target="<?php echo $totalProperties; ?>"><?php echo number_format($totalProperties); ?>+</span>
                         <span class="hero-stat-label">Properties Managed</span>
                     </div>
                     <div class="hero-stat">
-                        <span class="hero-stat-number">₵<?php echo number_format($totalRevenue/1000, 0); ?>K+</span>
+                        <span class="hero-stat-number" data-target="<?php echo $totalRevenue; ?>"><?php echo $revenueDisplay; ?>+</span>
                         <span class="hero-stat-label">Revenue Collected</span>
                     </div>
                 </div>
@@ -1558,22 +1717,36 @@ try {
                             <div class="stat-card">
                                 <div class="stat-value"><?php echo number_format($totalBusinesses); ?></div>
                                 <div class="stat-label">Total Businesses</div>
-                                <div class="stat-change">↗ +12% this month</div>
+                                <div class="stat-change <?php echo ($monthlyGrowth['businesses'] ?? 0) > 0 ? 'positive' : (($monthlyGrowth['businesses'] ?? 0) < 0 ? 'negative' : 'neutral'); ?>">
+                                    <?php 
+                                    $bizGrowth = $monthlyGrowth['businesses'] ?? 0;
+                                    echo $bizGrowth > 0 ? '↗ +' : ($bizGrowth < 0 ? '↘ ' : '→ ');
+                                    echo abs($bizGrowth) . '% this month'; 
+                                    ?>
+                                </div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-value">₵<?php echo number_format($totalRevenue, 0); ?></div>
                                 <div class="stat-label">Revenue Collected</div>
-                                <div class="stat-change">↗ +8% this month</div>
+                                <div class="stat-change <?php echo ($monthlyGrowth['revenue'] ?? 0) > 0 ? 'positive' : (($monthlyGrowth['revenue'] ?? 0) < 0 ? 'negative' : 'neutral'); ?>">
+                                    <?php 
+                                    $revGrowth = $monthlyGrowth['revenue'] ?? 0;
+                                    echo $revGrowth > 0 ? '↗ +' : ($revGrowth < 0 ? '↘ ' : '→ ');
+                                    echo abs($revGrowth) . '% this month'; 
+                                    ?>
+                                </div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-value"><?php echo number_format($totalProperties); ?></div>
                                 <div class="stat-label">Properties</div>
-                                <div class="stat-change">↗ +5 this week</div>
+                                <div class="stat-change positive">→ Stable count</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-value"><?php echo number_format($activeUsers); ?></div>
-                                <div class="stat-label">Active Users</div>
-                                <div class="stat-change">↗ +3 online</div>
+                                <div class="stat-value"><?php echo $collectionRate; ?>%</div>
+                                <div class="stat-label">Collection Rate</div>
+                                <div class="stat-change <?php echo $collectionRate >= 70 ? 'positive' : ($collectionRate >= 50 ? 'neutral' : 'negative'); ?>">
+                                    <?php echo $collectionRate >= 70 ? '↗ Excellent' : ($collectionRate >= 50 ? '→ Good' : '↘ Needs attention'); ?>
+                                </div>
                             </div>
                         </div>
                         
@@ -1581,45 +1754,83 @@ try {
                         <div class="dashboard-main">
                             <div class="chart-card">
                                 <div class="chart-header">
-                                    <div class="chart-title">Revenue Overview</div>
-                                    <div class="chart-period">Last 30 days</div>
+                                    <div class="chart-title">Collection Rate Overview</div>
+                                    <div class="chart-period">Current Status: <?php echo $collectionRate; ?>%</div>
                                 </div>
                                 <div class="chart-area">
-                                    <div class="chart-line"></div>
+                                    <div class="chart-line" style="height: <?php echo min(80, max(20, ($collectionRate ?? 60))); ?>%;"></div>
                                 </div>
                             </div>
                             
                             <div class="activity-feed">
                                 <div class="activity-header">Recent Activities</div>
-                                <div class="activity-item">
-                                    <div class="activity-icon success">
-                                        <i class="fas fa-check"></i>
+                                <?php if (!empty($recentPayments)): ?>
+                                    <?php foreach (array_slice($recentPayments, 0, 3) as $payment): ?>
+                                        <div class="activity-item">
+                                            <div class="activity-icon success">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                            <div class="activity-content">
+                                                <div class="activity-text">
+                                                    Payment of ₵<?php echo number_format($payment['amount_paid'], 2); ?> from 
+                                                    <?php echo htmlspecialchars($payment['payer_name']); ?>
+                                                </div>
+                                                <div class="activity-time">
+                                                    <?php 
+                                                    $paymentDate = new DateTime($payment['payment_date']);
+                                                    $now = new DateTime();
+                                                    $diff = $now->diff($paymentDate);
+                                                    
+                                                    if ($diff->days == 0) {
+                                                        if ($diff->h == 0) {
+                                                            echo $diff->i . ' minutes ago';
+                                                        } else {
+                                                            echo $diff->h . ' hours ago';
+                                                        }
+                                                    } else {
+                                                        echo $diff->days . ' days ago';
+                                                    }
+                                                    ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="activity-item">
+                                        <div class="activity-icon info">
+                                            <i class="fas fa-info-circle"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-text">System ready for revenue collection</div>
+                                            <div class="activity-time">Start collecting payments today</div>
+                                        </div>
                                     </div>
-                                    <div class="activity-content">
-                                        <div class="activity-text">Payment received from ABC Trading</div>
-                                        <div class="activity-time">2 hours ago</div>
+                                <?php endif; ?>
+                                
+                                <?php if ($totalBills > 0): ?>
+                                    <div class="activity-item">
+                                        <div class="activity-icon info">
+                                            <i class="fas fa-file-invoice"></i>
+                                            <span class="icon-invoice" style="display: none;"></span>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-text"><?php echo number_format($totalBills); ?> bills generated</div>
+                                            <div class="activity-time"><?php echo number_format($pendingBills); ?> pending collection</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="activity-item">
-                                    <div class="activity-icon info">
-                                        <i class="fas fa-file-invoice"></i>
-                                        <span class="icon-invoice" style="display: none;"></span>
+                                <?php endif; ?>
+                                
+                                <?php if ($defaulters > 0): ?>
+                                    <div class="activity-item">
+                                        <div class="activity-icon warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-text"><?php echo number_format($defaulters); ?> accounts with outstanding bills</div>
+                                            <div class="activity-time">Follow-up required</div>
+                                        </div>
                                     </div>
-                                    <div class="activity-content">
-                                        <div class="activity-text">Bills generated for Zone A</div>
-                                        <div class="activity-time">4 hours ago</div>
-                                    </div>
-                                </div>
-                                <div class="activity-item">
-                                    <div class="activity-icon warning">
-                                        <i class="fas fa-building"></i>
-                                        <span class="icon-building" style="display: none;"></span>
-                                    </div>
-                                    <div class="activity-content">
-                                        <div class="activity-text">New business registered</div>
-                                        <div class="activity-time">6 hours ago</div>
-                                    </div>
-                                </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -1765,6 +1976,17 @@ try {
     </footer>
 
     <script>
+        // Global variables for real data
+        const realData = {
+            totalBusinesses: <?php echo $totalBusinesses; ?>,
+            totalProperties: <?php echo $totalProperties; ?>,
+            totalRevenue: <?php echo $totalRevenue; ?>,
+            totalPayments: <?php echo $totalPayments; ?>,
+            collectionRate: <?php echo $collectionRate; ?>,
+            defaulters: <?php echo $defaulters; ?>,
+            monthlyGrowth: <?php echo json_encode($monthlyGrowth ?? ['revenue' => 0, 'businesses' => 0]); ?>
+        };
+
         // Check if Font Awesome loaded, if not show emoji icons
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
@@ -1897,24 +2119,35 @@ try {
             });
         }
 
-        // Animated counter for hero stats
+        // Animated counter for hero stats using real data
         function animateCounters() {
             const counters = document.querySelectorAll('.hero-stat-number');
             
-            counters.forEach(counter => {
+            counters.forEach((counter, index) => {
                 const text = counter.textContent;
-                const target = parseInt(text.replace(/[^\d]/g, ''));
+                const targetAttr = counter.getAttribute('data-target');
+                const target = parseInt(targetAttr) || parseInt(text.replace(/[^\d]/g, ''));
+                
+                if (target === 0) return;
+                
                 let current = 0;
-                const increment = target / 50;
+                const increment = Math.max(1, Math.ceil(target / 50));
                 const timer = setInterval(() => {
                     current += increment;
                     if (current >= target) {
+                        // Set final formatted value
                         counter.textContent = text;
                         clearInterval(timer);
                     } else {
+                        // Show animated count
                         const prefix = text.includes('₵') ? '₵' : '';
                         const suffix = text.includes('+') ? '+' : (text.includes('K') ? 'K+' : '');
-                        counter.textContent = prefix + Math.floor(current) + suffix;
+                        
+                        if (text.includes('K')) {
+                            counter.textContent = prefix + Math.floor(current/1000) + suffix;
+                        } else {
+                            counter.textContent = prefix + Math.floor(current).toLocaleString() + suffix;
+                        }
                     }
                 }, 40);
             });
@@ -2010,6 +2243,9 @@ try {
             // Disable animations for users who prefer reduced motion
             document.documentElement.style.setProperty('--transition', 'none');
         }
+
+        // Log real data for debugging (remove in production)
+        console.log('QuickBill 360 Real Statistics:', realData);
     </script>
 </body>
 </html>
