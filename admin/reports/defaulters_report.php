@@ -1,11 +1,11 @@
 <?php
 /**
  * Defaulters Report for QUICKBILL 305
- * Updated with Bill Serving-Based Defaulter Detection
+ * Updated with Bill Serving-Based Defaulter Detection and Excel Export
  * 
  * NEW DEFAULTER LOGIC:
  * 1. Bill Must Be Served: Only accounts with served bills (served_status = 'Served')
- * 2. Grace Period: 90 days from bill serving date (served_at)
+ * 2. Grace Period: 30 days from bill serving date (served_at)
  * 3. Outstanding Amount: Must have amount_payable > 0 after grace period
  * 4. Persistent: Once flagged (after grace period), remains defaulter until full payment
  * 5. Multi-Year: Accounts with overdue bills from previous years
@@ -61,19 +61,11 @@ $selectedZone = isset($_GET['zone']) ? intval($_GET['zone']) : 0;
 $selectedType = isset($_GET['type']) ? $_GET['type'] : 'all'; // all, business, property
 $minAmount = isset($_GET['min_amount']) ? floatval($_GET['min_amount']) : 0;
 $sortBy = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'amount_desc'; // amount_desc, amount_asc, name_asc, days_overdue_desc
-$gracePeriodDays = 90; // 90 days grace period after bill serving (3 months)
+$gracePeriodDays = 30; // 30 days grace period after bill serving
 
 // Get current date info
 $currentDate = new DateTime();
 $currentYear = (int)$currentDate->format('Y');
-
-// Export handling
-if (isset($_GET['export']) && $_GET['export'] === 'excel') {
-    // Export to Excel functionality would go here
-    setFlashMessage('info', 'Excel export functionality will be implemented soon.');
-    header('Location: defaulters_report.php');
-    exit();
-}
 
 // Function to calculate remaining balance for an account
 function calculateRemainingBalance($db, $accountType, $accountId, $amountPayable) {
@@ -98,6 +90,161 @@ function calculateRemainingBalance($db, $accountType, $accountId, $amountPayable
             'amount_payable' => $amountPayable
         ];
     }
+}
+
+// Function to export to Excel (Simple HTML Table Method)
+function exportToExcel($defaulters, $filters, $stats) {
+    // Set headers for Excel download
+    $filename = 'Defaulters_Report_' . date('Y-m-d_H-i-s') . '.xls';
+    
+    header('Content-Type: application/vnd.ms-excel');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    
+    // Create Excel content with HTML table
+    echo "<table border='1'>\n";
+    
+    // Report Header
+    echo "<tr><td colspan='20' style='font-weight:bold; font-size:16px; background-color:#667eea; color:white; text-align:center; padding:10px;'>";
+    echo "DEFAULTERS REPORT - QUICKBILL 305";
+    echo "</td></tr>\n";
+    
+    echo "<tr><td colspan='20' style='font-style:italic; padding:5px;'>";
+    echo "Generated on: " . date('F j, Y \a\t g:i A');
+    echo "</td></tr>\n";
+    
+    // Filter information
+    $filterText = 'Filters Applied: ';
+    if ($filters['zone'] > 0) $filterText .= "Zone: {$filters['zone_name']}, ";
+    if ($filters['type'] !== 'all') $filterText .= "Type: " . ucfirst($filters['type']) . ", ";
+    if ($filters['min_amount'] > 0) $filterText .= "Min Amount: ₵" . number_format($filters['min_amount'], 2) . ", ";
+    $filterText = rtrim($filterText, ', ');
+    
+    echo "<tr><td colspan='20' style='font-style:italic; font-size:12px; padding:5px;'>";
+    echo htmlspecialchars($filterText);
+    echo "</td></tr>\n";
+    
+    echo "<tr><td colspan='20'>&nbsp;</td></tr>\n";
+    
+    // Summary Statistics
+    echo "<tr><td colspan='20' style='font-weight:bold; font-size:14px; background-color:#f0f0f0; padding:8px;'>";
+    echo "SUMMARY STATISTICS";
+    echo "</td></tr>\n";
+    
+    echo "<tr><td style='font-weight:bold;'>Total Defaulters:</td><td style='font-weight:bold;'>" . number_format($stats['total_defaulters']) . "</td><td colspan='18'></td></tr>\n";
+    echo "<tr><td style='font-weight:bold;'>Total Outstanding:</td><td style='font-weight:bold; color:#e53e3e;'>₵ " . number_format($stats['total_outstanding'], 2) . "</td><td colspan='18'></td></tr>\n";
+    echo "<tr><td style='font-weight:bold;'>Critical Cases (>90 days):</td><td style='font-weight:bold; color:#dc2626;'>" . number_format($stats['critical_count']) . "</td><td colspan='18'></td></tr>\n";
+    echo "<tr><td style='font-weight:bold;'>High Priority (61-90 days):</td><td style='font-weight:bold; color:#d97706;'>" . number_format($stats['high_count']) . "</td><td colspan='18'></td></tr>\n";
+    echo "<tr><td style='font-weight:bold;'>Moderate Priority (31-60 days):</td><td style='font-weight:bold; color:#0369a1;'>" . number_format($stats['moderate_count']) . "</td><td colspan='18'></td></tr>\n";
+    
+    if (isset($stats['multi_year_defaulters']) && $stats['multi_year_defaulters'] > 0) {
+        echo "<tr><td style='font-weight:bold;'>Multi-Year Defaulters:</td><td style='font-weight:bold; color:#991b1b;'>" . number_format($stats['multi_year_defaulters']) . "</td><td colspan='18'></td></tr>\n";
+    }
+    
+    echo "<tr><td colspan='20'>&nbsp;</td></tr>\n";
+    
+    // Data Headers
+    echo "<tr style='font-weight:bold; background-color:#667eea; color:white;'>\n";
+    echo "<td>Type</td>";
+    echo "<td>Account Number</td>";
+    echo "<td>Name</td>";
+    echo "<td>Owner Name</td>";
+    echo "<td>Contact</td>";
+    echo "<td>Zone</td>";
+    echo "<td>Sub Zone</td>";
+    echo "<td>Category</td>";
+    echo "<td>Location</td>";
+    echo "<td>Amount Payable</td>";
+    echo "<td>Total Paid</td>";
+    echo "<td>Outstanding Balance</td>";
+    echo "<td>Bill Number</td>";
+    echo "<td>Billing Year</td>";
+    echo "<td>Due Date</td>";
+    echo "<td>Served Date</td>";
+    echo "<td>Days Since Served</td>";
+    echo "<td>Urgency Level</td>";
+    echo "<td>Defaulter Type</td>";
+    echo "<td>Served By</td>";
+    echo "</tr>\n";
+    
+    // Data Rows
+    foreach ($defaulters as $defaulter) {
+        $urgencyLevel = $defaulter['urgency_level'];
+        $defaulterType = isset($defaulter['defaulter_type']) ? $defaulter['defaulter_type'] : 'Current Year';
+        $servedBy = '';
+        if ($defaulter['served_by_first_name']) {
+            $servedBy = $defaulter['served_by_first_name'] . ' ' . $defaulter['served_by_last_name'];
+        } else {
+            $servedBy = 'Not recorded';
+        }
+        
+        // Row background color based on urgency
+        $rowStyle = '';
+        switch (strtolower($urgencyLevel)) {
+            case 'critical':
+                $rowStyle = 'background-color:#fee2e2;';
+                break;
+            case 'high':
+                $rowStyle = 'background-color:#fef3c7;';
+                break;
+            case 'moderate':
+                $rowStyle = 'background-color:#dbeafe;';
+                break;
+        }
+        
+        echo "<tr style='$rowStyle'>\n";
+        echo "<td>" . htmlspecialchars($defaulter['type']) . "</td>";
+        echo "<td style='font-family:monospace;'>" . htmlspecialchars($defaulter['account_number']) . "</td>";
+        echo "<td>" . htmlspecialchars($defaulter['name']) . "</td>";
+        echo "<td>" . htmlspecialchars($defaulter['owner_name']) . "</td>";
+        echo "<td>" . htmlspecialchars($defaulter['telephone'] ?? 'N/A') . "</td>";
+        echo "<td>" . htmlspecialchars($defaulter['zone_name'] ?? 'Unassigned') . "</td>";
+        echo "<td>" . htmlspecialchars($defaulter['sub_zone_name'] ?? '') . "</td>";
+        echo "<td>" . htmlspecialchars($defaulter['category'] ?? '') . "</td>";
+        echo "<td>" . htmlspecialchars($defaulter['location'] ?? '') . "</td>";
+        echo "<td style='text-align:right; font-family:monospace;'>₵ " . number_format($defaulter['amount_payable'], 2) . "</td>";
+        echo "<td style='text-align:right; font-family:monospace;'>₵ " . number_format($defaulter['total_paid'], 2) . "</td>";
+        echo "<td style='text-align:right; font-family:monospace; font-weight:bold; color:#dc2626;'>₵ " . number_format($defaulter['remaining_balance'], 2) . "</td>";
+        echo "<td>" . htmlspecialchars($defaulter['bill_number'] ?? 'N/A') . "</td>";
+        echo "<td style='text-align:center;'>" . htmlspecialchars($defaulter['billing_year'] ?? '') . "</td>";
+        echo "<td>" . (isset($defaulter['due_date']) ? date('M d, Y', strtotime($defaulter['due_date'])) : 'N/A') . "</td>";
+        echo "<td>" . (isset($defaulter['served_at']) ? date('M d, Y', strtotime($defaulter['served_at'])) : 'N/A') . "</td>";
+        echo "<td style='text-align:center; font-weight:bold;'>" . $defaulter['days_since_served'] . "</td>";
+        echo "<td style='text-align:center; font-weight:bold;'>" . htmlspecialchars($urgencyLevel) . "</td>";
+        echo "<td style='text-align:center;'>" . htmlspecialchars($defaulterType) . "</td>";
+        echo "<td>" . htmlspecialchars($servedBy) . "</td>";
+        echo "</tr>\n";
+    }
+    
+    // Summary row at bottom
+    echo "<tr style='font-weight:bold; background-color:#f9fafb; border-top:2px solid #374151;'>\n";
+    echo "<td colspan='9' style='text-align:right; padding:8px;'>TOTALS:</td>";
+    echo "<td style='text-align:right; font-family:monospace;'>₵ " . number_format(array_sum(array_column($defaulters, 'amount_payable')), 2) . "</td>";
+    echo "<td style='text-align:right; font-family:monospace;'>₵ " . number_format(array_sum(array_column($defaulters, 'total_paid')), 2) . "</td>";
+    echo "<td style='text-align:right; font-family:monospace; color:#dc2626;'>₵ " . number_format(array_sum(array_column($defaulters, 'remaining_balance')), 2) . "</td>";
+    echo "<td colspan='8'></td>";
+    echo "</tr>\n";
+    
+    echo "</table>\n";
+    
+    // Additional footer information
+    echo "<br><br>\n";
+    echo "<table border='0'>\n";
+    echo "<tr><td colspan='2' style='font-weight:bold; font-size:14px; margin-bottom:10px;'>Report Details:</td></tr>\n";
+    echo "<tr><td style='font-weight:bold;'>Grace Period:</td><td>30 days from bill serving date</td></tr>\n";
+    echo "<tr><td style='font-weight:bold;'>Detection Logic:</td><td>Bills must be served + Outstanding balance > 0 + Past grace period</td></tr>\n";
+    echo "<tr><td style='font-weight:bold;'>Report Generated:</td><td>" . date('F j, Y \a\t g:i A') . "</td></tr>\n";
+    echo "<tr><td style='font-weight:bold;'>Total Records:</td><td>" . count($defaulters) . "</td></tr>\n";
+    
+    // Urgency breakdown
+    echo "<tr><td colspan='2'>&nbsp;</td></tr>\n";
+    echo "<tr><td colspan='2' style='font-weight:bold;'>Urgency Level Breakdown:</td></tr>\n";
+    echo "<tr><td style='color:#dc2626;'>• Critical (>90 days):</td><td>" . $stats['critical_count'] . " accounts</td></tr>\n";
+    echo "<tr><td style='color:#d97706;'>• High Priority (61-90 days):</td><td>" . $stats['high_count'] . " accounts</td></tr>\n";
+    echo "<tr><td style='color:#0369a1;'>• Moderate Priority (31-60 days):</td><td>" . $stats['moderate_count'] . " accounts</td></tr>\n";
+    echo "</table>\n";
+    
+    exit();
 }
 
 // Get defaulters data
@@ -185,8 +332,8 @@ try {
                     ELSE 'Current Year'
                 END as defaulter_type,
                 CASE 
-                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 180 THEN 'Critical'
-                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 150 THEN 'High'
+                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 90 THEN 'Critical'
+                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 60 THEN 'High'
                     ELSE 'Moderate'
                 END as urgency_level
             FROM businesses b
@@ -247,8 +394,8 @@ try {
                     ELSE 'Current Year'
                 END as defaulter_type,
                 CASE 
-                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 180 THEN 'Critical'
-                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 150 THEN 'High'
+                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 90 THEN 'Critical'
+                    WHEN DATEDIFF(CURDATE(), bl.served_at) > 60 THEN 'High'
                     ELSE 'Moderate'
                 END as urgency_level
             FROM properties p
@@ -382,6 +529,43 @@ try {
     $chartLabels = !empty($zoneBreakdown) ? array_keys($zoneBreakdown) : [];
     $chartCountData = !empty($zoneBreakdown) ? array_values(array_column($zoneBreakdown, 'count')) : [];
     $chartAmountData = !empty($zoneBreakdown) ? array_values(array_column($zoneBreakdown, 'total_amount')) : [];
+
+    // Export handling
+    if (isset($_GET['export']) && $_GET['export'] === 'excel' && $totalDefaulters > 0) {
+        // Get zone name for selected zone
+        $selectedZoneName = 'All Zones';
+        if ($selectedZone > 0) {
+            foreach ($availableZones as $zone) {
+                if ($zone['zone_id'] == $selectedZone) {
+                    $selectedZoneName = $zone['zone_name'];
+                    break;
+                }
+            }
+        }
+
+        $exportFilters = [
+            'zone' => $selectedZone,
+            'zone_name' => $selectedZoneName,
+            'type' => $selectedType,
+            'min_amount' => $minAmount,
+            'sort_by' => $sortBy
+        ];
+
+        $exportStats = [
+            'total_defaulters' => $totalDefaulters,
+            'total_outstanding' => $totalOutstanding,
+            'business_count' => $businessCount,
+            'property_count' => $propertyCount,
+            'critical_count' => $criticalCount,
+            'high_count' => $highCount,
+            'moderate_count' => $moderateCount,
+            'multi_year_defaulters' => $multiYearDefaulters,
+            'current_year_defaulters' => $currentYearDefaulters
+        ];
+
+        exportToExcel($allDefaulters, $exportFilters, $exportStats);
+        exit();
+    }
     
 } catch (Exception $e) {
     $allDefaulters = [];
@@ -1255,6 +1439,48 @@ try {
             margin-top: 2px;
         }
 
+        /* Loading overlay for export */
+        .export-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            display: none;
+        }
+
+        .export-loading.show {
+            display: flex;
+        }
+
+        .export-spinner {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
@@ -1302,6 +1528,15 @@ try {
     </style>
 </head>
 <body>
+    <!-- Export Loading Overlay -->
+    <div class="export-loading" id="exportLoading">
+        <div class="export-spinner">
+            <div class="spinner"></div>
+            <h3>Generating Excel Report...</h3>
+            <p>Please wait while we prepare your defaulters report for download.</p>
+        </div>
+    </div>
+
     <!-- Top Navigation -->
     <div class="top-nav">
         <div class="nav-left">
@@ -1470,7 +1705,7 @@ try {
             <div class="page-header">
                 <div>
                     <h1 class="page-title">⚠️ Defaulters Report</h1>
-                    <p class="page-subtitle">Bill serving-based defaulter detection with 90-day grace period</p>
+                    <p class="page-subtitle">Bill serving-based defaulter detection with 30-day grace period</p>
                 </div>
                 <div class="page-actions">
                     <a href="index.php" class="btn btn-outline">
@@ -1478,7 +1713,7 @@ try {
                         Back to Reports
                     </a>
                     <?php if ($totalDefaulters > 0): ?>
-                    <a href="?export=excel&<?php echo http_build_query($_GET); ?>" class="btn btn-success">
+                    <a href="?export=excel&<?php echo http_build_query($_GET); ?>" class="btn btn-success" onclick="showExportLoading()">
                         <span class="icon-excel"></span>
                         Export Excel
                     </a>
@@ -1494,7 +1729,7 @@ try {
                     </div>
                     <div class="billing-status-info">
                         <h3>Bill Serving-Based Defaulter Detection</h3>
-                        <p>Only accounts with served bills past 90-day grace period are flagged</p>
+                        <p>Only accounts with served bills past 30-day grace period are flagged</p>
                     </div>
                 </div>
                 
@@ -1509,13 +1744,13 @@ try {
                     </div>
                     <div class="billing-detail">
                         <div class="billing-detail-label">Bills Served</div>
-                        <div class="billing-detail-value">
+                       <div class="billing-detail-value">
                             <?php echo number_format($servingStats['served_bills'] ?? 0); ?>
                             </div>
                     </div>
                     <div class="billing-detail">
                         <div class="billing-detail-label">Eligible for Check</div>
-                        <div class="billing-detail-value">
+                       <div class="billing-detail-value">
                         <?php echo number_format($servingStats['eligible_for_defaulter_check'] ?? 0); ?>
                         </div>
                     </div>
@@ -1526,7 +1761,7 @@ try {
                     <div class="billing-detail">
                         <div class="billing-detail-label">Detection Logic</div>
                         <div class="billing-detail-value" style="font-size: 12px; line-height: 1.3;">
-                            Served + 90 Days<br>
+                            Served + 30 Days<br>
                             + Outstanding Balance
                         </div>
                     </div>
@@ -1539,13 +1774,13 @@ try {
                 <span class="icon-exclamation"></span>
                 <strong>Action Required:</strong> There are <?php echo number_format($totalDefaulters); ?> accounts 
                 with outstanding payments totaling ₵ <?php echo number_format($totalOutstanding, 2); ?> 
-                past the 90-day grace period from bill serving.
+                past the 30-day grace period from bill serving.
             </div>
             <?php else: ?>
             <!-- No Defaulters Alert -->
             <div class="alert alert-success">
                 <span class="icon-smile"></span>
-                <strong>Excellent!</strong> No accounts are defaulting past the 90-day grace period after bill serving.
+                <strong>Excellent!</strong> No accounts are defaulting past the 30-day grace period after bill serving.
             </div>
             <?php endif; ?>
 
@@ -1612,7 +1847,7 @@ try {
                         </div>
                     </div>
                     <div class="stat-value"><?php echo number_format($totalDefaulters); ?></div>
-                    <div class="stat-subtitle">Past 90-day grace period</div>
+                    <div class="stat-subtitle">Past 30-day grace period</div>
                 </div>
 
                 <div class="stat-card warning">
@@ -1634,7 +1869,7 @@ try {
                         </div>
                     </div>
                     <div class="stat-value"><?php echo number_format($criticalCount); ?></div>
-                    <div class="stat-subtitle">>180 days since served</div>
+                    <div class="stat-subtitle">>90 days since served</div>
                 </div>
 
                 <div class="stat-card success">
@@ -1645,7 +1880,7 @@ try {
                         </div>
                     </div>
                     <div class="stat-value"><?php echo number_format($highCount); ?></div>
-                    <div class="stat-subtitle">151-180 days since served</div>
+                    <div class="stat-subtitle">61-90 days since served</div>
                 </div>
             </div>
 
@@ -1760,8 +1995,8 @@ try {
                                         <td>
                                             <?php 
                                             $daysSinceServed = $defaulter['days_since_served'];
-                                            $daysClass = $daysSinceServed > 180 ? 'critical' : 
-                                                        ($daysSinceServed > 150 ? 'high' : 'moderate');
+                                            $daysClass = $daysSinceServed > 90 ? 'critical' : 
+                                                        ($daysSinceServed > 60 ? 'high' : 'moderate');
                                             ?>
                                             <span class="days-served <?php echo $daysClass; ?>">
                                                 <?php echo $daysSinceServed; ?> days
@@ -1806,7 +2041,7 @@ try {
                                 <span class="icon-smile"></span>
                             </div>
                             <h3>No defaulters found!</h3>
-                            <p>No accounts have outstanding payments past the 90-day grace period after bill serving.</p>
+                            <p>No accounts have outstanding payments past the 30-day grace period after bill serving.</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -1820,6 +2055,21 @@ try {
         const zoneCountData = <?php echo json_encode($chartCountData); ?>;
         const zoneAmountData = <?php echo json_encode($chartAmountData); ?>;
         const hasDefaulters = <?php echo json_encode($totalDefaulters > 0); ?>;
+
+        // Export loading functionality
+        function showExportLoading() {
+            document.getElementById('exportLoading').classList.add('show');
+            
+            // Hide loading after 5 seconds or when page unloads
+            setTimeout(function() {
+                document.getElementById('exportLoading').classList.remove('show');
+            }, 5000);
+        }
+
+        // Hide loading when page unloads (export completed)
+        window.addEventListener('beforeunload', function() {
+            document.getElementById('exportLoading').classList.remove('show');
+        });
 
         // Initialize charts
         document.addEventListener('DOMContentLoaded', function() {
