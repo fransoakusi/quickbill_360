@@ -2,7 +2,7 @@
 /**
  * Fee Structure Management - Business Fees
  * QUICKBILL 305 - Admin Panel
- * Updated with 50 items per page default pagination
+ * Updated with 50 items per page default pagination and proper navigation links
  */
 
 // Define application constant
@@ -310,8 +310,10 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         .icon-money::before { content: "💰"; }
         .icon-active::before { content: "✅"; }
         .icon-inactive::before { content: "❌"; }
+        .icon-history::before { content: "📜"; }
+        .icon-question::before { content: "❓"; }
         
-        /* Top Navigation - Same as previous pages */
+        /* Top Navigation */
         .top-nav {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -414,7 +416,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             transition: transform 0.3s;
         }
         
-        /* User Dropdown - Same as previous pages */
+        /* User Dropdown */
         .user-dropdown {
             position: absolute;
             top: 100%;
@@ -520,7 +522,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             min-height: calc(100vh - 80px);
         }
         
-        /* Sidebar - Same as previous pages */
+        /* Sidebar */
         .sidebar {
             width: 280px;
             background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
@@ -892,7 +894,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             gap: 10px;
         }
         
-        /* Pagination Controls - ENHANCED */
+        /* Pagination Controls */
         .pagination-controls {
             display: flex;
             justify-content: space-between;
@@ -993,7 +995,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             font-weight: 600;
         }
         
-        /* Quick Jump - ENHANCED */
         .quick-jump {
             display: flex;
             align-items: center;
@@ -1199,7 +1200,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             line-height: 1.6;
         }
         
-        /* ENHANCED: Table Performance Indicator */
+        /* Table Performance Indicator */
         .table-performance {
             display: flex;
             align-items: center;
@@ -1359,7 +1360,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         <div class="user-section">
             <!-- Notification Bell -->
             <div style="position: relative; margin-right: 10px;">
-                <button style="
+                <a href="../notifications/index.php" style="
                     background: rgba(255,255,255,0.2);
                     border: none;
                     color: white;
@@ -1368,12 +1369,13 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                     border-radius: 50%;
                     cursor: pointer;
                     transition: all 0.3s;
+                    text-decoration: none;
+                    display: inline-block;
                 " onmouseover="this.style.background='rgba(255,255,255,0.3)'" 
-                   onmouseout="this.style.background='rgba(255,255,255,0.2)'"
-                   onclick="showComingSoon('Notifications')">
+                   onmouseout="this.style.background='rgba(255,255,255,0.2)'">
                     <i class="fas fa-bell"></i>
                     <span class="icon-bell" style="display: none;"></span>
-                </button>
+                </a>
                 <span class="notification-badge" style="
                     position: absolute;
                     top: -2px;
@@ -1412,24 +1414,24 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         <div class="dropdown-role"><?php echo htmlspecialchars(getCurrentUserRole()); ?></div>
                     </div>
                     <div class="dropdown-menu">
-                        <a href="#" class="dropdown-item" onclick="showComingSoon('User Profile')">
+                        <a href="../users/view.php?id=<?php echo $currentUser['user_id']; ?>" class="dropdown-item">
                             <i class="fas fa-user"></i>
                             <span class="icon-user" style="display: none;"></span>
                             My Profile
                         </a>
-                        <a href="#" class="dropdown-item" onclick="showComingSoon('Account Settings')">
+                        <a href="../settings/index.php" class="dropdown-item">
                             <i class="fas fa-cog"></i>
                             <span class="icon-cog" style="display: none;"></span>
                             Account Settings
                         </a>
-                        <a href="#" class="dropdown-item" onclick="showComingSoon('Activity Log')">
+                        <a href="../logs/user_activity.php" class="dropdown-item">
                             <i class="fas fa-history"></i>
-                            <span class="icon-chart" style="display: none;"></span>
+                            <span class="icon-history" style="display: none;"></span>
                             Activity Log
                         </a>
-                        <a href="#" class="dropdown-item" onclick="showComingSoon('Help & Support')">
+                        <a href="../../docs/user_manual.md" class="dropdown-item">
                             <i class="fas fa-question-circle"></i>
-                            <span class="icon-bell" style="display: none;"></span>
+                            <span class="icon-question" style="display: none;"></span>
                             Help & Support
                         </a>
                         <div style="height: 1px; background: #e2e8f0; margin: 10px 0;"></div>
@@ -1483,7 +1485,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Properties')">
+                        <a href="../properties/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-home"></i>
                                 <span class="icon-home" style="display: none;"></span>
@@ -1506,7 +1508,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 <div class="nav-section">
                     <div class="nav-title">Billing & Payments</div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Billing')">
+                        <a href="../billing/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-file-invoice"></i>
                                 <span class="icon-invoice" style="display: none;"></span>
@@ -1515,7 +1517,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Payments')">
+                        <a href="../payments/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-credit-card"></i>
                                 <span class="icon-credit" style="display: none;"></span>
@@ -1524,7 +1526,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="index.php" class="nav-link active">
+                        <a href="../fee_structure/index..php" class="nav-link active">
                             <span class="nav-icon">
                                 <i class="fas fa-tags"></i>
                                 <span class="icon-tags" style="display: none;"></span>
@@ -1538,7 +1540,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 <div class="nav-section">
                     <div class="nav-title">Reports & System</div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Reports')">
+                        <a href="../reports/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-chart-bar"></i>
                                 <span class="icon-chart" style="display: none;"></span>
@@ -1547,7 +1549,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Notifications')">
+                        <a href="../notifications/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-bell"></i>
                                 <span class="icon-bell" style="display: none;"></span>
@@ -1556,7 +1558,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Settings')">
+                        <a href="../settings/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-cog"></i>
                                 <span class="icon-cog" style="display: none;"></span>
@@ -1575,7 +1577,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 <div class="breadcrumb">
                     <a href="../index.php">Dashboard</a>
                     <span>/</span>
-                    <a href="index.php">Fee Structure</a>
+                    <a href="../fee_structure/index.php">Fee Structure</a>
                     <span>/</span>
                     <span class="breadcrumb-current">Business Fees</span>
                 </div>
@@ -1700,7 +1702,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                     </div>
                 </div>
 
-                <!-- ENHANCED: Table Performance Indicator -->
+                <!-- Table Performance Indicator -->
                 <?php if ($totalRecords > 0): ?>
                 <div class="table-performance">
                     <div class="performance-icon">
@@ -1822,7 +1824,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </tbody>
                     </table>
 
-                    <!-- ENHANCED Pagination Controls -->
+                    <!-- Pagination Controls -->
                     <?php if ($totalPages > 1): ?>
                         <div class="pagination-controls">
                             <div class="pagination-info">
@@ -1921,7 +1923,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                                     </span>
                                 <?php endif; ?>
                                 
-                                <!-- ENHANCED Quick Jump -->
+                                <!-- Quick Jump -->
                                 <div class="quick-jump">
                                     <span>Go to page:</span>
                                     <input type="number" id="quickJumpPage" min="1" max="<?php echo $totalPages; ?>" 
@@ -1952,7 +1954,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             }, 100);
         });
 
-        // ENHANCED: Pagination functions with proper URL handling
+        // Pagination functions with proper URL handling
         function changeItemsPerPage(value) {
             const url = new URL(window.location);
             url.searchParams.set('items_per_page', value);
@@ -2197,86 +2199,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             
             backdrop.addEventListener('click', function(e) {
                 if (e.target === backdrop) closeDeleteModal();
-            });
-        }
-
-        // Coming soon modal
-        function showComingSoon(feature) {
-            const backdrop = document.createElement('div');
-            backdrop.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 10000;
-                display: flex; align-items: center; justify-content: center;
-                animation: fadeIn 0.3s ease; cursor: pointer;
-            `;
-            
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white; padding: 50px 40px; border-radius: 25px; text-align: center;
-                box-shadow: 0 25px 80px rgba(0,0,0,0.4); max-width: 450px; width: 90%;
-                animation: modalSlideIn 0.4s ease; cursor: default; position: relative; overflow: hidden;
-            `;
-            
-            modal.innerHTML = `
-                <div style="position: absolute; top: -50%; right: -50%; width: 200%; height: 200%;
-                    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-                    animation: rotate 20s linear infinite; pointer-events: none;"></div>
-                
-                <div style="position: relative; z-index: 2;">
-                    <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2);
-                        border-radius: 50%; display: flex; align-items: center; justify-content: center;
-                        margin: 0 auto 25px; animation: bounce 2s ease-in-out infinite;">
-                        <i class="fas fa-rocket" style="font-size: 2.5rem; color: white;"></i>
-                        <span style="font-size: 2.5rem; display: none;">🚀</span>
-                    </div>
-                    
-                    <h3 style="margin: 0 0 15px 0; font-weight: 700; font-size: 1.8rem;
-                        text-shadow: 0 2px 4px rgba(0,0,0,0.3);">${feature}</h3>
-                    
-                    <p style="margin: 0 0 30px 0; opacity: 0.9; font-size: 1.1rem; line-height: 1.6;">
-                        This amazing feature is coming soon! 🎉<br>We're working hard to bring you the best experience.</p>
-                    
-                    <button onclick="closeModal()" style="background: rgba(255,255,255,0.2);
-                        border: 2px solid rgba(255,255,255,0.3); color: white; padding: 12px 30px;
-                        border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 1rem;
-                        transition: all 0.3s ease; backdrop-filter: blur(10px);">
-                        Awesome! Let's Go 🚀
-                    </button>
-                    
-                    <div style="margin-top: 20px; font-size: 0.9rem; opacity: 0.7;">
-                        Click anywhere outside to close</div>
-                </div>
-            `;
-            
-            backdrop.appendChild(modal);
-            document.body.appendChild(backdrop);
-            
-            if (!document.getElementById('modalAnimations')) {
-                const style = document.createElement('style');
-                style.id = 'modalAnimations';
-                style.textContent = `
-                    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                    @keyframes modalSlideIn { from { transform: translateY(-30px) scale(0.9); opacity: 0; } 
-                        to { transform: translateY(0) scale(1); opacity: 1; } }
-                    @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-                        40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
-                    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-                    @keyframes modalSlideOut { from { transform: translateY(0) scale(1); opacity: 1; }
-                        to { transform: translateY(-30px) scale(0.9); opacity: 0; } }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            window.closeModal = function() {
-                backdrop.style.animation = 'fadeOut 0.3s ease forwards';
-                modal.style.animation = 'modalSlideOut 0.3s ease forwards';
-                setTimeout(() => backdrop.remove(), 300);
-            };
-            
-            backdrop.addEventListener('click', function(e) {
-                if (e.target === backdrop) closeModal();
             });
         }
 

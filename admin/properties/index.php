@@ -2,6 +2,7 @@
 /**
  * Properties Management - List All Properties with Map View Integration
  * QUICKBILL 305 - Admin Panel
+ * Updated with Bill Serving-Based Defaulter Detection (30 Days)
  */
 
 // Define application constant
@@ -44,6 +45,9 @@ if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 
 $pageTitle = 'Properties Management';
 $currentUser = getCurrentUser();
 $userDisplayName = getUserDisplayName($currentUser);
+
+// Defaulter detection constants - Updated to 30 days
+$gracePeriodDays = 30; // 30 days grace period after bill serving
 
 // Handle search and filtering
 $search = sanitizeInput($_GET['search'] ?? '');
@@ -108,14 +112,36 @@ try {
     $propertyUses = $db->fetchAll("SELECT DISTINCT property_use FROM properties ORDER BY property_use");
     $zones = $db->fetchAll("SELECT * FROM zones ORDER BY zone_name");
     
-    // Get statistics
+    // Get basic statistics
     $stats = [
         'total' => $db->fetchRow("SELECT COUNT(*) as count FROM properties")['count'] ?? 0,
         'residential' => $db->fetchRow("SELECT COUNT(*) as count FROM properties WHERE property_use = 'Residential'")['count'] ?? 0,
         'commercial' => $db->fetchRow("SELECT COUNT(*) as count FROM properties WHERE property_use = 'Commercial'")['count'] ?? 0,
-        'defaulters' => $db->fetchRow("SELECT COUNT(*) as count FROM properties WHERE amount_payable > 0")['count'] ?? 0,
         'revenue' => $db->fetchRow("SELECT SUM(amount_payable) as total FROM properties WHERE amount_payable > 0")['total'] ?? 0
     ];
+    
+    // Enhanced defaulter calculation using bill serving-based logic (30 days)
+    $defaultersQuery = "
+        SELECT COUNT(DISTINCT p.property_id) as count
+        FROM properties p
+        INNER JOIN bills bl ON bl.reference_id = p.property_id AND bl.bill_type = 'Property'
+        LEFT JOIN (
+            SELECT 
+                b_inner.reference_id,
+                SUM(py.amount_paid) as total_paid
+            FROM payments py 
+            INNER JOIN bills b_inner ON py.bill_id = b_inner.bill_id 
+            WHERE b_inner.bill_type = 'Property' AND py.payment_status = 'Successful'
+            GROUP BY b_inner.reference_id
+        ) total_paid ON total_paid.reference_id = p.property_id
+        WHERE bl.served_status = 'Served'
+        AND bl.served_at IS NOT NULL
+        AND DATEDIFF(CURDATE(), bl.served_at) > $gracePeriodDays
+        AND (p.amount_payable - COALESCE(total_paid.total_paid, 0)) > 0
+    ";
+    
+    $defaultersResult = $db->fetchRow($defaultersQuery);
+    $stats['defaulters'] = $defaultersResult['count'] ?? 0;
     
 } catch (Exception $e) {
     writeLog("Properties list error: " . $e->getMessage(), 'ERROR');
@@ -540,6 +566,48 @@ try {
             color: white;
         }
         
+        /* Defaulter Logic Information Alert */
+        .defaulter-info-alert {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+            border: 1px solid #90cdf4;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .defaulter-info-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .defaulter-info-content {
+            flex: 1;
+        }
+        
+        .defaulter-info-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .defaulter-info-text {
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
         /* View Toggle */
         .view-toggle-container {
             background: #f1f5f9;
@@ -641,6 +709,12 @@ try {
         .stat-value {
             font-size: 28px;
             font-weight: bold;
+        }
+        
+        .stat-subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
         }
         
         /* Filters */
@@ -1409,7 +1483,7 @@ try {
                 </div>
             </div>
 
-            <!-- Statistics Cards -->
+            <!-- Statistics Cards (Updated with 30 Days Bill Serving Logic) -->
             <div class="stats-row">
                 <div class="stat-card primary">
                     <div class="stat-header">
@@ -1449,6 +1523,7 @@ try {
                         </div>
                     </div>
                     <div class="stat-value"><?php echo number_format($stats['defaulters']); ?></div>
+                    <div class="stat-subtitle">Bill serving + 30 days</div>
                 </div>
 
                 <div class="stat-card secondary">

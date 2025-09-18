@@ -2,6 +2,7 @@
 /**
  * Business Management - List All Businesses with Map View Integration
  * QUICKBILL 305 - Admin Panel
+ * Updated with Bill Serving-Based Defaulter Detection (30 Days)
  */
 
 // Define application constant
@@ -55,6 +56,9 @@ $zoneFilter = sanitizeInput($_GET['zone'] ?? '');
 $page = max(1, intval($_GET['page'] ?? 1));
 $perPage = 20;
 $offset = ($page - 1) * $perPage;
+
+// Defaulter detection constants - Updated to 30 days
+$gracePeriodDays = 30; // 30 days grace period after bill serving
 
 try {
     $db = new Database();
@@ -111,13 +115,35 @@ try {
     $businessTypes = $db->fetchAll("SELECT DISTINCT business_type FROM businesses ORDER BY business_type");
     $zones = $db->fetchAll("SELECT * FROM zones ORDER BY zone_name");
     
-    // Get statistics
+    // Get statistics with updated defaulter logic (30 days)
     $stats = [
         'total' => $db->fetchRow("SELECT COUNT(*) as count FROM businesses")['count'] ?? 0,
         'active' => $db->fetchRow("SELECT COUNT(*) as count FROM businesses WHERE status = 'Active'")['count'] ?? 0,
-        'defaulters' => $db->fetchRow("SELECT COUNT(*) as count FROM businesses WHERE amount_payable > 0")['count'] ?? 0,
         'revenue' => $db->fetchRow("SELECT SUM(amount_payable) as total FROM businesses WHERE amount_payable > 0")['total'] ?? 0
     ];
+    
+    // Updated defaulters count using bill serving-based logic (30 days)
+    $defaultersQuery = "
+        SELECT COUNT(DISTINCT b.business_id) as count
+        FROM businesses b
+        INNER JOIN bills bl ON bl.reference_id = b.business_id AND bl.bill_type = 'Business'
+        LEFT JOIN (
+            SELECT 
+                b_inner.reference_id,
+                SUM(p.amount_paid) as total_paid
+            FROM payments p 
+            INNER JOIN bills b_inner ON p.bill_id = b_inner.bill_id 
+            WHERE b_inner.bill_type = 'Business' AND p.payment_status = 'Successful'
+            GROUP BY b_inner.reference_id
+        ) total_paid ON total_paid.reference_id = b.business_id
+        WHERE bl.served_status = 'Served'
+        AND bl.served_at IS NOT NULL
+        AND DATEDIFF(CURDATE(), bl.served_at) > $gracePeriodDays
+        AND (b.amount_payable - COALESCE(total_paid.total_paid, 0)) > 0
+    ";
+    
+    $defaultersResult = $db->fetchRow($defaultersQuery);
+    $stats['defaulters'] = $defaultersResult['count'] ?? 0;
     
 } catch (Exception $e) {
     writeLog("Business list error: " . $e->getMessage(), 'ERROR');
@@ -541,6 +567,48 @@ try {
             color: white;
         }
         
+        /* Defaulter Alert for Bill Serving Logic */
+        .defaulter-info-alert {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+            border: 1px solid #90cdf4;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .defaulter-info-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .defaulter-info-content {
+            flex: 1;
+        }
+        
+        .defaulter-info-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .defaulter-info-text {
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
         /* View Toggle */
         .view-toggle-container {
             background: #f1f5f9;
@@ -637,6 +705,12 @@ try {
         .stat-value {
             font-size: 28px;
             font-weight: bold;
+        }
+        
+        .stat-subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
         }
         
         /* Filters */
@@ -1401,7 +1475,7 @@ try {
                 </div>
             </div>
 
-            <!-- Statistics Cards (Original Style) -->
+            <!-- Statistics Cards (Updated with 30 Days Bill Serving Logic) -->
             <div class="stats-row">
                 <div class="stat-card primary">
                     <div class="stat-header">
@@ -1431,6 +1505,7 @@ try {
                         </div>
                     </div>
                     <div class="stat-value"><?php echo number_format($stats['defaulters']); ?></div>
+                    <div class="stat-subtitle">Bill serving + 30 days</div>
                 </div>
 
                 <div class="stat-card info">

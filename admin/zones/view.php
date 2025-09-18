@@ -2,6 +2,7 @@
 /**
  * Zone Management - View Zone Details
  * QUICKBILL 305 - Admin Panel
+ * Updated with Bill Serving-Based Defaulter Detection (30 Days)
  */
 
 // Define application constant
@@ -37,6 +38,9 @@ $userDisplayName = getUserDisplayName($currentUser);
 
 // Get zone ID from URL
 $zoneId = intval($_GET['id'] ?? 0);
+
+// Defaulter detection constants - Updated to 30 days to match properties management
+$gracePeriodDays = 30; // 30 days grace period after bill serving
 
 if (!$zoneId) {
     setFlashMessage('error', 'Invalid zone ID.');
@@ -97,19 +101,65 @@ try {
                         LIMIT 10";
     $recentProperties = $db->fetchAll($propertiesQuery, [$zoneId]);
     
-    // Get zone statistics
-    $statsQuery = "SELECT 
+    // Get zone statistics with updated defaulter logic (30 days)
+    $baseStatsQuery = "SELECT 
                        (SELECT COUNT(*) FROM sub_zones WHERE zone_id = ?) as total_sub_zones,
                        (SELECT COUNT(*) FROM businesses WHERE zone_id = ?) as total_businesses,
                        (SELECT COUNT(*) FROM properties WHERE zone_id = ?) as total_properties,
                        (SELECT COALESCE(SUM(amount_payable), 0) FROM businesses WHERE zone_id = ?) as total_business_payable,
                        (SELECT COALESCE(SUM(amount_payable), 0) FROM properties WHERE zone_id = ?) as total_property_payable,
-                       (SELECT COUNT(*) FROM businesses WHERE zone_id = ? AND status = 'Active') as active_businesses,
-                       (SELECT COUNT(*) FROM businesses WHERE zone_id = ? AND amount_payable > 0) as business_defaulters,
-                       (SELECT COUNT(*) FROM properties WHERE zone_id = ? AND amount_payable > 0) as property_defaulters";
+                       (SELECT COUNT(*) FROM businesses WHERE zone_id = ? AND status = 'Active') as active_businesses";
     
-    $statsParams = array_fill(0, 8, $zoneId);
-    $stats = $db->fetchRow($statsQuery, $statsParams);
+    $baseStatsParams = array_fill(0, 6, $zoneId);
+    $stats = $db->fetchRow($baseStatsQuery, $baseStatsParams);
+    
+    // Enhanced defaulter calculation using bill serving-based logic for businesses (30 days)
+    $businessDefaultersQuery = "
+        SELECT COUNT(DISTINCT b.business_id) as count
+        FROM businesses b
+        INNER JOIN bills bl ON bl.reference_id = b.business_id AND bl.bill_type = 'Business'
+        LEFT JOIN (
+            SELECT 
+                b_inner.reference_id,
+                SUM(p.amount_paid) as total_paid
+            FROM payments p 
+            INNER JOIN bills b_inner ON p.bill_id = b_inner.bill_id 
+            WHERE b_inner.bill_type = 'Business' AND p.payment_status = 'Successful'
+            GROUP BY b_inner.reference_id
+        ) total_paid ON total_paid.reference_id = b.business_id
+        WHERE b.zone_id = ?
+        AND bl.served_status = 'Served'
+        AND bl.served_at IS NOT NULL
+        AND DATEDIFF(CURDATE(), bl.served_at) > $gracePeriodDays
+        AND (b.amount_payable - COALESCE(total_paid.total_paid, 0)) > 0
+    ";
+    
+    $businessDefaultersResult = $db->fetchRow($businessDefaultersQuery, [$zoneId]);
+    $stats['business_defaulters'] = $businessDefaultersResult['count'] ?? 0;
+    
+    // Enhanced defaulter calculation using bill serving-based logic for properties (30 days)
+    $propertyDefaultersQuery = "
+        SELECT COUNT(DISTINCT p.property_id) as count
+        FROM properties p
+        INNER JOIN bills bl ON bl.reference_id = p.property_id AND bl.bill_type = 'Property'
+        LEFT JOIN (
+            SELECT 
+                b_inner.reference_id,
+                SUM(py.amount_paid) as total_paid
+            FROM payments py 
+            INNER JOIN bills b_inner ON py.bill_id = b_inner.bill_id 
+            WHERE b_inner.bill_type = 'Property' AND py.payment_status = 'Successful'
+            GROUP BY b_inner.reference_id
+        ) total_paid ON total_paid.reference_id = p.property_id
+        WHERE p.zone_id = ?
+        AND bl.served_status = 'Served'
+        AND bl.served_at IS NOT NULL
+        AND DATEDIFF(CURDATE(), bl.served_at) > $gracePeriodDays
+        AND (p.amount_payable - COALESCE(total_paid.total_paid, 0)) > 0
+    ";
+    
+    $propertyDefaultersResult = $db->fetchRow($propertyDefaultersQuery, [$zoneId]);
+    $stats['property_defaulters'] = $propertyDefaultersResult['count'] ?? 0;
     
 } catch (Exception $e) {
     writeLog("Zone view error: " . $e->getMessage(), 'ERROR');
@@ -479,6 +529,48 @@ try {
             font-weight: 600;
         }
         
+        /* Defaulter Logic Information Alert */
+        .defaulter-info-alert {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+            border: 1px solid #90cdf4;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .defaulter-info-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .defaulter-info-content {
+            flex: 1;
+        }
+        
+        .defaulter-info-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .defaulter-info-text {
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
         /* Zone Header */
         .zone-header {
             background: white;
@@ -723,6 +815,12 @@ try {
             font-size: 14px;
             opacity: 0.9;
             font-weight: 500;
+        }
+        
+        .stat-subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
         }
         
         /* Content Cards */
@@ -1291,6 +1389,8 @@ try {
                 <?php endforeach; ?>
             <?php endif; ?>
 
+            
+
             <!-- Zone Header -->
             <div class="zone-header">
                 <div class="header-content">
@@ -1354,7 +1454,7 @@ try {
                 </div>
             </div>
 
-            <!-- Statistics Cards -->
+            <!-- Statistics Cards (Updated with 30-Day Bill Serving Logic) -->
             <div class="stats-grid">
                 <div class="stat-card primary">
                     <div class="stat-icon">
@@ -1397,6 +1497,7 @@ try {
                     </div>
                     <div class="stat-value"><?php echo number_format($stats['business_defaulters'] + $stats['property_defaulters']); ?></div>
                     <div class="stat-label">Defaulters</div>
+                    <div class="stat-subtitle">Bill serving + 30 days</div>
                 </div>
             </div>
 
@@ -1555,6 +1656,26 @@ try {
                             <div class="detail-item">
                                 <div class="detail-label">Total Properties</div>
                                 <div class="detail-value"><?php echo number_format($stats['total_properties']); ?></div>
+                            </div>
+                            
+                            <div class="detail-item">
+                                <div class="detail-label">Business Defaulters</div>
+                                <div class="detail-value" style="color: #e53e3e; font-weight: bold;">
+                                    <?php echo number_format($stats['business_defaulters']); ?>
+                                    <small style="font-size: 11px; color: #64748b; display: block; margin-top: 2px;">
+                                        Served + 30 days
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-item">
+                                <div class="detail-label">Property Defaulters</div>
+                                <div class="detail-value" style="color: #e53e3e; font-weight: bold;">
+                                    <?php echo number_format($stats['property_defaulters']); ?>
+                                    <small style="font-size: 11px; color: #64748b; display: block; margin-top: 2px;">
+                                        Served + 30 days
+                                    </small>
+                                </div>
                             </div>
                             
                             <div class="detail-item">
@@ -1725,13 +1846,13 @@ try {
                         text-shadow: 0 2px 4px rgba(0,0,0,0.3);">${feature}</h3>
                     
                     <p style="margin: 0 0 30px 0; opacity: 0.9; font-size: 1.1rem; line-height: 1.6;">
-                        This amazing feature is coming soon! 🎉<br>We're working hard to bring you the best experience.</p>
+                        This amazing feature is coming soon! We're working hard to bring you the best experience.</p>
                     
                     <button onclick="closeModal()" style="background: rgba(255,255,255,0.2);
                         border: 2px solid rgba(255,255,255,0.3); color: white; padding: 12px 30px;
                         border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 1rem;
                         transition: all 0.3s ease; backdrop-filter: blur(10px);">
-                        Awesome! Let's Go 🚀
+                        Awesome! Let's Go
                     </button>
                     
                     <div style="margin-top: 20px; font-size: 0.9rem; opacity: 0.7;">

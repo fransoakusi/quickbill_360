@@ -303,6 +303,7 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
         .icon-close::before { content: "✕"; }
         .icon-book::before { content: "📚"; }
         .icon-manual::before { content: "📖"; }
+        .icon-play::before { content: "▶️"; }
         
         /* Navigation */
         .navbar {
@@ -942,6 +943,181 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
             color: var(--medium-gray);
         }
         
+        /* Video Demo Section */
+        .video-section {
+            padding: 8rem 0;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .video-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><circle cx="200" cy="300" r="100" fill="rgba(102,126,234,0.05)"/><circle cx="800" cy="700" r="150" fill="rgba(116,75,162,0.05)"/></svg>');
+            animation: float 30s ease-in-out infinite;
+        }
+        
+        .video-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .video-header {
+            text-align: center;
+            margin-bottom: 5rem;
+        }
+        
+        .video-badge {
+            display: inline-block;
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-purple);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        
+        .video-title {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--dark-text);
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .video-subtitle {
+            font-size: 1.2rem;
+            color: var(--medium-gray);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .video-wrapper {
+            position: relative;
+            max-width: 840px;
+            margin: 0 auto;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-heavy);
+            background: var(--white);
+        }
+        
+        .video-player {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+        }
+        
+        .video-player video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: var(--border-radius);
+        }
+        
+        .video-controls {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        
+        .play-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .play-button:hover {
+            transform: scale(1.1);
+            background: var(--white);
+            box-shadow: var(--shadow-heavy);
+        }
+        
+        .play-button i {
+            font-size: 2rem;
+            color: var(--primary-purple);
+            margin-left: 3px; /* Center the play icon */
+        }
+        
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(116, 75, 162, 0.1));
+            opacity: 1;
+            transition: var(--transition);
+        }
+        
+        .video-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .video-info {
+            padding: 2rem;
+            text-align: center;
+            background: var(--white);
+        }
+        
+        .video-info h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin-bottom: 1rem;
+        }
+        
+        .video-info p {
+            color: var(--medium-gray);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .video-features {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .video-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--medium-gray);
+        }
+        
+        .video-feature i {
+            color: var(--success-green);
+        }
+        
         /* Features Section */
         .features-section {
             padding: 8rem 0;
@@ -1186,6 +1362,10 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
                 font-size: 2.5rem;
             }
             
+            .video-title {
+                font-size: 2.5rem;
+            }
+            
             .dashboard-stats {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 1.5rem;
@@ -1272,6 +1452,11 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
             
             .section-subtitle {
                 font-size: 1.1rem;
+            }
+            
+            .video-title {
+                font-size: 2.2rem;
+                line-height: 1.2;
             }
             
             .cta-title {
@@ -1361,6 +1546,44 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
             
             .activity-time {
                 font-size: 0.7rem;
+            }
+            
+            .video-section {
+                padding: 5rem 0;
+            }
+            
+            .video-container {
+                padding: 0 1.5rem;
+            }
+            
+            .video-header {
+                margin-bottom: 3rem;
+            }
+            
+            .play-button {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .play-button i {
+                font-size: 1.5rem;
+            }
+            
+            .video-info {
+                padding: 1.5rem;
+            }
+            
+            .video-info h3 {
+                font-size: 1.3rem;
+            }
+            
+            .video-features {
+                gap: 1rem;
+                justify-content: center;
+            }
+            
+            .video-feature {
+                font-size: 0.8rem;
             }
             
             .features-section {
@@ -1460,6 +1683,10 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
                 font-size: 1.8rem;
             }
             
+            .video-title {
+                font-size: 1.8rem;
+            }
+            
             .cta-title {
                 font-size: 1.8rem;
             }
@@ -1470,6 +1697,7 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
             }
             
             .features-container,
+            .video-container,
             .cta-container,
             .footer-container {
                 padding: 0 1rem;
@@ -1496,6 +1724,10 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
                 width: 30px;
                 height: 30px;
                 font-size: 0.8rem;
+            }
+            
+            .video-info {
+                padding: 1rem;
             }
         }
 
@@ -1542,6 +1774,10 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
             .feature-card {
                 box-shadow: var(--shadow-light);
             }
+            
+            .video-wrapper {
+                box-shadow: var(--shadow-heavy);
+            }
         }
 
         /* Reduced Motion Preferences */
@@ -1555,6 +1791,10 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
             }
             
             .hero::before {
+                animation: none;
+            }
+            
+            .video-section::before {
                 animation: none;
             }
             
@@ -1579,7 +1819,8 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
         .btn:focus,
         .nav-link:focus,
         .mobile-nav-link:focus,
-        .mobile-menu-toggle:focus {
+        .mobile-menu-toggle:focus,
+        .play-button:focus {
             outline: 2px solid var(--primary-purple);
             outline-offset: 2px;
         }
@@ -1589,7 +1830,8 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
             .btn,
             .nav-link,
             .mobile-nav-link,
-            .mobile-menu-toggle {
+            .mobile-menu-toggle,
+            .play-button {
                 min-height: 44px;
                 min-width: 44px;
             }
@@ -1664,8 +1906,9 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
                         <span class="icon-rocket" style="display: none;"></span>
                         Start Your Journey
                     </a>
-                    <a href="#features" class="btn btn-secondary">
+                    <a href="#demo" class="btn btn-secondary">
                         <i class="fas fa-play"></i>
+                        <span class="icon-play" style="display: none;"></span>
                         Watch Demo
                     </a>
                     <a href="user-manual.html" class="btn btn-tertiary" target="_blank">
@@ -1839,6 +2082,65 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
         </div>
     </section>
 
+    <!-- Video Demo Section -->
+    <section class="video-section" id="demo">
+        <div class="video-container">
+            <div class="video-header fade-in">
+                <div class="video-badge">📹 PRODUCT DEMO</div>
+                <h2 class="video-title">See QUICKBILL 360 in Action</h2>
+                <p class="video-subtitle">
+                    Watch our comprehensive demo to understand how QUICKBILL 360 transforms assembly revenue management through automation and modern technology.
+                </p>
+            </div>
+            
+            <div class="video-wrapper fade-in">
+                <div class="video-player">
+                    <video id="demoVideo" preload="metadata" poster="">
+                        <source src="assets/video/demo.mp4" type="video/mp4">
+                        <source src="assets/video/demo.webm" type="video/webm">
+                        Your browser does not support the video tag.
+                    </video>
+                    
+                    <div class="video-overlay" id="videoOverlay">
+                        <div class="video-controls">
+                            <button class="play-button" id="playButton">
+                                <i class="fas fa-play"></i>
+                                <span class="icon-play" style="display: none;"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="video-info">
+                    <h3>Complete System Walkthrough</h3>
+                    <p>
+                        This demo covers all major features including business registration, automated billing, 
+                        mobile money payments, reporting, and user management. Perfect for understanding the full scope of QUICKBILL 360.
+                    </p>
+                    
+                    <div class="video-features">
+                        <div class="video-feature">
+                            <i class="fas fa-clock"></i>
+                            <span>5 min demo</span>
+                        </div>
+                        <div class="video-feature">
+                            <i class="fas fa-eye"></i>
+                            <span>HD Quality</span>
+                        </div>
+                        <div class="video-feature">
+                            <i class="fas fa-volume-up"></i>
+                            <span>Audio Narration</span>
+                        </div>
+                        <div class="video-feature">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Mobile Friendly</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Features Section -->
     <section class="features-section" id="features">
         <div class="features-container">
@@ -2000,6 +2302,61 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
                     });
                 }
             }, 100);
+        });
+
+        // Video Player Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('demoVideo');
+            const playButton = document.getElementById('playButton');
+            const videoOverlay = document.getElementById('videoOverlay');
+            
+            if (video && playButton && videoOverlay) {
+                // Play button click handler
+                playButton.addEventListener('click', function() {
+                    video.play();
+                    videoOverlay.classList.add('hidden');
+                    playButton.innerHTML = '<i class="fas fa-pause"></i>';
+                });
+                
+                // Video click to pause/play
+                video.addEventListener('click', function() {
+                    if (video.paused) {
+                        video.play();
+                        videoOverlay.classList.add('hidden');
+                        playButton.innerHTML = '<i class="fas fa-pause"></i>';
+                    } else {
+                        video.pause();
+                        videoOverlay.classList.remove('hidden');
+                        playButton.innerHTML = '<i class="fas fa-play"></i>';
+                    }
+                });
+                
+                // Video ended handler
+                video.addEventListener('ended', function() {
+                    videoOverlay.classList.remove('hidden');
+                    playButton.innerHTML = '<i class="fas fa-replay"></i>';
+                });
+                
+                // Video pause handler
+                video.addEventListener('pause', function() {
+                    if (!video.ended) {
+                        videoOverlay.classList.remove('hidden');
+                        playButton.innerHTML = '<i class="fas fa-play"></i>';
+                    }
+                });
+                
+                // Video play handler
+                video.addEventListener('play', function() {
+                    videoOverlay.classList.add('hidden');
+                    playButton.innerHTML = '<i class="fas fa-pause"></i>';
+                });
+                
+                // Handle video loading errors
+                video.addEventListener('error', function() {
+                    console.error('Video failed to load');
+                    videoOverlay.innerHTML = '<div style="color: white; text-align: center; padding: 2rem;"><h3>Video Currently Unavailable</h3><p>Please check back later or contact support.</p></div>';
+                });
+            }
         });
 
         // Mobile Menu Functionality
@@ -2244,8 +2601,50 @@ $revenueDisplay = $totalRevenue >= 1000 ? '₵' . number_format($totalRevenue/10
             document.documentElement.style.setProperty('--transition', 'none');
         }
 
+        // Video section scroll trigger
+        const videoSection = document.querySelector('.video-section');
+        if (videoSection) {
+            const videoObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Add any video-specific animations here
+                        const videoWrapper = entry.target.querySelector('.video-wrapper');
+                        if (videoWrapper) {
+                            videoWrapper.style.transform = 'translateY(0)';
+                            videoWrapper.style.opacity = '1';
+                        }
+                    }
+                });
+            }, { threshold: 0.3 });
+            
+            videoObserver.observe(videoSection);
+        }
+
+        // Auto-hide video controls on mobile after inactivity
+        let videoControlsTimeout;
+        const video = document.getElementById('demoVideo');
+        const videoOverlay = document.getElementById('videoOverlay');
+        
+        if (video && videoOverlay && window.innerWidth <= 768) {
+            function showControls() {
+                videoOverlay.style.opacity = '1';
+                clearTimeout(videoControlsTimeout);
+                videoControlsTimeout = setTimeout(() => {
+                    if (!video.paused) {
+                        videoOverlay.style.opacity = '0';
+                    }
+                }, 3000);
+            }
+            
+            video.addEventListener('touchstart', showControls);
+            video.addEventListener('mousemove', showControls);
+        }
+
         // Log real data for debugging (remove in production)
         console.log('QuickBill 360 Real Statistics:', realData);
+        
+        // Initialize page
+        console.log('QuickBill 360 Landing Page Loaded Successfully');
     </script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 <?php
 /**
- * Fee Structure Management - Property Fees
+ * Fee Structure Management - Business Fees
  * QUICKBILL 305 - Admin Panel
- * Updated with 50 items per page default pagination
+ * Updated with 50 items per page default pagination and proper navigation links
  */
 
 // Define application constant
@@ -42,15 +42,15 @@ if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 
     exit();
 }
 
-$pageTitle = 'Property Fee Structure';
+$pageTitle = 'Business Fee Structure';
 $currentUser = getCurrentUser();
 $userDisplayName = getUserDisplayName($currentUser);
 
 // Initialize variables
-$propertyFees = [];
+$businessFees = [];
 $stats = [
     'total_fees' => 0,
-    'structure_types' => 0,
+    'business_types' => 0,
     'active_fees' => 0,
     'inactive_fees' => 0
 ];
@@ -74,7 +74,7 @@ $urlParams = [];
 if (!empty($searchTerm)) $urlParams['search'] = $searchTerm;
 if ($filterStatus !== '') $urlParams['status'] = $filterStatus;
 if ($itemsPerPage !== $defaultItemsPerPage) $urlParams['items_per_page'] = $itemsPerPage;
-$baseUrl = 'property_fees.php' . (!empty($urlParams) ? '?' . http_build_query($urlParams) : '');
+$baseUrl = 'business_fees.php' . (!empty($urlParams) ? '?' . http_build_query($urlParams) : '');
 
 try {
     $db = new Database();
@@ -84,7 +84,7 @@ try {
     $params = [];
     
     if (!empty($searchTerm)) {
-        $conditions[] = "(structure LIKE ? OR property_use LIKE ?)";
+        $conditions[] = "(business_type LIKE ? OR category LIKE ?)";
         $params[] = "%{$searchTerm}%";
         $params[] = "%{$searchTerm}%";
     }
@@ -97,7 +97,7 @@ try {
     $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
     
     // Get total count for pagination
-    $countQuery = "SELECT COUNT(*) as total FROM property_fee_structure {$whereClause}";
+    $countQuery = "SELECT COUNT(*) as total FROM business_fee_structure {$whereClause}";
     $totalResult = $db->fetchRow($countQuery, $params);
     $totalRecords = $totalResult['total'] ?? 0;
     $totalPages = ceil($totalRecords / $itemsPerPage);
@@ -108,17 +108,17 @@ try {
         $offset = ($currentPage - 1) * $itemsPerPage;
     }
     
-    // Get property fees with creator information (paginated)
+    // Get business fees with creator information (paginated)
     $paginationParams = array_merge($params, [$offset, $itemsPerPage]);
-    $propertyFees = $db->fetchAll("
+    $businessFees = $db->fetchAll("
         SELECT 
-            pf.*,
+            bf.*,
             u.username as created_by_username,
             CONCAT(u.first_name, ' ', u.last_name) as created_by_name
-        FROM property_fee_structure pf
-        LEFT JOIN users u ON pf.created_by = u.user_id
+        FROM business_fee_structure bf
+        LEFT JOIN users u ON bf.created_by = u.user_id
         {$whereClause}
-        ORDER BY pf.structure ASC, pf.property_use ASC
+        ORDER BY bf.business_type ASC, bf.category ASC
         LIMIT ?, ?
     ", $paginationParams);
     
@@ -126,16 +126,16 @@ try {
     $allStats = $db->fetchRow("
         SELECT 
             COUNT(*) as total_fees,
-            COUNT(DISTINCT structure) as structure_types,
+            COUNT(DISTINCT business_type) as business_types,
             SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_fees,
             SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive_fees
-        FROM property_fee_structure
+        FROM business_fee_structure
     ");
     
     if ($allStats) {
         $stats = [
             'total_fees' => $allStats['total_fees'],
-            'structure_types' => $allStats['structure_types'],
+            'business_types' => $allStats['business_types'],
             'active_fees' => $allStats['active_fees'],
             'inactive_fees' => $allStats['inactive_fees']
         ];
@@ -146,42 +146,42 @@ try {
         $feeId = intval($_GET['id']);
         
         if (hasPermission('fee_structure.delete')) {
-            // Check if fee structure is being used by properties
-            $propertyCountResult = $db->fetchRow("
-                SELECT COUNT(*) as count FROM properties 
-                WHERE structure = (
-                    SELECT structure FROM property_fee_structure WHERE fee_id = ?
-                ) AND property_use = (
-                    SELECT property_use FROM property_fee_structure WHERE fee_id = ?
+            // Check if fee structure is being used by businesses
+            $businessCountResult = $db->fetchRow("
+                SELECT COUNT(*) as count FROM businesses 
+                WHERE business_type = (
+                    SELECT business_type FROM business_fee_structure WHERE fee_id = ?
+                ) AND category = (
+                    SELECT category FROM business_fee_structure WHERE fee_id = ?
                 )
             ", [$feeId, $feeId]);
-            $propertyCount = $propertyCountResult['count'] ?? 0;
+            $businessCount = $businessCountResult['count'] ?? 0;
             
-            if ($propertyCount > 0) {
-                setFlashMessage('error', "Cannot delete fee structure. It is being used by {$propertyCount} propert" . ($propertyCount == 1 ? 'y' : 'ies') . ".");
+            if ($businessCount > 0) {
+                setFlashMessage('error', "Cannot delete fee structure. It is being used by {$businessCount} business(es).");
             } else {
                 try {
                     $db->beginTransaction();
                     
                     // Get fee details for logging
                     $feeDetails = $db->fetchRow("
-                        SELECT structure, property_use, fee_per_room 
-                        FROM property_fee_structure WHERE fee_id = ?
+                        SELECT business_type, category, fee_amount 
+                        FROM business_fee_structure WHERE fee_id = ?
                     ", [$feeId]);
                     
                     // Delete fee structure
-                    $db->execute("DELETE FROM property_fee_structure WHERE fee_id = ?", [$feeId]);
+                    $db->execute("DELETE FROM business_fee_structure WHERE fee_id = ?", [$feeId]);
                     
                     // Log the action
                     if ($feeDetails) {
-                        writeLog("Property fee deleted: {$feeDetails['structure']} - {$feeDetails['property_use']} (GHS {$feeDetails['fee_per_room']}/room) by user {$currentUser['username']}", 'INFO');
+                        writeLog("Business fee deleted: {$feeDetails['business_type']} - {$feeDetails['category']} (GHS {$feeDetails['fee_amount']}) by user {$currentUser['username']}", 'INFO');
                     }
                     
                     $db->commit();
-                    setFlashMessage('success', 'Property fee structure deleted successfully!');
+                    setFlashMessage('success', 'Business fee structure deleted successfully!');
                 } catch (Exception $e) {
                     $db->rollback();
-                    writeLog("Error deleting property fee: " . $e->getMessage(), 'ERROR');
+                    writeLog("Error deleting business fee: " . $e->getMessage(), 'ERROR');
                     setFlashMessage('error', 'An error occurred while deleting the fee structure.');
                 }
             }
@@ -205,8 +205,8 @@ try {
                 
                 // Get current status
                 $currentFee = $db->fetchRow("
-                    SELECT is_active, structure, property_use 
-                    FROM property_fee_structure WHERE fee_id = ?
+                    SELECT is_active, business_type, category 
+                    FROM business_fee_structure WHERE fee_id = ?
                 ", [$feeId]);
                 
                 if ($currentFee) {
@@ -214,14 +214,14 @@ try {
                     
                     // Update status
                     $db->execute("
-                        UPDATE property_fee_structure 
+                        UPDATE business_fee_structure 
                         SET is_active = ?, updated_at = NOW() 
                         WHERE fee_id = ?
                     ", [$newStatus, $feeId]);
                     
                     // Log the action
                     $statusText = $newStatus ? 'activated' : 'deactivated';
-                    writeLog("Property fee {$statusText}: {$currentFee['structure']} - {$currentFee['property_use']} by user {$currentUser['username']}", 'INFO');
+                    writeLog("Business fee {$statusText}: {$currentFee['business_type']} - {$currentFee['category']} by user {$currentUser['username']}", 'INFO');
                     
                     $db->commit();
                     setFlashMessage('success', 'Fee structure status updated successfully!');
@@ -230,7 +230,7 @@ try {
                 }
             } catch (Exception $e) {
                 $db->rollback();
-                writeLog("Error toggling property fee status: " . $e->getMessage(), 'ERROR');
+                writeLog("Error toggling business fee status: " . $e->getMessage(), 'ERROR');
                 setFlashMessage('error', 'An error occurred while updating the fee structure.');
             }
         } else {
@@ -244,7 +244,7 @@ try {
     }
     
 } catch (Exception $e) {
-    writeLog("Property fees page error: " . $e->getMessage(), 'ERROR');
+    writeLog("Business fees page error: " . $e->getMessage(), 'ERROR');
     setFlashMessage('error', 'An error occurred while loading fee structures.');
 }
 
@@ -310,8 +310,10 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         .icon-money::before { content: "💰"; }
         .icon-active::before { content: "✅"; }
         .icon-inactive::before { content: "❌"; }
+        .icon-history::before { content: "📜"; }
+        .icon-question::before { content: "❓"; }
         
-        /* Top Navigation - Same as previous pages */
+        /* Top Navigation */
         .top-nav {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -414,7 +416,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             transition: transform 0.3s;
         }
         
-        /* User Dropdown - Same as previous pages */
+        /* User Dropdown */
         .user-dropdown {
             position: absolute;
             top: 100%;
@@ -520,7 +522,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             min-height: calc(100vh - 80px);
         }
         
-        /* Sidebar - Same as previous pages */
+        /* Sidebar */
         .sidebar {
             width: 280px;
             background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
@@ -620,10 +622,10 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             font-weight: 600;
         }
         
-        /* Stats Header - Green theme for properties */
+        /* Stats Header */
         .stats-header {
-            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-            border: 1px solid #bbf7d0;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #bae6fd;
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 30px;
@@ -638,7 +640,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
         }
         
         .stats-content {
@@ -657,14 +659,14 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: bold;
             font-size: 24px;
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
         }
         
         .stats-details h3 {
@@ -760,8 +762,8 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         
         .search-input:focus {
             outline: none;
-            border-color: #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
         }
         
         .filter-select {
@@ -776,8 +778,8 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         
         .filter-select:focus {
             outline: none;
-            border-color: #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
         }
         
         /* Alert Messages */
@@ -819,13 +821,13 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
             color: white;
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 8px 25px rgba(66, 153, 225, 0.3);
             color: white;
         }
         
@@ -892,7 +894,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             gap: 10px;
         }
         
-        /* Pagination Controls - ENHANCED */
+        /* Pagination Controls */
         .pagination-controls {
             display: flex;
             justify-content: space-between;
@@ -938,7 +940,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         
         .items-per-page select:focus {
             outline: none;
-            border-color: #10b981;
+            border-color: #4299e1;
         }
         
         .pagination-nav {
@@ -963,17 +965,17 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         }
         
         .pagination-btn:hover:not(.disabled) {
-            background: #10b981;
+            background: #4299e1;
             color: white;
-            border-color: #10b981;
+            border-color: #4299e1;
             transform: translateY(-1px);
             text-decoration: none;
         }
         
         .pagination-btn.active {
-            background: #10b981;
+            background: #4299e1;
             color: white;
-            border-color: #10b981;
+            border-color: #4299e1;
         }
         
         .pagination-btn.disabled {
@@ -993,7 +995,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             font-weight: 600;
         }
         
-        /* Quick Jump - ENHANCED */
         .quick-jump {
             display: flex;
             align-items: center;
@@ -1016,12 +1017,12 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         
         .quick-jump input:focus {
             outline: none;
-            border-color: #10b981;
+            border-color: #4299e1;
         }
         
         .quick-jump button {
             padding: 8px 12px;
-            background: #10b981;
+            background: #4299e1;
             color: white;
             border: none;
             border-radius: 6px;
@@ -1032,47 +1033,8 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         }
         
         .quick-jump button:hover {
-            background: #059669;
+            background: #3182ce;
             transform: translateY(-1px);
-        }
-        
-        /* ENHANCED: Table Performance Indicator */
-        .table-performance {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
-            border-radius: 10px;
-            border-left: 4px solid #00acc1;
-        }
-        
-        .performance-icon {
-            width: 40px;
-            height: 40px;
-            background: #00acc1;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-        }
-        
-        .performance-text {
-            flex: 1;
-            color: #00695c;
-        }
-        
-        .performance-title {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        
-        .performance-description {
-            font-size: 14px;
-            opacity: 0.8;
         }
         
         .fees-table {
@@ -1103,13 +1065,13 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             background: #f8fafc;
         }
         
-        .structure-name {
+        .business-type {
             font-weight: 600;
             color: #2d3748;
             font-size: 16px;
         }
         
-        .property-use {
+        .category {
             color: #64748b;
             font-size: 14px;
             margin-top: 3px;
@@ -1126,13 +1088,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             font-size: 14px;
             color: #64748b;
             margin-right: 5px;
-        }
-        
-        .per-room {
-            font-size: 12px;
-            color: #64748b;
-            display: block;
-            margin-top: 2px;
         }
         
         .status-badge {
@@ -1175,12 +1130,12 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         }
         
         .action-btn.edit {
-            background: #10b981;
+            background: #4299e1;
             color: white;
         }
         
         .action-btn.edit:hover {
-            background: #059669;
+            background: #3182ce;
             color: white;
         }
         
@@ -1243,6 +1198,45 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             margin-left: auto;
             margin-right: auto;
             line-height: 1.6;
+        }
+        
+        /* Table Performance Indicator */
+        .table-performance {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            border-radius: 10px;
+            border-left: 4px solid #00acc1;
+        }
+        
+        .performance-icon {
+            width: 40px;
+            height: 40px;
+            background: #00acc1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .performance-text {
+            flex: 1;
+            color: #00695c;
+        }
+        
+        .performance-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .performance-description {
+            font-size: 14px;
+            opacity: 0.8;
         }
         
         /* Responsive Design */
@@ -1366,7 +1360,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         <div class="user-section">
             <!-- Notification Bell -->
             <div style="position: relative; margin-right: 10px;">
-                <button style="
+                <a href="../notifications/index.php" style="
                     background: rgba(255,255,255,0.2);
                     border: none;
                     color: white;
@@ -1375,12 +1369,13 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                     border-radius: 50%;
                     cursor: pointer;
                     transition: all 0.3s;
+                    text-decoration: none;
+                    display: inline-block;
                 " onmouseover="this.style.background='rgba(255,255,255,0.3)'" 
-                   onmouseout="this.style.background='rgba(255,255,255,0.2)'"
-                   onclick="showComingSoon('Notifications')">
+                   onmouseout="this.style.background='rgba(255,255,255,0.2)'">
                     <i class="fas fa-bell"></i>
                     <span class="icon-bell" style="display: none;"></span>
-                </button>
+                </a>
                 <span class="notification-badge" style="
                     position: absolute;
                     top: -2px;
@@ -1419,24 +1414,24 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         <div class="dropdown-role"><?php echo htmlspecialchars(getCurrentUserRole()); ?></div>
                     </div>
                     <div class="dropdown-menu">
-                        <a href="#" class="dropdown-item" onclick="showComingSoon('User Profile')">
+                        <a href="../users/view.php?id=<?php echo $currentUser['user_id']; ?>" class="dropdown-item">
                             <i class="fas fa-user"></i>
                             <span class="icon-user" style="display: none;"></span>
                             My Profile
                         </a>
-                        <a href="#" class="dropdown-item" onclick="showComingSoon('Account Settings')">
+                        <a href="../settings/index.php" class="dropdown-item">
                             <i class="fas fa-cog"></i>
                             <span class="icon-cog" style="display: none;"></span>
                             Account Settings
                         </a>
-                        <a href="#" class="dropdown-item" onclick="showComingSoon('Activity Log')">
+                        <a href="../logs/user_activity.php" class="dropdown-item">
                             <i class="fas fa-history"></i>
-                            <span class="icon-chart" style="display: none;"></span>
+                            <span class="icon-history" style="display: none;"></span>
                             Activity Log
                         </a>
-                        <a href="#" class="dropdown-item" onclick="showComingSoon('Help & Support')">
+                        <a href="../../docs/user_manual.md" class="dropdown-item">
                             <i class="fas fa-question-circle"></i>
-                            <span class="icon-bell" style="display: none;"></span>
+                            <span class="icon-question" style="display: none;"></span>
                             Help & Support
                         </a>
                         <div style="height: 1px; background: #e2e8f0; margin: 10px 0;"></div>
@@ -1490,7 +1485,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Properties')">
+                        <a href="../properties/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-home"></i>
                                 <span class="icon-home" style="display: none;"></span>
@@ -1513,7 +1508,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 <div class="nav-section">
                     <div class="nav-title">Billing & Payments</div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Billing')">
+                        <a href="../billing/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-file-invoice"></i>
                                 <span class="icon-invoice" style="display: none;"></span>
@@ -1522,7 +1517,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Payments')">
+                        <a href="../payments/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-credit-card"></i>
                                 <span class="icon-credit" style="display: none;"></span>
@@ -1531,7 +1526,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="index.php" class="nav-link active">
+                        <a href="../fee_structure/index.php" class="nav-link active">
                             <span class="nav-icon">
                                 <i class="fas fa-tags"></i>
                                 <span class="icon-tags" style="display: none;"></span>
@@ -1545,7 +1540,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 <div class="nav-section">
                     <div class="nav-title">Reports & System</div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Reports')">
+                        <a href="../reports/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-chart-bar"></i>
                                 <span class="icon-chart" style="display: none;"></span>
@@ -1554,7 +1549,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Notifications')">
+                        <a href="../notifications/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-bell"></i>
                                 <span class="icon-bell" style="display: none;"></span>
@@ -1563,7 +1558,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showComingSoon('Settings')">
+                        <a href="../settings/index.php" class="nav-link">
                             <span class="nav-icon">
                                 <i class="fas fa-cog"></i>
                                 <span class="icon-cog" style="display: none;"></span>
@@ -1582,9 +1577,9 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 <div class="breadcrumb">
                     <a href="../index.php">Dashboard</a>
                     <span>/</span>
-                    <a href="index.php">Fee Structure</a>
+                    <a href="../fee_structure/index.php">Fee Structure</a>
                     <span>/</span>
-                    <span class="breadcrumb-current">Property Fees</span>
+                    <span class="breadcrumb-current">Business Fees</span>
                 </div>
             </div>
 
@@ -1601,12 +1596,12 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 <div class="stats-content">
                     <div class="stats-info">
                         <div class="stats-avatar">
-                            <i class="fas fa-home"></i>
-                            <span class="icon-home" style="display: none;"></span>
+                            <i class="fas fa-tags"></i>
+                            <span class="icon-tags" style="display: none;"></span>
                         </div>
                         <div class="stats-details">
-                            <h3>Property Fee Structure</h3>
-                            <div class="stats-description">Configure billing rates for different property structures and uses</div>
+                            <h3>Business Fee Structure</h3>
+                            <div class="stats-description">Configure billing rates for different business types and categories</div>
                         </div>
                     </div>
                     
@@ -1616,8 +1611,8 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                             <div class="stat-label">Total Fees</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number"><?php echo $stats['structure_types']; ?></div>
-                            <div class="stat-label">Structure Types</div>
+                            <div class="stat-number"><?php echo $stats['business_types']; ?></div>
+                            <div class="stat-label">Business Types</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-number"><?php echo $stats['active_fees']; ?></div>
@@ -1636,21 +1631,21 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 <div class="header-content">
                     <div>
                         <h1 class="page-title">
-                            <i class="fas fa-home"></i>
-                            Property Fee Management
+                            <i class="fas fa-tags"></i>
+                            Business Fee Management
                         </h1>
-                        <p style="color: #64748b; margin: 5px 0 0 0;">Manage billing rates for property structures and uses</p>
+                        <p style="color: #64748b; margin: 5px 0 0 0;">Manage billing rates for business types and categories</p>
                     </div>
                     <div class="header-actions">
-                        <a href="business_fees.php" class="btn btn-secondary">
-                            <i class="fas fa-building"></i>
-                            Business Fees
+                        <a href="property_fees.php" class="btn btn-secondary">
+                            <i class="fas fa-home"></i>
+                            Property Fees
                         </a>
                         <?php if (hasPermission('fee_structure.create')): ?>
-                            <a href="add_property_fee.php" class="btn btn-success">
+                            <a href="add_business_fee.php" class="btn btn-success">
                                 <i class="fas fa-plus"></i>
                                 <span class="icon-plus" style="display: none;"></span>
-                                Add Property Fee
+                                Add Business Fee
                             </a>
                         <?php endif; ?>
                     </div>
@@ -1665,7 +1660,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                             <i class="fas fa-search" style="color: #64748b;"></i>
                             <span class="icon-search" style="display: none;"></span>
                             <input type="text" name="search" class="search-input" 
-                                   placeholder="Search property structures or uses..." 
+                                   placeholder="Search business types or categories..." 
                                    value="<?php echo htmlspecialchars($searchTerm); ?>">
                         </div>
                         <div class="search-group">
@@ -1682,7 +1677,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                             Search
                         </button>
                         <?php if (!empty($searchTerm) || $filterStatus !== ''): ?>
-                            <a href="property_fees.php" class="btn btn-secondary">
+                            <a href="business_fees.php" class="btn btn-secondary">
                                 <i class="fas fa-times"></i>
                                 Clear
                             </a>
@@ -1691,13 +1686,13 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 </div>
             </div>
 
-            <!-- Property Fees Grid -->
+            <!-- Business Fees Grid -->
             <div class="fees-grid">
                 <div class="grid-header">
                     <div class="grid-title">
-                        <i class="fas fa-home"></i>
-                        <span class="icon-home" style="display: none;"></span>
-                        Property Fee Structures
+                        <i class="fas fa-tags"></i>
+                        <span class="icon-tags" style="display: none;"></span>
+                        Business Fee Structures
                         <?php if (!empty($searchTerm) || $filterStatus !== ''): ?>
                             <span style="color: #64748b; font-weight: normal;">(Filtered Results)</span>
                         <?php endif; ?>
@@ -1707,7 +1702,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                     </div>
                 </div>
 
-                <!-- ENHANCED: Table Performance Indicator -->
+                <!-- Table Performance Indicator -->
                 <?php if ($totalRecords > 0): ?>
                 <div class="table-performance">
                     <div class="performance-icon">
@@ -1723,57 +1718,56 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 </div>
                 <?php endif; ?>
 
-                <?php if (empty($propertyFees)): ?>
+                <?php if (empty($businessFees)): ?>
                     <!-- Empty State -->
                     <div class="empty-state">
                         <div class="empty-icon">
-                            <i class="fas fa-home"></i>
-                            <span class="icon-home" style="display: none;"></span>
+                            <i class="fas fa-tags"></i>
+                            <span class="icon-tags" style="display: none;"></span>
                         </div>
                         <div class="empty-title">
                             <?php if (!empty($searchTerm) || $filterStatus !== ''): ?>
                                 No Fee Structures Found
                             <?php else: ?>
-                                No Property Fees Yet
+                                No Business Fees Yet
                             <?php endif; ?>
                         </div>
                         <div class="empty-text">
                             <?php if (!empty($searchTerm) || $filterStatus !== ''): ?>
                                 No fee structures match your search criteria. Try adjusting your search terms or clear the filter to view all fee structures.
                             <?php else: ?>
-                                No property fee structures have been configured yet. Create your first property fee structure to start billing properties based on their structure and use.
+                                No business fee structures have been configured yet. Create your first business fee structure to start billing businesses based on their type and category.
                             <?php endif; ?>
                         </div>
                         <?php if (hasPermission('fee_structure.create')): ?>
-                            <a href="add_property_fee.php" class="btn btn-success">
+                            <a href="add_business_fee.php" class="btn btn-success">
                                 <i class="fas fa-plus"></i>
                                 Create First Fee Structure
                             </a>
                         <?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <!-- Property Fees Table -->
+                    <!-- Business Fees Table -->
                     <table class="fees-table">
                         <thead>
                             <tr>
-                                <th>Structure & Use</th>
-                                <th>Fee Per Room</th>
+                                <th>Business Type & Category</th>
+                                <th>Fee Amount</th>
                                 <th>Status</th>
                                 <th>Created</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($propertyFees as $fee): ?>
+                            <?php foreach ($businessFees as $fee): ?>
                                 <tr>
                                     <td>
-                                        <div class="structure-name"><?php echo htmlspecialchars($fee['structure']); ?></div>
-                                        <div class="property-use"><?php echo htmlspecialchars($fee['property_use']); ?></div>
+                                        <div class="business-type"><?php echo htmlspecialchars($fee['business_type']); ?></div>
+                                        <div class="category"><?php echo htmlspecialchars($fee['category']); ?></div>
                                     </td>
                                     <td>
                                         <div class="fee-amount">
-                                            <span class="currency">GHS</span><?php echo number_format($fee['fee_per_room'], 2); ?>
-                                            <span class="per-room">per room</span>
+                                            <span class="currency">GHS</span><?php echo number_format($fee['fee_amount'], 2); ?>
                                         </div>
                                     </td>
                                     <td>
@@ -1789,7 +1783,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                                     </td>
                                     <td>
                                         <?php if (hasPermission('fee_structure.edit')): ?>
-                                            <a href="edit_property_fee.php?id=<?php echo $fee['fee_id']; ?>" 
+                                            <a href="edit_business_fee.php?id=<?php echo $fee['fee_id']; ?>" 
                                                class="action-btn edit">
                                                 <i class="fas fa-edit"></i>
                                                 <span class="icon-edit" style="display: none;"></span>
@@ -1798,28 +1792,28 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                                             
                                             <a href="javascript:void(0)" 
                                                class="action-btn toggle"
-                                               onclick="toggleStatus(<?php echo $fee['fee_id']; ?>, '<?php echo htmlspecialchars($fee['structure'] . ' - ' . $fee['property_use'], ENT_QUOTES); ?>', <?php echo $fee['is_active'] ? 'true' : 'false'; ?>)">
+                                               onclick="toggleStatus(<?php echo $fee['fee_id']; ?>, '<?php echo htmlspecialchars($fee['business_type'] . ' - ' . $fee['category'], ENT_QUOTES); ?>', <?php echo $fee['is_active'] ? 'true' : 'false'; ?>)">
                                                 <i class="fas fa-<?php echo $fee['is_active'] ? 'pause' : 'play'; ?>"></i>
                                                 <?php echo $fee['is_active'] ? 'Deactivate' : 'Activate'; ?>
                                             </a>
                                         <?php endif; ?>
                                         
                                         <?php 
-                                        // Check if fee is being used by properties (placeholder logic)
-                                        $canDelete = hasPermission('fee_structure.delete'); // Add actual property check later
+                                        // Check if fee is being used by businesses (placeholder logic)
+                                        $canDelete = hasPermission('fee_structure.delete'); // Add actual business check later
                                         ?>
                                         
                                         <?php if ($canDelete): ?>
                                             <a href="javascript:void(0)" 
                                                class="action-btn delete"
-                                               onclick="confirmDelete(<?php echo $fee['fee_id']; ?>, '<?php echo htmlspecialchars($fee['structure'] . ' - ' . $fee['property_use'], ENT_QUOTES); ?>')">
+                                               onclick="confirmDelete(<?php echo $fee['fee_id']; ?>, '<?php echo htmlspecialchars($fee['business_type'] . ' - ' . $fee['category'], ENT_QUOTES); ?>')">
                                                 <i class="fas fa-trash"></i>
                                                 <span class="icon-delete" style="display: none;"></span>
                                                 Delete
                                             </a>
                                         <?php else: ?>
                                             <span class="action-btn protected" 
-                                                  title="Cannot delete: In use by properties">
+                                                  title="Cannot delete: In use by businesses">
                                                 <i class="fas fa-lock"></i>
                                                 Protected
                                             </span>
@@ -1830,7 +1824,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         </tbody>
                     </table>
 
-                    <!-- ENHANCED Pagination Controls -->
+                    <!-- Pagination Controls -->
                     <?php if ($totalPages > 1): ?>
                         <div class="pagination-controls">
                             <div class="pagination-info">
@@ -1929,7 +1923,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                                     </span>
                                 <?php endif; ?>
                                 
-                                <!-- ENHANCED Quick Jump -->
+                                <!-- Quick Jump -->
                                 <div class="quick-jump">
                                     <span>Go to page:</span>
                                     <input type="number" id="quickJumpPage" min="1" max="<?php echo $totalPages; ?>" 
@@ -1960,7 +1954,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             }, 100);
         });
 
-        // ENHANCED: Pagination functions with proper URL handling
+        // Pagination functions with proper URL handling
         function changeItemsPerPage(value) {
             const url = new URL(window.location);
             url.searchParams.set('items_per_page', value);
@@ -2081,7 +2075,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         Are you sure you want to ${action} <strong>"${feeName}"</strong>?
                     </p>
                     <p style="margin: 0 0 30px 0; color: #64748b; font-size: 0.9rem;">
-                        ${isActive ? 'This will prevent new properties from using this fee structure.' : 'This will make the fee structure available for new properties.'}
+                        ${isActive ? 'This will prevent new businesses from using this fee structure.' : 'This will make the fee structure available for new businesses.'}
                     </p>
                     
                     <div style="display: flex; gap: 15px; justify-content: center;">
@@ -2205,86 +2199,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             
             backdrop.addEventListener('click', function(e) {
                 if (e.target === backdrop) closeDeleteModal();
-            });
-        }
-
-        // Coming soon modal
-        function showComingSoon(feature) {
-            const backdrop = document.createElement('div');
-            backdrop.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 10000;
-                display: flex; align-items: center; justify-content: center;
-                animation: fadeIn 0.3s ease; cursor: pointer;
-            `;
-            
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white; padding: 50px 40px; border-radius: 25px; text-align: center;
-                box-shadow: 0 25px 80px rgba(0,0,0,0.4); max-width: 450px; width: 90%;
-                animation: modalSlideIn 0.4s ease; cursor: default; position: relative; overflow: hidden;
-            `;
-            
-            modal.innerHTML = `
-                <div style="position: absolute; top: -50%; right: -50%; width: 200%; height: 200%;
-                    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-                    animation: rotate 20s linear infinite; pointer-events: none;"></div>
-                
-                <div style="position: relative; z-index: 2;">
-                    <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2);
-                        border-radius: 50%; display: flex; align-items: center; justify-content: center;
-                        margin: 0 auto 25px; animation: bounce 2s ease-in-out infinite;">
-                        <i class="fas fa-rocket" style="font-size: 2.5rem; color: white;"></i>
-                        <span style="font-size: 2.5rem; display: none;">🚀</span>
-                    </div>
-                    
-                    <h3 style="margin: 0 0 15px 0; font-weight: 700; font-size: 1.8rem;
-                        text-shadow: 0 2px 4px rgba(0,0,0,0.3);">${feature}</h3>
-                    
-                    <p style="margin: 0 0 30px 0; opacity: 0.9; font-size: 1.1rem; line-height: 1.6;">
-                        This amazing feature is coming soon! 🎉<br>We're working hard to bring you the best experience.</p>
-                    
-                    <button onclick="closeModal()" style="background: rgba(255,255,255,0.2);
-                        border: 2px solid rgba(255,255,255,0.3); color: white; padding: 12px 30px;
-                        border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 1rem;
-                        transition: all 0.3s ease; backdrop-filter: blur(10px);">
-                        Awesome! Let's Go 🚀
-                    </button>
-                    
-                    <div style="margin-top: 20px; font-size: 0.9rem; opacity: 0.7;">
-                        Click anywhere outside to close</div>
-                </div>
-            `;
-            
-            backdrop.appendChild(modal);
-            document.body.appendChild(backdrop);
-            
-            if (!document.getElementById('modalAnimations')) {
-                const style = document.createElement('style');
-                style.id = 'modalAnimations';
-                style.textContent = `
-                    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                    @keyframes modalSlideIn { from { transform: translateY(-30px) scale(0.9); opacity: 0; } 
-                        to { transform: translateY(0) scale(1); opacity: 1; } }
-                    @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-                        40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
-                    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-                    @keyframes modalSlideOut { from { transform: translateY(0) scale(1); opacity: 1; }
-                        to { transform: translateY(-30px) scale(0.9); opacity: 0; } }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            window.closeModal = function() {
-                backdrop.style.animation = 'fadeOut 0.3s ease forwards';
-                modal.style.animation = 'modalSlideOut 0.3s ease forwards';
-                setTimeout(() => backdrop.remove(), 300);
-            };
-            
-            backdrop.addEventListener('click', function(e) {
-                if (e.target === backdrop) closeModal();
             });
         }
 

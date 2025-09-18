@@ -3,6 +3,7 @@
  * Public Portal - Search Bill for QUICKBILL 305
  * Allows users to search for their bills using account number
  * Updated with Outstanding Balance and Payment Tracking Features
+ * Modified to show balance only when bills exist
  */
 
 // Define application constant
@@ -179,14 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $account = $db->fetchRow($accountQuery, [$accountNumber]);
                     
                     if ($account) {
-                        // Calculate remaining balance and payment info
-                        $balanceInfo = calculateRemainingBalance($account['id'], 'Business', $account['amount_payable']);
-                        $account = array_merge($account, $balanceInfo);
-                        
-                        // Get payment history
-                        $paymentHistory = getPaymentHistory($account['id'], 'Business');
-                        
-                        // Get current year bills for this business - NO ADDITIONAL CALCULATION
+                        // First, get current year bills for this business
                         $billsQuery = "
                             SELECT 
                                 bill_id,
@@ -209,11 +203,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         $bills = $db->fetchAll($billsQuery, [$account['id']]);
                         
+                        // Only calculate balance and payment info if bills exist
+                        if (!empty($bills)) {
+                            // Calculate remaining balance and payment info
+                            $balanceInfo = calculateRemainingBalance($account['id'], 'Business', $account['amount_payable']);
+                            $account = array_merge($account, $balanceInfo);
+                            
+                            // Get payment history
+                            $paymentHistory = getPaymentHistory($account['id'], 'Business');
+                        } else {
+                            // No bills exist - set default balance info
+                            $account['total_paid'] = 0;
+                            $account['remaining_balance'] = 0;
+                            $account['payment_percentage'] = 0;
+                            $paymentHistory = [];
+                        }
+                        
                         $searchResults = [
                             'account' => $account,
                             'bills' => $bills,
                             'payment_history' => $paymentHistory,
-                            'account_type' => 'Business'
+                            'account_type' => 'Business',
+                            'has_bills' => !empty($bills)
                         ];
                         
                         // Log successful search
@@ -223,8 +234,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'business_name' => $account['name'],
                                 'account_number' => $accountNumber,
                                 'bills_count' => count($bills),
-                                'remaining_balance' => $account['remaining_balance'],
-                                'payment_percentage' => $account['payment_percentage']
+                                'has_bills' => !empty($bills),
+                                'remaining_balance' => $account['remaining_balance'] ?? 0,
+                                'payment_percentage' => $account['payment_percentage'] ?? 0
                             ]
                         );
                         
@@ -273,14 +285,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $account = $db->fetchRow($accountQuery, [$accountNumber]);
                     
                     if ($account) {
-                        // Calculate remaining balance and payment info
-                        $balanceInfo = calculateRemainingBalance($account['id'], 'Property', $account['amount_payable']);
-                        $account = array_merge($account, $balanceInfo);
-                        
-                        // Get payment history
-                        $paymentHistory = getPaymentHistory($account['id'], 'Property');
-                        
-                        // Get current year bills for this property - NO ADDITIONAL CALCULATION
+                        // First, get current year bills for this property
                         $billsQuery = "
                             SELECT 
                                 bill_id,
@@ -303,11 +308,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         $bills = $db->fetchAll($billsQuery, [$account['id']]);
                         
+                        // Only calculate balance and payment info if bills exist
+                        if (!empty($bills)) {
+                            // Calculate remaining balance and payment info
+                            $balanceInfo = calculateRemainingBalance($account['id'], 'Property', $account['amount_payable']);
+                            $account = array_merge($account, $balanceInfo);
+                            
+                            // Get payment history
+                            $paymentHistory = getPaymentHistory($account['id'], 'Property');
+                        } else {
+                            // No bills exist - set default balance info
+                            $account['total_paid'] = 0;
+                            $account['remaining_balance'] = 0;
+                            $account['payment_percentage'] = 0;
+                            $paymentHistory = [];
+                        }
+                        
                         $searchResults = [
                             'account' => $account,
                             'bills' => $bills,
                             'payment_history' => $paymentHistory,
-                            'account_type' => 'Property'
+                            'account_type' => 'Property',
+                            'has_bills' => !empty($bills)
                         ];
                         
                         // Log successful search
@@ -317,8 +339,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'owner_name' => $account['name'],
                                 'account_number' => $accountNumber,
                                 'bills_count' => count($bills),
-                                'remaining_balance' => $account['remaining_balance'],
-                                'payment_percentage' => $account['payment_percentage']
+                                'has_bills' => !empty($bills),
+                                'remaining_balance' => $account['remaining_balance'] ?? 0,
+                                'payment_percentage' => $account['payment_percentage'] ?? 0
                             ]
                         );
                         
@@ -443,31 +466,44 @@ include 'header.php';
         <!-- Search Results Section -->
         <?php if ($searchResults): ?>
         <div class="results-section">
-            <!-- Outstanding Balance Alert -->
-            <?php if ($searchResults['account']['remaining_balance'] > 0): ?>
-            <div class="balance-alert balance-outstanding">
-                <div class="alert-icon">⚠️</div>
-                <div class="alert-content">
-                    <h3>Outstanding Balance</h3>
-                    <div class="alert-amount">₵ <?php echo number_format($searchResults['account']['remaining_balance'], 2); ?></div>
-                    <p>You have an outstanding balance that needs to be paid</p>
+            
+            <!-- Only show balance alert if bills exist -->
+            <?php if ($searchResults['has_bills']): ?>
+                <!-- Outstanding Balance Alert -->
+                <?php if ($searchResults['account']['remaining_balance'] > 0): ?>
+                <div class="balance-alert balance-outstanding">
+                    <div class="alert-icon">⚠️</div>
+                    <div class="alert-content">
+                        <h3>Outstanding Balance</h3>
+                        <div class="alert-amount">₵ <?php echo number_format($searchResults['account']['remaining_balance'], 2); ?></div>
+                        <p>You have an outstanding balance that needs to be paid</p>
+                    </div>
+                    <div class="alert-action">
+                        <a href="#bills-section" class="btn btn-warning btn-pulse">
+                            <i class="fas fa-credit-card"></i>
+                            Pay Now
+                        </a>
+                    </div>
                 </div>
-                <div class="alert-action">
-                    <a href="#bills-section" class="btn btn-warning btn-pulse">
-                        <i class="fas fa-credit-card"></i>
-                        Pay Now
-                    </a>
+                <?php else: ?>
+                <div class="balance-alert balance-cleared">
+                    <div class="alert-icon">✅</div>
+                    <div class="alert-content">
+                        <h3>Account Fully Paid</h3>
+                        <div class="alert-amount">₵ 0.00</div>
+                        <p>Congratulations! Your account has no outstanding balance</p>
+                    </div>
                 </div>
-            </div>
+                <?php endif; ?>
             <?php else: ?>
-            <div class="balance-alert balance-cleared">
-                <div class="alert-icon">✅</div>
-                <div class="alert-content">
-                    <h3>Account Fully Paid</h3>
-                    <div class="alert-amount">₵ 0.00</div>
-                    <p>Congratulations! Your account has no outstanding balance</p>
+                <!-- No Bills Alert -->
+                <div class="balance-alert no-bills-alert">
+                    <div class="alert-icon">📋</div>
+                    <div class="alert-content">
+                        <h3>Account Registered</h3>
+                        <p>Your account is registered but no bills have been generated yet</p>
+                    </div>
                 </div>
-            </div>
             <?php endif; ?>
             
             <!-- Account Information -->
@@ -494,15 +530,42 @@ include 'header.php';
                                 <i class="fas fa-map-marker-alt"></i>
                                 <?php echo htmlspecialchars($searchResults['account']['zone_name'] ?? 'N/A'); ?>
                             </span>
+                            <?php if ($searchResults['account_type'] === 'Business'): ?>
+                            <span class="meta-item">
+                                <i class="fas fa-building"></i>
+                                <?php echo htmlspecialchars($searchResults['account']['type']); ?>
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-tag"></i>
+                                <?php echo htmlspecialchars($searchResults['account']['category']); ?>
+                            </span>
+                            <?php else: ?>
+                            <span class="meta-item">
+                                <i class="fas fa-home"></i>
+                                <?php echo htmlspecialchars($searchResults['account']['type']); ?> (<?php echo htmlspecialchars($searchResults['account']['category']); ?>)
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-door-closed"></i>
+                                <?php echo $searchResults['account']['number_of_rooms']; ?> rooms
+                            </span>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div class="account-status">
+                        <?php if ($searchResults['has_bills']): ?>
                         <span class="status-badge <?php echo $searchResults['account']['remaining_balance'] > 0 ? 'outstanding' : 'paid'; ?>">
                             <?php echo $searchResults['account']['remaining_balance'] > 0 ? 'Outstanding' : 'Paid Up'; ?>
                         </span>
+                        <?php else: ?>
+                        <span class="status-badge active">
+                            Registered
+                        </span>
+                        <?php endif; ?>
                     </div>
                 </div>
                 
+                <!-- Only show account summary if bills exist -->
+                <?php if ($searchResults['has_bills']): ?>
                 <div class="account-summary">
                     <div class="summary-item">
                         <div class="summary-label">Total Amount Payable</div>
@@ -532,16 +595,82 @@ include 'header.php';
                         </div>
                     </div>
                 </div>
+                <?php else: ?>
+                <!-- Basic account info when no bills exist -->
+                <div class="account-basic-info">
+                    <div class="basic-info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Registration Date</div>
+                            <div class="info-value">
+                                <i class="fas fa-calendar-plus"></i>
+                                <?php echo date('M d, Y', strtotime($searchResults['account']['created_at'])); ?>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Account Status</div>
+                            <div class="info-value">
+                                <i class="fas fa-check-circle"></i>
+                                Active & Registered
+                            </div>
+                        </div>
+                        <?php if ($searchResults['account_type'] === 'Business'): ?>
+                        <div class="info-item">
+                            <div class="info-label">Business Type</div>
+                            <div class="info-value">
+                                <i class="fas fa-briefcase"></i>
+                                <?php echo htmlspecialchars($searchResults['account']['type']); ?>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Category</div>
+                            <div class="info-value">
+                                <i class="fas fa-layer-group"></i>
+                                <?php echo htmlspecialchars($searchResults['account']['category']); ?>
+                            </div>
+                        </div>
+                        <?php else: ?>
+                        <div class="info-item">
+                            <div class="info-label">Property Structure</div>
+                            <div class="info-value">
+                                <i class="fas fa-building"></i>
+                                <?php echo htmlspecialchars($searchResults['account']['type']); ?>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Usage Type</div>
+                            <div class="info-value">
+                                <i class="fas fa-home"></i>
+                                <?php echo htmlspecialchars($searchResults['account']['category']); ?>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Number of Rooms</div>
+                            <div class="info-value">
+                                <i class="fas fa-door-closed"></i>
+                                <?php echo $searchResults['account']['number_of_rooms']; ?> rooms
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        <div class="info-item">
+                            <div class="info-label">Location</div>
+                            <div class="info-value location-text">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <?php echo htmlspecialchars($searchResults['account']['location'] ?? 'Not specified'); ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
             
-            <!-- Bills Section -->
+            <!-- Bills Section - Only show if bills exist -->
+            <?php if ($searchResults['has_bills']): ?>
             <div class="bills-section" id="bills-section">
                 <div class="bills-header">
                     <h3>📄 Available Bills (<?php echo date('Y'); ?>)</h3>
                     <p>Bills available for online payment</p>
                 </div>
                 
-                <?php if (!empty($searchResults['bills'])): ?>
                 <div class="bills-grid">
                     <?php foreach ($searchResults['bills'] as $bill): ?>
                     <div class="bill-card <?php echo $searchResults['account']['remaining_balance'] > 0 ? 'has-balance' : 'fully-paid'; ?>">
@@ -653,18 +782,33 @@ include 'header.php';
                     </div>
                     <?php endforeach; ?>
                 </div>
-                
-                <?php else: ?>
-                <div class="no-bills-message">
-                    <div class="no-bills-icon">📋</div>
-                    <h4>No Bills Found</h4>
-                    <p>No bills have been generated for this account in <?php echo date('Y'); ?>.</p>
-                    <small>Bills are typically generated on November 1st each year.</small>
-                </div>
-                <?php endif; ?>
             </div>
+            <?php else: ?>
+            <!-- No Bills Information Section -->
+            <div class="no-bills-info-section">
+                <div class="no-bills-info-card">
+                    <div class="no-bills-icon">📋</div>
+                    <h3>No Bills Generated Yet</h3>
+                    <p>Your account is registered and active, but no bills have been generated for the current year (<?php echo date('Y'); ?>).</p>
+                    
+                    <div class="billing-info">
+                        <h4>📅 When are bills generated?</h4>
+                        <ul>
+                            <li>Bills are typically generated on <strong>November 1st</strong> each year</li>
+                            <li>You will receive an SMS notification when your bill is ready</li>
+                            <li>Bills can be viewed and paid online through this portal</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="contact-info">
+                        <h4>📞 Need Help?</h4>
+                        <p>If you believe your bill should have been generated or have questions about your account, please contact our office.</p>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
             
-            <!-- Recent Payment History -->
+            <!-- Recent Payment History - Only show if payments exist -->
             <?php if (!empty($searchResults['payment_history'])): ?>
             <div class="payment-history-section">
                 <div class="section-header">
@@ -710,6 +854,7 @@ include 'header.php';
                     Search Another Account
                 </a>
                 
+                <?php if ($searchResults['has_bills']): ?>
                 <a href="verify_payment.php" class="btn btn-secondary">
                     <i class="fas fa-check-circle"></i>
                     Verify Payment
@@ -719,6 +864,12 @@ include 'header.php';
                 <a href="#bills-section" class="btn btn-warning btn-scroll">
                     <i class="fas fa-credit-card"></i>
                     Make Payment
+                </a>
+                <?php endif; ?>
+                <?php else: ?>
+                <a href="#help" class="btn btn-secondary" onclick="scrollToHelp()">
+                    <i class="fas fa-question-circle"></i>
+                    Get Help
                 </a>
                 <?php endif; ?>
             </div>
@@ -883,6 +1034,11 @@ include 'header.php';
 .balance-alert.balance-cleared {
     border-left: 5px solid #10b981;
     background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.balance-alert.no-bills-alert {
+    border-left: 5px solid #667eea;
+    background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%);
 }
 
 .alert-icon {
@@ -1230,6 +1386,129 @@ include 'header.php';
     color: #4a5568;
 }
 
+/* Account Basic Info (when no bills exist) */
+.account-basic-info {
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.basic-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.info-item {
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.info-label {
+    color: #718096;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.info-value i {
+    color: #667eea;
+}
+
+.location-text {
+    font-size: 0.9rem;
+    text-align: left;
+    justify-content: flex-start;
+}
+
+/* No Bills Info Section */
+.no-bills-info-section {
+    margin-bottom: 30px;
+}
+
+.no-bills-info-card {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border: 2px solid #bae6fd;
+}
+
+.no-bills-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.no-bills-info-card h3 {
+    color: #2d3748;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+.no-bills-info-card > p {
+    color: #4a5568;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+}
+
+.billing-info,
+.contact-info {
+    background: #f0f9ff;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.billing-info h4,
+.contact-info h4 {
+    color: #0369a1;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.billing-info ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.billing-info li {
+    color: #0369a1;
+    margin-bottom: 8px;
+    padding-left: 20px;
+    position: relative;
+    font-size: 0.95rem;
+}
+
+.billing-info li:before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #0369a1;
+    font-weight: bold;
+}
+
+.contact-info p {
+    color: #0369a1;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
 /* Bills Section */
 .bills-section {
     margin-bottom: 30px;
@@ -1444,33 +1723,6 @@ include 'header.php';
     gap: 5px;
 }
 
-.no-bills-message {
-    text-align: center;
-    padding: 60px 20px;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.no-bills-icon {
-    font-size: 4rem;
-    margin-bottom: 20px;
-}
-
-.no-bills-message h4 {
-    color: #2d3748;
-    margin-bottom: 10px;
-}
-
-.no-bills-message p {
-    color: #4a5568;
-    margin-bottom: 10px;
-}
-
-.no-bills-message small {
-    color: #718096;
-}
-
 /* Payment History Section */
 .payment-history-section {
     margin-bottom: 30px;
@@ -1669,7 +1921,8 @@ include 'header.php';
         gap: 10px;
     }
     
-    .account-summary {
+    .account-summary,
+    .basic-info-grid {
         grid-template-columns: 1fr;
     }
     
@@ -1730,7 +1983,7 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = true;
             
             // Show loading overlay
-            showLoading('Searching for your account and calculating outstanding balance...');
+            showLoading('Searching for your account...');
             
             // Re-enable button after 15 seconds (in case of issues)
             setTimeout(() => {
@@ -1770,7 +2023,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Outstanding balance notification
+    // Outstanding balance notification - only if bills exist
     const balanceAlert = document.querySelector('.balance-alert.balance-outstanding');
     if (balanceAlert) {
         // Add animation class after a delay
@@ -1789,6 +2042,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add copy functionality to account numbers
     addCopyFunctionality();
+    
+    // Handle no bills scenario
+    handleNoBillsScenario();
 });
 
 function initializeProgressBars() {
@@ -1826,6 +2082,20 @@ function addCopyFunctionality() {
             });
         });
     });
+}
+
+function handleNoBillsScenario() {
+    const noBillsAlert = document.querySelector('.no-bills-alert');
+    const noBillsInfo = document.querySelector('.no-bills-info-section');
+    
+    if (noBillsAlert && noBillsInfo) {
+        // Add special styling for no bills scenario
+        noBillsAlert.style.animation = 'slideUp 0.6s ease';
+        noBillsInfo.style.animation = 'slideUp 0.8s ease';
+        
+        // Show helpful information
+        console.log('Account found but no bills generated - showing informational content');
+    }
 }
 
 function scrollToHelp() {
@@ -1928,7 +2198,7 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Enhanced balance checking for real-time updates
+// Enhanced balance checking for accounts with bills
 function checkBalanceUpdates() {
     // This could be extended to periodically check for balance updates
     const outstandingElements = document.querySelectorAll('.summary-value.outstanding, .balance-amount');
@@ -1941,10 +2211,13 @@ function checkBalanceUpdates() {
     });
 }
 
-// Initialize balance checking
-setTimeout(checkBalanceUpdates, 2000);
+// Initialize balance checking only if bills exist
+const hasBills = document.querySelector('.bills-section');
+if (hasBills) {
+    setTimeout(checkBalanceUpdates, 2000);
+}
 
-console.log('✅ Bill search page with outstanding balance tracking initialized successfully (Fixed)');
+console.log('✅ Updated bill search page with conditional balance display initialized successfully');
 </script>
 
 <?php include 'footer.php'; ?>
