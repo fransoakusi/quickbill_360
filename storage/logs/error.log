@@ -9168,3 +9168,16 @@ Stack trace:
 [02-Sep-2025 10:24:48 Africa/Accra] Database Connection Error: SQLSTATE[HY000] [2006] MySQL server has gone away
 [02-Sep-2025 10:24:53 Africa/Accra] Database Connection Error: SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it
 [02-Sep-2025 11:50:25 Africa/Accra] Database Connection Error: SQLSTATE[HY000] [1049] Unknown database 'quickbill_305'
+[16-Sep-2025 11:47:47 Africa/Accra] Database Connection Error: SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it
+[04-Oct-2025 10:29:44 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'
+[04-Oct-2025 10:30:20 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'
+[04-Oct-2025 10:41:08 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'
+[04-Oct-2025 10:41:13 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'
+[04-Oct-2025 10:41:24 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'
+[04-Oct-2025 14:42:16 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'
+[04-Oct-2025 14:42:32 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'
+[04-Oct-2025 14:43:34 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'
+[04-Oct-2025 15:10:10 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'
+[04-Oct-2025 19:08:46 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'
+[04-Oct-2025 19:08:53 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'
+[04-Oct-2025 19:09:51 Africa/Accra] Database Execute Error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'account_number' in 'where clause'

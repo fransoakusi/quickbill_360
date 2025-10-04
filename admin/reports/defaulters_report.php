@@ -1744,15 +1744,11 @@ try {
                     </div>
                     <div class="billing-detail">
                         <div class="billing-detail-label">Bills Served</div>
-                       <div class="billing-detail-value">
-                            <?php echo number_format($servingStats['served_bills'] ?? 0); ?>
-                            </div>
+                        <div class="billing-detail-value"><?php echo number_format($servingStats['served_bills']); ?></div>
                     </div>
                     <div class="billing-detail">
                         <div class="billing-detail-label">Eligible for Check</div>
-                       <div class="billing-detail-value">
-                        <?php echo number_format($servingStats['eligible_for_defaulter_check'] ?? 0); ?>
-                        </div>
+                        <div class="billing-detail-value"><?php echo number_format($servingStats['eligible_for_defaulter_check']); ?></div>
                     </div>
                     <div class="billing-detail">
                         <div class="billing-detail-label">Avg Days Since Serving</div>

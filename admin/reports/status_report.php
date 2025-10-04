@@ -53,131 +53,11 @@ $zoneId = $_GET['zone_id'] ?? '';
 $status = $_GET['status'] ?? '';
 $export = $_GET['export'] ?? '';
 
-// Export function - Define before data processing
-function exportBillsStatusCSV($statusSummary, $statusBreakdown, $agingAnalysis, $detailedData, $dateFrom, $dateTo, $billType, $zoneId, $status, $zones) {
-    // Set headers for CSV download
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="Bills_Status_Report_' . date('Y-m-d_H-i-s') . '.csv"');
-    
-    // Create file pointer
-    $output = fopen('php://output', 'w');
-    
-    // Add UTF-8 BOM for Excel compatibility
-    fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-    
-    // Report header
-    fputcsv($output, ['QUICKBILL 305 - BILLS BY STATUS REPORT']);
-    fputcsv($output, ['Generated on: ' . date('F j, Y g:i A')]);
-    fputcsv($output, ['Report Period: ' . date('M j, Y', strtotime($dateFrom)) . ' to ' . date('M j, Y', strtotime($dateTo))]);
-    
-    // Filter information
-    $filterInfo = 'Filters Applied: ';
-    $filters = [];
-    if ($billType) $filters[] = 'Bill Type: ' . $billType;
-    if ($zoneId) {
-        $zoneName = 'Unknown Zone';
-        foreach ($zones as $zone) {
-            if ($zone['zone_id'] == $zoneId) {
-                $zoneName = $zone['zone_name'];
-                break;
-            }
-        }
-        $filters[] = 'Zone: ' . $zoneName;
-    }
-    if ($status) $filters[] = 'Status: ' . $status;
-    if (empty($filters)) $filters[] = 'None';
-    fputcsv($output, [$filterInfo . implode(', ', $filters)]);
-    fputcsv($output, []); // Empty line
-    
-    // Status Summary Section
-    fputcsv($output, ['STATUS SUMMARY']);
-    fputcsv($output, ['Status', 'Bills Count', 'Total Amount (GHS)', 'Average Amount (GHS)', 'Min Amount (GHS)', 'Max Amount (GHS)', 'Percentage of Total']);
-    
-    $totalAmount = array_sum(array_column($statusSummary, 'total_amount'));
-    foreach ($statusSummary as $statusData) {
-        $percentage = $totalAmount > 0 ? round(($statusData['total_amount'] / $totalAmount) * 100, 2) : 0;
-        fputcsv($output, [
-            $statusData['status'],
-            number_format($statusData['bills_count']),
-            number_format($statusData['total_amount'], 2),
-            number_format($statusData['average_amount'], 2),
-            number_format($statusData['min_amount'], 2),
-            number_format($statusData['max_amount'], 2),
-            $percentage . '%'
-        ]);
-    }
-    fputcsv($output, []); // Empty line
-    
-    // Status Breakdown by Bill Type
-    if (!empty($statusBreakdown)) {
-        fputcsv($output, ['STATUS BREAKDOWN BY BILL TYPE']);
-        fputcsv($output, ['Status', 'Bill Type', 'Bills Count', 'Total Amount (GHS)', 'Average Amount (GHS)']);
-        foreach ($statusBreakdown as $breakdown) {
-            fputcsv($output, [
-                $breakdown['status'],
-                $breakdown['bill_type'],
-                number_format($breakdown['bills_count']),
-                number_format($breakdown['total_amount'], 2),
-                number_format($breakdown['average_amount'], 2)
-            ]);
-        }
-        fputcsv($output, []); // Empty line
-    }
-    
-    // Aging Analysis
-    if (!empty($agingAnalysis)) {
-        fputcsv($output, ['AGING ANALYSIS (PENDING & OVERDUE BILLS)']);
-        fputcsv($output, ['Age Group', 'Bills Count', 'Total Amount (GHS)', 'Average Amount (GHS)']);
-        foreach ($agingAnalysis as $aging) {
-            fputcsv($output, [
-                $aging['age_group'],
-                number_format($aging['bills_count']),
-                number_format($aging['total_amount'], 2),
-                number_format($aging['average_amount'], 2)
-            ]);
-        }
-        fputcsv($output, []); // Empty line
-    }
-    
-    // Detailed Bill Data
-    if (!empty($detailedData)) {
-        fputcsv($output, ['DETAILED BILL STATUS DATA']);
-        fputcsv($output, [
-            'Bill Number', 'Payer Name', 'Account Number', 'Bill Type', 'Zone', 
-            'Amount Payable (GHS)', 'Total Paid (GHS)', 'Balance (GHS)', 'Status', 
-            'Age (Days)', 'Generated Date', 'Payment Count', 'Last Payment Date'
-        ]);
-        
-        foreach ($detailedData as $data) {
-            $balance = $data['amount_payable'] - $data['total_paid'];
-            fputcsv($output, [
-                $data['bill_number'],
-                $data['payer_name'] ?? 'Unknown',
-                $data['account_number'] ?? '',
-                $data['bill_type'],
-                $data['zone_name'] ?? 'N/A',
-                number_format($data['amount_payable'], 2),
-                number_format($data['total_paid'], 2),
-                number_format($balance, 2),
-                $data['status'],
-                $data['age_days'],
-                date('M j, Y', strtotime($data['generated_at'])),
-                $data['payment_count'],
-                $data['last_payment_date'] ? date('M j, Y', strtotime($data['last_payment_date'])) : 'N/A'
-            ]);
-        }
-    }
-    
-    fclose($output);
-    exit();
-}
-
 // Initialize variables
 $statusSummary = [];
 $statusBreakdown = [];
 $agingAnalysis = [];
 $detailedData = [];
-$zones = [];
 
 try {
     $db = new Database();
@@ -332,9 +212,12 @@ try {
     setFlashMessage('error', 'An error occurred while loading status data.');
 }
 
-// Handle Export Request - This MUST come after all data is loaded
-if ($export === 'excel' || $export === 'csv') {
-    exportBillsStatusCSV($statusSummary, $statusBreakdown, $agingAnalysis, $detailedData, $dateFrom, $dateTo, $billType, $zoneId, $status, $zones);
+// Handle Excel export
+if ($export === 'excel') {
+    // Here you would implement Excel export functionality
+    setFlashMessage('info', 'Excel export functionality will be implemented soon.');
+    header('Location: status_report.php?' . http_build_query($_GET));
+    exit();
 }
 
 // Get flash messages
@@ -649,7 +532,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             border-left: 4px solid #f59e0b;
         }
         
-        .status-card.partiallypaid {
+        .status-card.partial {
             border-left: 4px solid #3b82f6;
         }
         
@@ -692,7 +575,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             background: #f59e0b;
         }
         
-        .status-icon.partiallypaid {
+        .status-icon.partial {
             background: #3b82f6;
         }
         
@@ -968,18 +851,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             color: white;
         }
         
-        .btn-success {
-            background: #10b981;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #059669;
-            color: white;
-            text-decoration: none;
-            transform: translateY(-2px);
-        }
-        
         /* Alert */
         .alert {
             padding: 15px 20px;
@@ -1006,28 +877,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             background: #dbeafe;
             border: 1px solid #93c5fd;
             color: #1e40af;
-        }
-        
-        /* Export Info Alert */
-        .export-info {
-            background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
-            border: 1px solid #4fc3f7;
-            border-radius: 10px;
-            padding: 15px 20px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .export-info .info-icon {
-            color: #0277bd;
-            font-size: 20px;
-        }
-        
-        .export-info .info-text {
-            color: #01579b;
-            font-weight: 500;
         }
         
         /* Responsive */
@@ -1061,7 +910,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         
         /* Print Styles */
         @media print {
-            .top-nav, .filter-section, .header-actions, .export-info {
+            .top-nav, .filter-section, .header-actions {
                 display: none !important;
             }
             
@@ -1148,14 +997,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             </div>
         <?php endif; ?>
 
-        <!-- Export Info -->
-        <div class="export-info">
-            <i class="fas fa-info-circle info-icon"></i>
-            <div class="info-text">
-                <strong>Export Feature:</strong> Click "Export Report" to download a comprehensive CSV file containing all bill status data, summary statistics, aging analysis, and detailed records.
-            </div>
-        </div>
-
         <!-- Report Header -->
         <div class="report-header">
             <div class="header-content">
@@ -1179,10 +1020,10 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         <span class="icon-print" style="display: none;"></span>
                         Print Report
                     </button>
-                    <a href="status_report.php?<?php echo http_build_query(array_merge($_GET, ['export' => 'excel'])); ?>" class="btn btn-success">
+                    <a href="status_report.php?<?php echo http_build_query(array_merge($_GET, ['export' => 'excel'])); ?>" class="btn btn-primary">
                         <i class="fas fa-download"></i>
                         <span class="icon-download" style="display: none;"></span>
-                        Export Report
+                        Export Excel
                     </a>
                 </div>
             </div>
@@ -1365,7 +1206,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                     Detailed Bill Status (Last 200 records)
                 </div>
                 <div>
-                    <a href="status_report.php?<?php echo http_build_query(array_merge($_GET, ['export' => 'csv'])); ?>" class="btn btn-outline">
+                    <a href="#" onclick="exportToCSV()" class="btn btn-outline">
                         <i class="fas fa-download"></i>
                         Export CSV
                     </a>
@@ -1550,6 +1391,11 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 }
             });
             <?php endif; ?>
+        }
+
+        function exportToCSV() {
+            // This would implement CSV export functionality
+            alert('CSV export functionality will be implemented soon.');
         }
     </script>
 </body>

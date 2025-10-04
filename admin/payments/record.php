@@ -1,7 +1,7 @@
 <?php
 /**
  * Payment Management - Record Payment with Enhanced Confirmation
- * QUICKBILL 305 - Admin Panel - FINAL CLEAN VERSION
+ * QUICKBILL 305 - Admin Panel - FIXED VERSION
  */
 
 // Define application constant
@@ -48,7 +48,7 @@ $userDisplayName = getUserDisplayName($currentUser);
 // Add payment reference generator if missing
 if (!function_exists('generatePaymentReference')) {
     function generatePaymentReference() {
-        return 'PAY' . date('Y') . mt_rand(100000, 999999);
+        return 'PAY' . date('Ymd') . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
     }
 }
 
@@ -96,26 +96,6 @@ try {
             if ($accountData) {
                 writeLog("Business found: " . $accountData['business_name'], 'DEBUG');
                 
-                // Calculate remaining balance (outstanding amount after all payments)
-                $totalPaymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as total_paid
-                                      FROM payments p 
-                                      INNER JOIN bills b ON p.bill_id = b.bill_id 
-                                      WHERE b.bill_type = 'Business' AND b.reference_id = ? 
-                                      AND p.payment_status = 'Successful'";
-                $totalPaymentsResult = $db->fetchRow($totalPaymentsQuery, [$accountData['business_id']]);
-                $totalPaid = $totalPaymentsResult['total_paid'] ?? 0;
-                
-                // Get payment summary
-                $paymentSummary = $db->fetchRow("
-                    SELECT 
-                        COALESCE(SUM(CASE WHEN p.payment_status = 'Successful' THEN p.amount_paid ELSE 0 END), 0) as total_paid,
-                        COUNT(CASE WHEN p.payment_status = 'Successful' THEN 1 END) as successful_payments,
-                        COUNT(*) as total_transactions
-                    FROM payments p
-                    JOIN bills b ON p.bill_id = b.bill_id
-                    WHERE b.bill_type = 'Business' AND b.reference_id = ?
-                ", [$accountData['business_id']]);
-                
                 // Check if bill exists for current year
                 $currentYear = date('Y');
                 $billData = $db->fetchRow("
@@ -128,9 +108,23 @@ try {
                     $errors[] = "No bill found for this business account for the year {$currentYear}. Please generate bills first before recording payments.";
                     $accountData = null;
                 } else {
-                    writeLog("Bill found: " . $billData['bill_number'], 'DEBUG');
-                    // Calculate remaining balance: amount payable minus total successful payments
-                    $remainingBalance = max(0, $accountData['amount_payable'] - $totalPaid);
+                    writeLog("Bill found: " . $billData['bill_number'] . " with amount_payable: " . $billData['amount_payable'], 'DEBUG');
+                    
+                    // FIX: Use the bill's amount_payable directly - this is the correct remaining balance for the current year
+                    $remainingBalance = floatval($billData['amount_payable']);
+                    
+                    // Get payment summary for this account (all years)
+                    $paymentSummary = $db->fetchRow("
+                        SELECT 
+                            COALESCE(SUM(CASE WHEN p.payment_status = 'Successful' THEN p.amount_paid ELSE 0 END), 0) as total_paid,
+                            COUNT(CASE WHEN p.payment_status = 'Successful' THEN 1 END) as successful_payments,
+                            COUNT(*) as total_transactions
+                        FROM payments p
+                        JOIN bills b ON p.bill_id = b.bill_id
+                        WHERE b.bill_type = 'Business' AND b.reference_id = ?
+                    ", [$accountData['business_id']]);
+                    
+                    $totalPaid = $paymentSummary['total_paid'] ?? 0;
                 }
             }
             
@@ -139,35 +133,17 @@ try {
                 SELECT 
                     p.*,
                     z.zone_name,
+                    sz.sub_zone_name,
                     pfs.fee_per_room
                 FROM properties p
                 LEFT JOIN zones z ON p.zone_id = z.zone_id
+                LEFT JOIN sub_zones sz ON p.sub_zone_id = sz.sub_zone_id
                 LEFT JOIN property_fee_structure pfs ON p.structure = pfs.structure AND p.property_use = pfs.property_use
-                WHERE p.property_number = ?
-            ", [$accountNumber]);
+                WHERE p.property_number = ? OR p.account_number = ?
+            ", [$accountNumber, $accountNumber]);
             
             if ($accountData) {
                 writeLog("Property found: " . $accountData['owner_name'], 'DEBUG');
-                
-                // Calculate remaining balance (outstanding amount after all payments)
-                $totalPaymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as total_paid
-                                      FROM payments p 
-                                      INNER JOIN bills b ON p.bill_id = b.bill_id 
-                                      WHERE b.bill_type = 'Property' AND b.reference_id = ? 
-                                      AND p.payment_status = 'Successful'";
-                $totalPaymentsResult = $db->fetchRow($totalPaymentsQuery, [$accountData['property_id']]);
-                $totalPaid = $totalPaymentsResult['total_paid'] ?? 0;
-                
-                // Get payment summary
-                $paymentSummary = $db->fetchRow("
-                    SELECT 
-                        COALESCE(SUM(CASE WHEN p.payment_status = 'Successful' THEN p.amount_paid ELSE 0 END), 0) as total_paid,
-                        COUNT(CASE WHEN p.payment_status = 'Successful' THEN 1 END) as successful_payments,
-                        COUNT(*) as total_transactions
-                    FROM payments p
-                    JOIN bills b ON p.bill_id = b.bill_id
-                    WHERE b.bill_type = 'Property' AND b.reference_id = ?
-                ", [$accountData['property_id']]);
                 
                 // Check if bill exists for current year
                 $currentYear = date('Y');
@@ -181,9 +157,23 @@ try {
                     $errors[] = "No bill found for this property account for the year {$currentYear}. Please generate bills first before recording payments.";
                     $accountData = null;
                 } else {
-                    writeLog("Bill found: " . $billData['bill_number'], 'DEBUG');
-                    // Calculate remaining balance: amount payable minus total successful payments
-                    $remainingBalance = max(0, $accountData['amount_payable'] - $totalPaid);
+                    writeLog("Bill found: " . $billData['bill_number'] . " with amount_payable: " . $billData['amount_payable'], 'DEBUG');
+                    
+                    // FIX: Use the bill's amount_payable directly - this is the correct remaining balance for the current year
+                    $remainingBalance = floatval($billData['amount_payable']);
+                    
+                    // Get payment summary for this account (all years)
+                    $paymentSummary = $db->fetchRow("
+                        SELECT 
+                            COALESCE(SUM(CASE WHEN p.payment_status = 'Successful' THEN p.amount_paid ELSE 0 END), 0) as total_paid,
+                            COUNT(CASE WHEN p.payment_status = 'Successful' THEN 1 END) as successful_payments,
+                            COUNT(*) as total_transactions
+                        FROM payments p
+                        JOIN bills b ON p.bill_id = b.bill_id
+                        WHERE b.bill_type = 'Property' AND b.reference_id = ?
+                    ", [$accountData['property_id']]);
+                    
+                    $totalPaid = $paymentSummary['total_paid'] ?? 0;
                 }
             }
         }
@@ -194,7 +184,7 @@ try {
         } else if ($accountData && $billData) {
             $formData['account_number'] = $accountNumber;
             $formData['account_type'] = $accountType;
-            writeLog("Account search successful with valid bill", 'DEBUG');
+            writeLog("Account search successful with valid bill. Remaining balance: GHS " . $remainingBalance, 'DEBUG');
         }
     }
     
@@ -208,34 +198,20 @@ try {
             if ($accountType === 'Business') {
                 $accountData = $db->fetchRow("SELECT * FROM businesses WHERE account_number = ?", [$accountNumber]);
                 if ($accountData) {
-                    // Calculate remaining balance
-                    $totalPaymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as total_paid
-                                          FROM payments p 
-                                          INNER JOIN bills b ON p.bill_id = b.bill_id 
-                                          WHERE b.bill_type = 'Business' AND b.reference_id = ? 
-                                          AND p.payment_status = 'Successful'";
-                    $totalPaymentsResult = $db->fetchRow($totalPaymentsQuery, [$accountData['business_id']]);
-                    $totalPaid = $totalPaymentsResult['total_paid'] ?? 0;
-                    $remainingBalance = max(0, $accountData['amount_payable'] - $totalPaid);
-                    
                     $currentYear = date('Y');
                     $billData = $db->fetchRow("SELECT * FROM bills WHERE bill_type = 'Business' AND reference_id = ? AND billing_year = ?", [$accountData['business_id'], $currentYear]);
+                    if ($billData) {
+                        $remainingBalance = floatval($billData['amount_payable']);
+                    }
                 }
             } elseif ($accountType === 'Property') {
-                $accountData = $db->fetchRow("SELECT * FROM properties WHERE property_number = ?", [$accountNumber]);
+                $accountData = $db->fetchRow("SELECT * FROM properties WHERE property_number = ? OR account_number = ?", [$accountNumber, $accountNumber]);
                 if ($accountData) {
-                    // Calculate remaining balance
-                    $totalPaymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as total_paid
-                                          FROM payments p 
-                                          INNER JOIN bills b ON p.bill_id = b.bill_id 
-                                          WHERE b.bill_type = 'Property' AND b.reference_id = ? 
-                                          AND p.payment_status = 'Successful'";
-                    $totalPaymentsResult = $db->fetchRow($totalPaymentsQuery, [$accountData['property_id']]);
-                    $totalPaid = $totalPaymentsResult['total_paid'] ?? 0;
-                    $remainingBalance = max(0, $accountData['amount_payable'] - $totalPaid);
-                    
                     $currentYear = date('Y');
                     $billData = $db->fetchRow("SELECT * FROM bills WHERE bill_type = 'Property' AND reference_id = ? AND billing_year = ?", [$accountData['property_id'], $currentYear]);
+                    if ($billData) {
+                        $remainingBalance = floatval($billData['amount_payable']);
+                    }
                 }
             }
         }
@@ -337,6 +313,7 @@ try {
                     
                     // Update bill status
                     $newAmountPayable = floatval($billData['amount_payable']) - $amountPaid;
+                    $newAmountPayable = max(0, $newAmountPayable); // Ensure non-negative
                     $billStatus = $newAmountPayable <= 0 ? 'Paid' : ($newAmountPayable < floatval($billData['amount_payable']) ? 'Partially Paid' : 'Pending');
                     
                     $billUpdateResult = $db->execute("
@@ -352,6 +329,7 @@ try {
                     // Update account balance
                     if ($formData['account_type'] === 'Business') {
                         $newBusinessPayable = floatval($accountData['amount_payable']) - $amountPaid;
+                        $newBusinessPayable = max(0, $newBusinessPayable); // Ensure non-negative
                         $newPreviousPayments = floatval($accountData['previous_payments']) + $amountPaid;
                         
                         $accountUpdateResult = $db->execute("
@@ -365,6 +343,7 @@ try {
                         }
                     } else {
                         $newPropertyPayable = floatval($accountData['amount_payable']) - $amountPaid;
+                        $newPropertyPayable = max(0, $newPropertyPayable); // Ensure non-negative
                         $newPreviousPayments = floatval($accountData['previous_payments']) + $amountPaid;
                         
                         $accountUpdateResult = $db->execute("
@@ -394,8 +373,8 @@ try {
                             'payment_method' => $formData['payment_method'],
                             'payment_channel' => $formData['payment_channel'],
                             'transaction_id' => $formData['transaction_id'],
-                            'previous_balance' => $remainingBalance + $amountPaid,
-                            'new_balance' => max(0, $remainingBalance),
+                            'previous_balance' => $remainingBalance,
+                            'new_balance' => $newAmountPayable,
                             'bill_amount_payable_before' => $billData['amount_payable'],
                             'bill_amount_payable_after' => $newAmountPayable,
                             'bill_status_updated' => $billStatus,
@@ -450,19 +429,6 @@ try {
                     } catch (Exception $auditError) {
                         // Log audit failure but don't fail the payment
                         error_log("Failed to log payment audit: " . $auditError->getMessage());
-                        // Could also log this to database if needed
-                        try {
-                            $db->execute(
-                                "INSERT INTO system_logs (level, message, context, created_at) VALUES (?, ?, ?, NOW())",
-                                ['ERROR', 'Payment audit logging failed', json_encode([
-                                    'payment_id' => $paymentId,
-                                    'payment_reference' => $paymentReference,
-                                    'error' => $auditError->getMessage()
-                                ])]
-                            );
-                        } catch (Exception $logError) {
-                            // Final fallback - just continue with payment processing
-                        }
                     }
                     
                     // Log the action
@@ -2003,10 +1969,22 @@ try {
                                 </div>
                                 
                                 <div class="account-item outstanding-balance">
-                                    <div class="account-label">Outstanding Balance</div>
+                                    <div class="account-label">Current Bill Balance</div>
                                     <div class="account-value amount-value">GHS <?php echo number_format($remainingBalance, 2); ?></div>
                                 </div>
                             </div>
+                            
+                            <?php if ($paymentSummary && $paymentSummary['total_paid'] > 0): ?>
+                                <div style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.5); border-radius: 8px; border: 1px solid #93c5fd;">
+                                    <div style="font-size: 12px; color: #1e40af; margin-bottom: 8px; font-weight: 600;">
+                                        Payment History Summary
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                                        <span>Total Paid (All Years): <strong>GHS <?php echo number_format($paymentSummary['total_paid'], 2); ?></strong></span>
+                                        <span>Successful Payments: <strong><?php echo $paymentSummary['successful_payments']; ?></strong></span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -2275,7 +2253,7 @@ try {
                         
                         <div class="account-info-display">
                             <strong>${accountName}</strong> (${paymentData.accountNumber})<br>
-                            Outstanding Balance: ${outstandingBalance}
+                            Current Bill Balance: ${outstandingBalance}
                         </div>
                     </div>
                     

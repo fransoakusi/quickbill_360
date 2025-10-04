@@ -2,6 +2,7 @@
 /**
  * Billing Management - View Bill Details with Official Format
  * QUICKBILL 305 - Admin Panel
+ * Bill displays ORIGINAL amounts - Total Amount Due never changes
  */
 
 // Define application constant
@@ -63,6 +64,7 @@ $payerInfo = null;
 $payments = [];
 $qr_url = null;
 $assemblyName = 'Anloga District Assembly'; // Default fallback
+$originalAmountPayable = 0; // This will hold the ORIGINAL billed amount
 
 try {
     $db = new Database();
@@ -86,6 +88,19 @@ try {
         header('Location: index.php');
         exit();
     }
+    
+    // CRITICAL: Calculate ORIGINAL amount_payable (what was billed when bill was generated)
+    // The bills.amount_payable field gets reduced by payments via triggers
+    // To get the ORIGINAL amount, we add back all payments made to this bill
+    $totalPaymentsQuery = "SELECT COALESCE(SUM(amount_paid), 0) as total_paid 
+                          FROM payments 
+                          WHERE bill_id = ? AND payment_status = 'Successful'";
+    $totalPaymentsResult = $db->fetchRow($totalPaymentsQuery, [$billId]);
+    $totalPaidOnBill = floatval($totalPaymentsResult['total_paid'] ?? 0);
+    
+    // Original Amount = Current amount_payable + All payments made
+    // This gives us what was originally billed
+    $originalAmountPayable = floatval($bill['amount_payable']) + $totalPaidOnBill;
     
     // Get payer information based on bill type
     if ($bill['bill_type'] === 'Business') {
@@ -128,7 +143,7 @@ try {
         mkdir($qr_dir, 0755, true);
     }
     
-    // Create complete bill content for QR code
+    // Create complete bill content for QR code using ORIGINAL amounts
     $bill_type_full = $bill['bill_type'] === 'Business' ? 'Business License Bill' : 'Property Rate Bill';
     $bill_date = date('d/m/Y', strtotime($bill['generated_at']));
     
@@ -162,14 +177,14 @@ try {
     $qr_data .= "Bill Year: " . ($bill['billing_year'] ?? '') . "\n";
     $qr_data .= str_repeat("-", 40) . "\n";
     
-    // Financial breakdown
+    // Financial breakdown - ORIGINAL AMOUNTS (never change)
     $qr_data .= "FINANCIAL BREAKDOWN:\n";
     $qr_data .= "Old Fee: GHS " . number_format($bill['old_bill'] ?? 0, 2) . "\n";
     $qr_data .= "Previous Payments: GHS " . number_format($bill['previous_payments'] ?? 0, 2) . "\n";
     $qr_data .= "Arrears: GHS " . number_format($bill['arrears'] ?? 0, 2) . "\n";
     $qr_data .= "Current Rate: GHS " . number_format($bill['current_bill'] ?? 0, 2) . "\n";
     $qr_data .= str_repeat("-", 40) . "\n";
-    $qr_data .= "TOTAL AMOUNT DUE: GHS " . number_format($bill['amount_payable'] ?? 0, 2) . "\n";
+    $qr_data .= "TOTAL AMOUNT DUE: GHS " . number_format($originalAmountPayable, 2) . "\n";
     $qr_data .= str_repeat("=", 40) . "\n\n";
     
     $qr_data .= "PAYMENT INSTRUCTIONS:\n";
@@ -187,11 +202,11 @@ try {
         try {
             $options = new QROptions([
                 'outputType' => ChillerlanQRCode::OUTPUT_IMAGE_PNG,
-                'eccLevel' => ChillerlanQRCode::ECC_M, // Medium error correction for better reliability
+                'eccLevel' => ChillerlanQRCode::ECC_M,
                 'imageBase64' => false,
-                'scale' => 3, // Slightly smaller scale to accommodate more data
+                'scale' => 3,
                 'imageTransparent' => false,
-                'quietzoneSize' => 2, // Add quiet zone for better scanning
+                'quietzoneSize' => 2,
             ]);
 
             if (file_exists($qr_file)) {
@@ -612,6 +627,12 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             color: #991b1b;
         }
         
+        .alert-info {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            color: #1e3a8a;
+        }
+        
         /* Official Bill Container */
         .bill-container {
             background: white;
@@ -636,7 +657,41 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             box-sizing: border-box;
         }
         
-        /* Watermark Styles - Using HTML elements for better print support */
+        /* Bill Notice Banner */
+        .bill-notice {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        .bill-notice i {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .bill-notice-content {
+            flex: 1;
+        }
+        
+        .bill-notice-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .bill-notice-text {
+            font-size: 14px;
+            opacity: 0.95;
+            line-height: 1.4;
+        }
+        
+        /* Watermark Styles */
         .watermark {
             position: absolute;
             font-size: 65px;
@@ -1139,7 +1194,8 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             .sidebar,
             .breadcrumb-nav,
             .bill-actions,
-            .payment-history {
+            .payment-history,
+            .bill-notice {
                 display: none !important;
             }
             
@@ -1180,7 +1236,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 font-size: 11px;
             }
             
-            /* Enhanced watermark visibility for print */
             .watermark {
                 color: rgba(0,0,0,0.12) !important;
                 opacity: 1 !important;
@@ -1189,7 +1244,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 font-size: 60px !important;
             }
             
-            /* Ensure watermarks print */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -1332,10 +1386,9 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
     </div>
 
     <div class="container-layout">
-        <!-- Sidebar -->
+        <!-- Sidebar - (Sidebar content remains exactly the same as before) -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-content">
-                <!-- Dashboard -->
                 <div class="nav-section">
                     <div class="nav-item">
                         <a href="../index.php" class="nav-link">
@@ -1348,7 +1401,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                     </div>
                 </div>
                 
-                <!-- Core Management -->
                 <div class="nav-section">
                     <div class="nav-title">Core Management</div>
                     <div class="nav-item">
@@ -1389,7 +1441,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                     </div>
                 </div>
                 
-                <!-- Billing & Payments -->
                 <div class="nav-section">
                     <div class="nav-title">Billing & Payments</div>
                     <div class="nav-item">
@@ -1421,7 +1472,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                     </div>
                 </div>
                 
-                <!-- Reports & System -->
                 <div class="nav-section">
                     <div class="nav-title">Reports & System</div>
                     <div class="nav-item">
@@ -1477,6 +1527,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                     </div>
                 <?php endif; ?>
 
+
                 <!-- Action Buttons -->
                 <div class="bill-actions">
                     <div class="action-buttons">
@@ -1507,7 +1558,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                 <!-- Official Bill Container -->
                 <div class="bill-container">
                     <div class="bill-wrapper">
-                        <!-- Multiple Watermarks using HTML elements for better print support -->
+                        <!-- Watermarks -->
                         <div class="watermark watermark-top-left">AnDA</div>
                         <div class="watermark watermark-center">AnDA</div>
                         <div class="watermark watermark-bottom-right">AnDA</div>
@@ -1515,7 +1566,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         <div class="watermark watermark-bottom-left">AnDA</div>
                         
                         <!-- Bill Header -->
-                        <div class="bill-header">
+                         <div class="bill-header">
                             <img src="../../assets/images/download.png" alt="<?php echo htmlspecialchars($assemblyName); ?> Logo" class="bill-logo">
                             <div class="bill-header-text">
                                 <h1><?php echo htmlspecialchars($assemblyName); ?></h1>
@@ -1560,7 +1611,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                                     <p><strong>Owner:</strong> <?php echo htmlspecialchars($payerInfo['owner_name'] ?? ($payerInfo['business_name'] ?? '')); ?></p>
                                     <p><strong><?php echo $bill['bill_type'] === 'Business' ? 'Acct#' : 'Property#'; ?>:</strong> <?php echo htmlspecialchars($bill['bill_type'] === 'Business' ? ($payerInfo['account_number'] ?? '') : ($payerInfo['property_number'] ?? '')); ?></p>
                                     <p><strong>Bill Year:</strong> <?php echo htmlspecialchars($bill['billing_year']); ?></p>
-                                    <p><strong>Total Amount Due:</strong> GHS <?php echo number_format($bill['amount_payable'], 2); ?></p>
+                                    <p><strong>Total Amount Due:</strong> GHS <?php echo number_format($originalAmountPayable, 2); ?></p>
                                 </div>
                                 <div style="overflow-x: auto;">
                                     <table class="bill-table">
@@ -1579,7 +1630,7 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                                                 <td>GHS <?php echo number_format($bill['previous_payments'], 2); ?></td>
                                                 <td>GHS <?php echo number_format($bill['arrears'], 2); ?></td>
                                                 <td>GHS <?php echo number_format($bill['current_bill'], 2); ?></td>
-                                                <td>GHS <?php echo number_format($bill['amount_payable'], 2); ?></td>
+                                                <td>GHS <?php echo number_format($originalAmountPayable, 2); ?></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -1661,13 +1712,11 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
     </div>
 
     <script>
-        // Check if Font Awesome loaded, if not show emoji icons
+        // Check if Font Awesome loaded
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
-                // Check if Font Awesome icons are working
                 const testIcon = document.querySelector('.fas.fa-bars');
                 if (!testIcon || getComputedStyle(testIcon, ':before').content === 'none') {
-                    // Font Awesome didn't load, show emoji fallbacks
                     document.querySelectorAll('.fas, .far').forEach(function(icon) {
                         icon.style.display = 'none';
                     });
@@ -1682,16 +1731,12 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('hidden');
-            
-            // Save state
-            const isHidden = sidebar.classList.contains('hidden');
-            localStorage.setItem('sidebarHidden', isHidden);
+            localStorage.setItem('sidebarHidden', sidebar.classList.contains('hidden'));
         }
 
         // Restore sidebar state
         document.addEventListener('DOMContentLoaded', function() {
-            const sidebarHidden = localStorage.getItem('sidebarHidden');
-            if (sidebarHidden === 'true') {
+            if (localStorage.getItem('sidebarHidden') === 'true') {
                 document.getElementById('sidebar').classList.add('hidden');
             }
         });
@@ -1700,7 +1745,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         function toggleUserDropdown() {
             const dropdown = document.getElementById('userDropdown');
             const profile = document.getElementById('userProfile');
-            
             dropdown.classList.toggle('show');
             profile.classList.toggle('active');
         }
@@ -1709,7 +1753,6 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         document.addEventListener('click', function(event) {
             const dropdown = document.getElementById('userDropdown');
             const profile = document.getElementById('userProfile');
-            
             if (!profile.contains(event.target)) {
                 dropdown.classList.remove('show');
                 profile.classList.remove('active');
@@ -1725,98 +1768,25 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
         });
 
         function printBill() {
-            // Create a new window for printing
             const printWindow = window.open('', '_blank');
-            
-            // Get the bill content
             const billContent = document.querySelector('.bill-container').innerHTML;
-            
-            // Get assembly name from PHP
             const assemblyName = <?php echo json_encode($assemblyName); ?>;
             
-            // Create print content with enhanced watermark support
             const printContent = `
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>Bill - <?php echo htmlspecialchars($bill['bill_number']); ?></title>
                     <style>
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            margin: 0; 
-                            padding: 20px; 
-                            background: white;
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                        .bill-wrapper {
-                            width: 100%;
-                            padding: 20px;
-                            position: relative;
-                            overflow: hidden;
-                            z-index: 1;
-                            background-color: #fff;
-                            box-sizing: border-box;
-                        }
-                        
-                        /* Enhanced watermark styles for printing */
-                        .watermark {
-                            position: absolute;
-                            font-size: 60px;
-                            font-weight: bold;
-                            font-family: Arial, Helvetica, sans-serif;
-                            color: rgba(0,0,0,0.12) !important;
-                            z-index: 0;
-                            pointer-events: none;
-                            opacity: 1 !important;
-                            transform: rotate(-45deg);
-                            user-select: none;
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                        
-                        .watermark-top-left {
-                            top: 15%;
-                            left: 15%;
-                            transform: translate(-50%, -50%) rotate(-45deg);
-                        }
-                        
-                        .watermark-center {
-                            top: 50%;
-                            left: 50%;
-                            transform: translate(-50%, -50%) rotate(-45deg);
-                        }
-                        
-                        .watermark-bottom-right {
-                            bottom: 15%;
-                            right: 15%;
-                            transform: translate(50%, 50%) rotate(-45deg);
-                        }
-                        
-                        .watermark-top-right {
-                            top: 20%;
-                            right: 20%;
-                            transform: translate(50%, -50%) rotate(-45deg);
-                        }
-                        
-                        .watermark-bottom-left {
-                            bottom: 20%;
-                            left: 20%;
-                            transform: translate(-50%, 50%) rotate(-45deg);
-                        }
-                        
-                        .bill-header {
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                            border-bottom: 1px solid #000;
-                            padding-bottom: 15px;
-                            position: relative;
-                            z-index: 2;
-                            margin-bottom: 20px;
-                            flex-wrap: wrap;
-                            gap: 15px;
-                        }
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .bill-wrapper { width: 100%; padding: 20px; position: relative; overflow: hidden; z-index: 1; background-color: #fff; box-sizing: border-box; }
+                        .watermark { position: absolute; font-size: 60px; font-weight: bold; font-family: Arial, Helvetica, sans-serif; color: rgba(0,0,0,0.12) !important; z-index: 0; pointer-events: none; opacity: 1 !important; transform: rotate(-45deg); user-select: none; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .watermark-top-left { top: 15%; left: 15%; transform: translate(-50%, -50%) rotate(-45deg); }
+                        .watermark-center { top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); }
+                        .watermark-bottom-right { bottom: 15%; right: 15%; transform: translate(50%, 50%) rotate(-45deg); }
+                        .watermark-top-right { top: 20%; right: 20%; transform: translate(50%, -50%) rotate(-45deg); }
+                        .watermark-bottom-left { bottom: 20%; left: 20%; transform: translate(-50%, 50%) rotate(-45deg); }
+                        .bill-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 15px; position: relative; z-index: 2; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
                         .bill-logo, .bill-logo-right { width: 80px; height: auto; z-index: 2; flex-shrink: 0; }
                         .bill-header-text { text-align: center; flex-grow: 1; z-index: 2; min-width: 200px; }
                         .bill-header-text h1 { margin: 0; font-size: 28px; font-weight: bold; color: #000; }
@@ -1836,32 +1806,8 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
                         .bill-qr-code img { width: 150px; height: 150px; border: 1px solid #ddd; }
                         .bill-footer { border-top: 1px solid #000; padding-top: 15px; text-align: center; font-size: 13px; position: relative; z-index: 2; color: #000; margin-top: 30px; clear: both; }
                         .bill-footer p { margin: 8px 0; line-height: 1.4; }
-                        
-                        /* Force print color adjustment */
-                        * {
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                        
-                        @media print { 
-                            .no-print { display: none; } 
-                            body { margin: 0; padding: 10px; }
-                            .bill-content { gap: 10px; }
-                            .bill-left-section, .bill-right-section { max-width: 48%; }
-                            
-                            /* Ensure watermarks are visible in print */
-                            .watermark {
-                                color: rgba(0,0,0,0.15) !important;
-                                opacity: 1 !important;
-                                -webkit-print-color-adjust: exact !important;
-                                print-color-adjust: exact !important;
-                            }
-                            
-                            .bill-logo, .bill-logo-right {
-                                width: 80px !important;
-                                height: auto !important;
-                            }
-                        }
+                        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        @media print { .no-print { display: none; } body { margin: 0; padding: 10px; } .bill-content { gap: 10px; } .bill-left-section, .bill-right-section { max-width: 48%; } .watermark { color: rgba(0,0,0,0.15) !important; opacity: 1 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .bill-logo, .bill-logo-right { width: 80px !important; height: auto !important; } }
                     </style>
                 </head>
                 <body>
@@ -1876,12 +1822,10 @@ $flashMessage = !empty($flashMessages) ? $flashMessages[0] : null;
             
             printWindow.document.write(printContent);
             printWindow.document.close();
-            
-            // Auto-print after a short delay to ensure content is loaded
-            setTimeout(() => {
-                printWindow.print();
-            }, 500);
+            setTimeout(() => { printWindow.print(); }, 500);
         }
+        
+        console.log('Bill displays ORIGINAL amount of GHS <?php echo number_format($originalAmountPayable, 2); ?> - Current balance: GHS <?php echo number_format($bill['amount_payable'], 2); ?>');
     </script>
 </body>
 </html>

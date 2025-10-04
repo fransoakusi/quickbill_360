@@ -2,8 +2,8 @@
 /**
  * Public Portal - Search Bill for QUICKBILL 305
  * Allows users to search for their bills using account number
- * Updated with Outstanding Balance and Payment Tracking Features
- * Modified to show balance only when bills exist
+ * Updated with CORRECT Outstanding Balance Calculation
+ * Balance is retrieved from current year's bill amount_payable field
  */
 
 // Define application constant
@@ -57,35 +57,74 @@ function logPublicActivity($action, $details = '') {
     }
 }
 
-// Calculate remaining balance after payments - ACCOUNT LEVEL ONLY
-function calculateRemainingBalance($accountId, $accountType, $totalAmountPayable) {
+// FIXED: Calculate remaining balance from current year's bill - CORRECT IMPLEMENTATION
+function calculateRemainingBalance($accountId, $accountType) {
     try {
         $db = new Database();
+        $currentYear = date('Y');
         
-        // Get total successful payments for this account
-        $paymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as total_paid
-                         FROM payments p 
-                         INNER JOIN bills b ON p.bill_id = b.bill_id 
-                         WHERE b.bill_type = ? AND b.reference_id = ? 
-                         AND p.payment_status = 'Successful'";
+        // Get current year's bill - the amount_payable field is the correct remaining balance
+        $billQuery = "SELECT bill_id, amount_payable, billing_year, status
+                     FROM bills 
+                     WHERE bill_type = ? AND reference_id = ? AND billing_year = ?
+                     ORDER BY generated_at DESC 
+                     LIMIT 1";
         
-        $paymentsResult = $db->fetchRow($paymentsQuery, [$accountType, $accountId]);
-        $totalPaid = $paymentsResult['total_paid'] ?? 0;
+        $currentBill = $db->fetchRow($billQuery, [$accountType, $accountId, $currentYear]);
         
-        // Calculate remaining balance
-        $remainingBalance = max(0, $totalAmountPayable - $totalPaid);
+        if ($currentBill) {
+            // The bill's amount_payable IS the remaining balance (updated by triggers when payments are made)
+            $remainingBalance = floatval($currentBill['amount_payable']);
+            
+            // Get total payments for this specific bill to show payment progress
+            $paymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as bill_payments
+                             FROM payments p 
+                             WHERE p.bill_id = ? AND p.payment_status = 'Successful'";
+            
+            $paymentsResult = $db->fetchRow($paymentsQuery, [$currentBill['bill_id']]);
+            $billPayments = floatval($paymentsResult['bill_payments'] ?? 0);
+            
+            // Get the original bill amount (before any payments)
+            // This is: current_bill + arrears (which was already calculated when bill was generated)
+            $originalAmount = $remainingBalance + $billPayments;
+            
+            // Calculate payment percentage based on the current year's bill
+            $paymentPercentage = $originalAmount > 0 ? ($billPayments / $originalAmount) * 100 : 0;
+            
+            return [
+                'has_current_bill' => true,
+                'current_bill_year' => $currentBill['billing_year'],
+                'bill_id' => $currentBill['bill_id'],
+                'bill_status' => $currentBill['status'],
+                'remaining_balance' => $remainingBalance,
+                'bill_payments' => $billPayments,
+                'original_bill_amount' => $originalAmount,
+                'payment_percentage' => $paymentPercentage
+            ];
+        }
         
+        // No current year bill exists
         return [
-            'total_paid' => $totalPaid,
-            'remaining_balance' => $remainingBalance,
-            'payment_percentage' => $totalAmountPayable > 0 ? ($totalPaid / $totalAmountPayable) * 100 : 100
+            'has_current_bill' => false,
+            'current_bill_year' => $currentYear,
+            'bill_id' => null,
+            'bill_status' => null,
+            'remaining_balance' => 0,
+            'bill_payments' => 0,
+            'original_bill_amount' => 0,
+            'payment_percentage' => 0
         ];
         
     } catch (Exception $e) {
         writeLog("Error calculating remaining balance: " . $e->getMessage(), 'ERROR');
         return [
-            'total_paid' => 0,
-            'remaining_balance' => $totalAmountPayable,
+            'has_current_bill' => false,
+            'current_bill_year' => date('Y'),
+            'bill_id' => null,
+            'bill_status' => null,
+            'remaining_balance' => 0,
+            'bill_payments' => 0,
+            'original_bill_amount' => 0,
             'payment_percentage' => 0
         ];
     }
@@ -161,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             b.business_type as type,
                             b.category,
                             b.exact_location as location,
-                            b.amount_payable,
+                            b.amount_payable as account_amount_payable,
                             b.old_bill,
                             b.previous_payments,
                             b.arrears,
@@ -180,7 +219,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $account = $db->fetchRow($accountQuery, [$accountNumber]);
                     
                     if ($account) {
-                        // First, get current year bills for this business
+                        // Get current year bills for this business
+                        $currentYear = date('Y');
                         $billsQuery = "
                             SELECT 
                                 bill_id,
@@ -197,27 +237,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             FROM bills 
                             WHERE bill_type = 'Business' 
                             AND reference_id = ? 
-                            AND YEAR(generated_at) = YEAR(CURDATE())
+                            AND billing_year = ?
                             ORDER BY generated_at DESC
                         ";
                         
-                        $bills = $db->fetchAll($billsQuery, [$account['id']]);
+                        $bills = $db->fetchAll($billsQuery, [$account['id'], $currentYear]);
                         
-                        // Only calculate balance and payment info if bills exist
+                        // Calculate CORRECT remaining balance using the FIXED function
+                        $balanceInfo = calculateRemainingBalance($account['id'], 'Business');
+                        
+                        // Only proceed if bills exist
                         if (!empty($bills)) {
-                            // Calculate remaining balance and payment info
-                            $balanceInfo = calculateRemainingBalance($account['id'], 'Business', $account['amount_payable']);
-                            $account = array_merge($account, $balanceInfo);
-                            
                             // Get payment history
                             $paymentHistory = getPaymentHistory($account['id'], 'Business');
                         } else {
-                            // No bills exist - set default balance info
-                            $account['total_paid'] = 0;
-                            $account['remaining_balance'] = 0;
-                            $account['payment_percentage'] = 0;
                             $paymentHistory = [];
                         }
+                        
+                        // Merge balance info with account
+                        $account = array_merge($account, $balanceInfo);
                         
                         $searchResults = [
                             'account' => $account,
@@ -235,8 +273,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'account_number' => $accountNumber,
                                 'bills_count' => count($bills),
                                 'has_bills' => !empty($bills),
-                                'remaining_balance' => $account['remaining_balance'] ?? 0,
-                                'payment_percentage' => $account['payment_percentage'] ?? 0
+                                'current_bill_year' => $balanceInfo['current_bill_year'],
+                                'remaining_balance' => $balanceInfo['remaining_balance'],
+                                'payment_percentage' => $balanceInfo['payment_percentage']
                             ]
                         );
                         
@@ -266,7 +305,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             p.property_use as category,
                             p.location,
                             p.number_of_rooms,
-                            p.amount_payable,
+                            p.amount_payable as account_amount_payable,
                             p.old_bill,
                             p.previous_payments,
                             p.arrears,
@@ -285,7 +324,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $account = $db->fetchRow($accountQuery, [$accountNumber]);
                     
                     if ($account) {
-                        // First, get current year bills for this property
+                        // Get current year bills for this property
+                        $currentYear = date('Y');
                         $billsQuery = "
                             SELECT 
                                 bill_id,
@@ -302,27 +342,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             FROM bills 
                             WHERE bill_type = 'Property' 
                             AND reference_id = ? 
-                            AND YEAR(generated_at) = YEAR(CURDATE())
+                            AND billing_year = ?
                             ORDER BY generated_at DESC
                         ";
                         
-                        $bills = $db->fetchAll($billsQuery, [$account['id']]);
+                        $bills = $db->fetchAll($billsQuery, [$account['id'], $currentYear]);
                         
-                        // Only calculate balance and payment info if bills exist
+                        // Calculate CORRECT remaining balance using the FIXED function
+                        $balanceInfo = calculateRemainingBalance($account['id'], 'Property');
+                        
+                        // Only proceed if bills exist
                         if (!empty($bills)) {
-                            // Calculate remaining balance and payment info
-                            $balanceInfo = calculateRemainingBalance($account['id'], 'Property', $account['amount_payable']);
-                            $account = array_merge($account, $balanceInfo);
-                            
                             // Get payment history
                             $paymentHistory = getPaymentHistory($account['id'], 'Property');
                         } else {
-                            // No bills exist - set default balance info
-                            $account['total_paid'] = 0;
-                            $account['remaining_balance'] = 0;
-                            $account['payment_percentage'] = 0;
                             $paymentHistory = [];
                         }
+                        
+                        // Merge balance info with account
+                        $account = array_merge($account, $balanceInfo);
                         
                         $searchResults = [
                             'account' => $account,
@@ -340,8 +378,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'account_number' => $accountNumber,
                                 'bills_count' => count($bills),
                                 'has_bills' => !empty($bills),
-                                'remaining_balance' => $account['remaining_balance'] ?? 0,
-                                'payment_percentage' => $account['payment_percentage'] ?? 0
+                                'current_bill_year' => $balanceInfo['current_bill_year'],
+                                'remaining_balance' => $balanceInfo['remaining_balance'],
+                                'payment_percentage' => $balanceInfo['payment_percentage']
                             ]
                         );
                         
@@ -455,7 +494,7 @@ include 'header.php';
                     <ul>
                         <li><strong>Account Number:</strong> Usually starts with BIZ (Business) or PROP (Property)</li>
                         <li><strong>Case Sensitive:</strong> Enter your account number exactly as shown on your bill</li>
-                        <li><strong>Outstanding Balance:</strong> View real-time remaining balance after payments</li>
+                        <li><strong>Outstanding Balance:</strong> View real-time remaining balance for <?php echo date('Y'); ?></li>
                         <li><strong>Need Help?</strong> Contact us if you can't find your account number</li>
                     </ul>
                 </div>
@@ -474,9 +513,9 @@ include 'header.php';
                 <div class="balance-alert balance-outstanding">
                     <div class="alert-icon">⚠️</div>
                     <div class="alert-content">
-                        <h3>Outstanding Balance</h3>
+                        <h3><?php echo $searchResults['account']['current_bill_year']; ?> Outstanding Balance</h3>
                         <div class="alert-amount">₵ <?php echo number_format($searchResults['account']['remaining_balance'], 2); ?></div>
-                        <p>You have an outstanding balance that needs to be paid</p>
+                        <p>Current year bill balance that needs to be paid</p>
                     </div>
                     <div class="alert-action">
                         <a href="#bills-section" class="btn btn-warning btn-pulse">
@@ -489,9 +528,9 @@ include 'header.php';
                 <div class="balance-alert balance-cleared">
                     <div class="alert-icon">✅</div>
                     <div class="alert-content">
-                        <h3>Account Fully Paid</h3>
+                        <h3><?php echo $searchResults['account']['current_bill_year']; ?> Bill Fully Paid</h3>
                         <div class="alert-amount">₵ 0.00</div>
-                        <p>Congratulations! Your account has no outstanding balance</p>
+                        <p>Congratulations! Your <?php echo $searchResults['account']['current_bill_year']; ?> bill has been fully settled</p>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -501,7 +540,7 @@ include 'header.php';
                     <div class="alert-icon">📋</div>
                     <div class="alert-content">
                         <h3>Account Registered</h3>
-                        <p>Your account is registered but no bills have been generated yet</p>
+                        <p>Your account is registered but no bills have been generated for <?php echo date('Y'); ?> yet</p>
                     </div>
                 </div>
             <?php endif; ?>
@@ -568,15 +607,15 @@ include 'header.php';
                 <?php if ($searchResults['has_bills']): ?>
                 <div class="account-summary">
                     <div class="summary-item">
-                        <div class="summary-label">Total Amount Payable</div>
+                        <div class="summary-label"><?php echo $searchResults['account']['current_bill_year']; ?> Bill Amount</div>
                         <div class="summary-value">
-                            ₵ <?php echo number_format($searchResults['account']['amount_payable'], 2); ?>
+                            ₵ <?php echo number_format($searchResults['account']['original_bill_amount'], 2); ?>
                         </div>
                     </div>
                     <div class="summary-item">
-                        <div class="summary-label">Total Paid</div>
+                        <div class="summary-label">Amount Paid</div>
                         <div class="summary-value paid">
-                            ₵ <?php echo number_format($searchResults['account']['total_paid'], 2); ?>
+                            ₵ <?php echo number_format($searchResults['account']['bill_payments'], 2); ?>
                         </div>
                     </div>
                     <div class="summary-item highlight">
@@ -667,7 +706,7 @@ include 'header.php';
             <?php if ($searchResults['has_bills']): ?>
             <div class="bills-section" id="bills-section">
                 <div class="bills-header">
-                    <h3>📄 Available Bills (<?php echo date('Y'); ?>)</h3>
+                    <h3>📄 Available Bills (<?php echo $searchResults['account']['current_bill_year']; ?>)</h3>
                     <p>Bills available for online payment</p>
                 </div>
                 
@@ -725,15 +764,10 @@ include 'header.php';
                                     <span>₵ <?php echo number_format($bill['current_bill'], 2); ?></span>
                                 </div>
                                 
-                                <div class="amount-row total">
-                                    <span><strong>Total Payable:</strong></span>
-                                    <span><strong>₵ <?php echo number_format($bill['amount_payable'], 2); ?></strong></span>
-                                </div>
-                                
-                                <?php if ($searchResults['account']['total_paid'] > 0): ?>
+                                <?php if ($searchResults['account']['bill_payments'] > 0): ?>
                                 <div class="amount-row paid-amount">
                                     <span><strong>Amount Paid:</strong></span>
-                                    <span class="paid"><strong>₵ <?php echo number_format($searchResults['account']['total_paid'], 2); ?></strong></span>
+                                    <span class="paid"><strong>₵ <?php echo number_format($searchResults['account']['bill_payments'], 2); ?></strong></span>
                                 </div>
                                 <?php endif; ?>
                                 
@@ -912,6 +946,7 @@ include 'header.php';
 </div>
 
 <style>
+/* All existing styles remain exactly the same - no changes to CSS */
 /* Search Page Styles */
 .search-page {
     min-height: 600px;
@@ -1955,6 +1990,7 @@ include 'header.php';
 </style>
 
 <script>
+// All JavaScript remains exactly the same - no changes needed
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('searchForm');
     const accountInput = document.getElementById('account_number');
@@ -2217,7 +2253,7 @@ if (hasBills) {
     setTimeout(checkBalanceUpdates, 2000);
 }
 
-console.log('✅ Updated bill search page with conditional balance display initialized successfully');
+console.log('✅ FIXED: Bill search page with correct balance calculation from current year bill initialized successfully');
 </script>
 
 <?php include 'footer.php'; ?>

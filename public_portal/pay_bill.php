@@ -1,8 +1,8 @@
 <?php
 /**
  * Public Portal - Pay Bill for QUICKBILL 305
- * Payment interface with outstanding balance tracking and PayStack integration
- * Updated with consistent account-level balance calculation
+ * Payment interface with FIXED outstanding balance tracking and PayStack integration
+ * Updated to use bill amount_payable as single source of truth
  */
 
 // Define application constant
@@ -63,44 +63,82 @@ function logPublicActivity($action, $details = '') {
 // Generate payment reference
 if (!function_exists('generatePaymentReference')) {
     function generatePaymentReference() {
-        return 'PAY' . date('YmdHis') . mt_rand(100, 999);
+        return 'PAY' . date('Ymd') . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
     }
 }
 
-// Calculate remaining balance for account - ACCOUNT LEVEL ONLY
-function calculateAccountRemainingBalance($accountId, $accountType, $totalAmountPayable) {
+// FIXED: Calculate remaining balance from current year's bill - CORRECT IMPLEMENTATION
+function calculateRemainingBalance($accountId, $accountType) {
     try {
         $db = new Database();
+        $currentYear = date('Y');
         
-        // Get total successful payments for this account
-        $paymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as total_paid
-                         FROM payments p 
-                         INNER JOIN bills b ON p.bill_id = b.bill_id 
-                         WHERE b.bill_type = ? AND b.reference_id = ? 
-                         AND p.payment_status = 'Successful'";
+        // Get current year's bill - the amount_payable field is the correct remaining balance
+        $billQuery = "SELECT bill_id, amount_payable, billing_year, status
+                     FROM bills 
+                     WHERE bill_type = ? AND reference_id = ? AND billing_year = ?
+                     ORDER BY generated_at DESC 
+                     LIMIT 1";
         
-        $paymentsResult = $db->fetchRow($paymentsQuery, [$accountType, $accountId]);
-        $totalPaid = $paymentsResult['total_paid'] ?? 0;
+        $currentBill = $db->fetchRow($billQuery, [$accountType, $accountId, $currentYear]);
         
-        // Calculate remaining balance
-        $remainingBalance = max(0, $totalAmountPayable - $totalPaid);
-        $isFullyPaid = $remainingBalance <= 0;
-        $paymentPercentage = $totalAmountPayable > 0 ? ($totalPaid / $totalAmountPayable) * 100 : 100;
+        if ($currentBill) {
+            // The bill's amount_payable IS the remaining balance (updated by triggers when payments are made)
+            $remainingBalance = floatval($currentBill['amount_payable']);
+            
+            // Get total payments for this specific bill to show payment progress
+            $paymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as bill_payments
+                             FROM payments p 
+                             WHERE p.bill_id = ? AND p.payment_status = 'Successful'";
+            
+            $paymentsResult = $db->fetchRow($paymentsQuery, [$currentBill['bill_id']]);
+            $billPayments = floatval($paymentsResult['bill_payments'] ?? 0);
+            
+            // Get the original bill amount (before any payments)
+            // This is: current_bill + arrears (which was already calculated when bill was generated)
+            $originalAmount = $remainingBalance + $billPayments;
+            
+            // Calculate payment percentage based on the current year's bill
+            $paymentPercentage = $originalAmount > 0 ? ($billPayments / $originalAmount) * 100 : 0;
+            
+            return [
+                'has_current_bill' => true,
+                'current_bill_year' => $currentBill['billing_year'],
+                'bill_id' => $currentBill['bill_id'],
+                'bill_status' => $currentBill['status'],
+                'remaining_balance' => $remainingBalance,
+                'bill_payments' => $billPayments,
+                'original_bill_amount' => $originalAmount,
+                'payment_percentage' => $paymentPercentage,
+                'is_fully_paid' => $remainingBalance <= 0
+            ];
+        }
         
+        // No current year bill exists
         return [
-            'total_paid' => $totalPaid,
-            'remaining_balance' => $remainingBalance,
-            'payment_percentage' => min($paymentPercentage, 100),
-            'is_fully_paid' => $isFullyPaid
+            'has_current_bill' => false,
+            'current_bill_year' => $currentYear,
+            'bill_id' => null,
+            'bill_status' => null,
+            'remaining_balance' => 0,
+            'bill_payments' => 0,
+            'original_bill_amount' => 0,
+            'payment_percentage' => 0,
+            'is_fully_paid' => true
         ];
         
     } catch (Exception $e) {
-        writeLog("Error calculating account remaining balance: " . $e->getMessage(), 'ERROR');
+        writeLog("Error calculating remaining balance: " . $e->getMessage(), 'ERROR');
         return [
-            'total_paid' => 0,
-            'remaining_balance' => $totalAmountPayable,
+            'has_current_bill' => false,
+            'current_bill_year' => date('Y'),
+            'bill_id' => null,
+            'bill_status' => null,
+            'remaining_balance' => 0,
+            'bill_payments' => 0,
+            'original_bill_amount' => 0,
             'payment_percentage' => 0,
-            'is_fully_paid' => false
+            'is_fully_paid' => true
         ];
     }
 }
@@ -110,7 +148,8 @@ function getRecentPaymentHistory($accountId, $accountType, $limit = 3) {
     try {
         $db = new Database();
         
-        $paymentsQuery = "SELECT p.payment_reference, p.amount_paid, p.payment_method, p.payment_status, p.payment_date
+        $paymentsQuery = "SELECT p.payment_reference, p.amount_paid, p.payment_method, p.payment_status, p.payment_date,
+                                 b.bill_number, b.billing_year
                          FROM payments p 
                          INNER JOIN bills b ON p.bill_id = b.bill_id 
                          WHERE b.bill_type = ? AND b.reference_id = ?
@@ -149,7 +188,7 @@ function verifyPaystackTransaction($reference, $secretKey) {
     return false;
 }
 
-// Process PayStack payment callback
+// FIXED: Process PayStack payment with correct balance updates
 function processPaystackPayment($paymentReference, $billId) {
     try {
         $db = new Database();
@@ -179,16 +218,10 @@ function processPaystackPayment($paymentReference, $billId) {
             return ['success' => true, 'message' => 'Payment already processed', 'payment_id' => $existingPayment['payment_id']];
         }
         
-        // Get bill details with account info
+        // Get bill details
         $billQuery = "
             SELECT 
-                b.bill_id,
-                b.bill_number,
-                b.bill_type,
-                b.reference_id,
-                b.billing_year,
-                b.amount_payable,
-                b.status,
+                b.*,
                 CASE 
                     WHEN b.bill_type = 'Business' THEN bs.business_name
                     WHEN b.bill_type = 'Property' THEN p.owner_name
@@ -196,11 +229,7 @@ function processPaystackPayment($paymentReference, $billId) {
                 CASE 
                     WHEN b.bill_type = 'Business' THEN bs.account_number
                     WHEN b.bill_type = 'Property' THEN p.property_number
-                END as account_number,
-                CASE 
-                    WHEN b.bill_type = 'Business' THEN bs.amount_payable
-                    WHEN b.bill_type = 'Property' THEN p.amount_payable
-                END as account_total_payable
+                END as account_number
             FROM bills b
             LEFT JOIN businesses bs ON b.bill_type = 'Business' AND b.reference_id = bs.business_id
             LEFT JOIN properties p ON b.bill_type = 'Property' AND b.reference_id = p.property_id
@@ -213,12 +242,12 @@ function processPaystackPayment($paymentReference, $billId) {
             throw new Exception('Bill not found');
         }
         
-        // Get current account balance info
-        $balanceInfo = calculateAccountRemainingBalance(
-            $billData['reference_id'], 
-            $billData['bill_type'], 
-            $billData['account_total_payable']
-        );
+        // Get current balance info BEFORE payment
+        $balanceBeforePayment = calculateRemainingBalance($billData['reference_id'], $billData['bill_type']);
+        
+        if (!$balanceBeforePayment['has_current_bill']) {
+            throw new Exception('No current year bill found for this account');
+        }
         
         // Start database transaction
         if (method_exists($db, 'beginTransaction')) {
@@ -231,7 +260,7 @@ function processPaystackPayment($paymentReference, $billId) {
         $amountPaid = $transactionData['amount'] / 100;
         
         // Validate payment amount doesn't exceed remaining balance
-        if ($amountPaid > $balanceInfo['remaining_balance']) {
+        if ($amountPaid > $balanceBeforePayment['remaining_balance']) {
             throw new Exception('Payment amount exceeds outstanding balance');
         }
         
@@ -261,7 +290,8 @@ function processPaystackPayment($paymentReference, $billId) {
             'authorization_code' => $transactionData['authorization']['authorization_code'] ?? '',
             'card_type' => $transactionData['authorization']['card_type'] ?? '',
             'bank' => $transactionData['authorization']['bank'] ?? '',
-            'last4' => $transactionData['authorization']['last4'] ?? ''
+            'last4' => $transactionData['authorization']['last4'] ?? '',
+            'balance_before' => $balanceBeforePayment['remaining_balance']
         ]);
         
         $result = $db->execute($paymentQuery, [
@@ -289,56 +319,29 @@ function processPaystackPayment($paymentReference, $billId) {
             $paymentId = $insertResult['id'] ?? null;
         }
         
-        // Update account balance - SINGLE SOURCE OF TRUTH
-        if ($billData['bill_type'] === 'Business') {
-            // Update business account
-            $businessData = $db->fetchRow("SELECT * FROM businesses WHERE business_id = ?", [$billData['reference_id']]);
-            if ($businessData) {
-                $newBusinessPayable = max(0, floatval($businessData['amount_payable']) - $amountPaid);
-                $newPreviousPayments = floatval($businessData['previous_payments']) + $amountPaid;
-                
-                $accountUpdateResult = $db->execute("
-                    UPDATE businesses 
-                    SET amount_payable = ?, previous_payments = ?
-                    WHERE business_id = ?
-                ", [$newBusinessPayable, $newPreviousPayments, $billData['reference_id']]);
-                
-                if (!$accountUpdateResult) {
-                    throw new Exception("Failed to update business account");
-                }
-            }
-        } else {
-            // Update property account
-            $propertyData = $db->fetchRow("SELECT * FROM properties WHERE property_id = ?", [$billData['reference_id']]);
-            if ($propertyData) {
-                $newPropertyPayable = max(0, floatval($propertyData['amount_payable']) - $amountPaid);
-                $newPreviousPayments = floatval($propertyData['previous_payments']) + $amountPaid;
-                
-                $accountUpdateResult = $db->execute("
-                    UPDATE properties 
-                    SET amount_payable = ?, previous_payments = ?
-                    WHERE property_id = ?
-                ", [$newPropertyPayable, $newPreviousPayments, $billData['reference_id']]);
-                
-                if (!$accountUpdateResult) {
-                    throw new Exception("Failed to update property account");
-                }
-            }
-        }
-        
-        // Update bill status (optional - for record keeping)
-        $newRemainingBalance = max(0, $balanceInfo['remaining_balance'] - $amountPaid);
-        $billStatus = $newRemainingBalance <= 0 ? 'Paid' : 'Partially Paid';
+        // CRITICAL: Update bill amount_payable - this is the single source of truth
+        $newBillBalance = max(0, floatval($billData['amount_payable']) - $amountPaid);
+        $newBillStatus = $newBillBalance <= 0 ? 'Paid' : 'Partially Paid';
         
         $billUpdateResult = $db->execute("
             UPDATE bills 
-            SET status = ?
+            SET amount_payable = ?, status = ?
             WHERE bill_id = ?
-        ", [$billStatus, $billId]);
+        ", [$newBillBalance, $newBillStatus, $billId]);
         
         if (!$billUpdateResult) {
-            throw new Exception("Failed to update bill status");
+            throw new Exception("Failed to update bill balance");
         }
+        
+        // Commit transaction
+        if (method_exists($db, 'commit')) {
+            $db->commit();
+        } else {
+            $db->execute("COMMIT");
+        }
+        
+        // Get balance info AFTER payment for logging
+        $balanceAfterPayment = calculateRemainingBalance($billData['reference_id'], $billData['bill_type']);
         
         // Log the action
         logPublicActivity(
@@ -348,10 +351,14 @@ function processPaystackPayment($paymentReference, $billId) {
                 'paystack_reference' => $paymentReference,
                 'amount' => $amountPaid,
                 'bill_number' => $billData['bill_number'],
+                'bill_id' => $billId,
                 'account_number' => $billData['account_number'],
                 'account_name' => $billData['account_name'],
-                'remaining_balance_before' => $balanceInfo['remaining_balance'],
-                'remaining_balance_after' => $newRemainingBalance,
+                'balance_before' => $balanceBeforePayment['remaining_balance'],
+                'balance_after' => $balanceAfterPayment['remaining_balance'],
+                'payment_percentage_before' => $balanceBeforePayment['payment_percentage'],
+                'payment_percentage_after' => $balanceAfterPayment['payment_percentage'],
+                'fully_paid' => $balanceAfterPayment['is_fully_paid'],
                 'payer_email' => $payerEmail,
                 'payer_phone' => $payerPhone,
                 'payment_method' => 'PayStack',
@@ -359,20 +366,15 @@ function processPaystackPayment($paymentReference, $billId) {
             ]
         );
         
-        // Commit transaction
-        if (method_exists($db, 'commit')) {
-            $db->commit();
-        } else {
-            $db->execute("COMMIT");
-        }
-        
-        writeLog("PayStack payment processed successfully: {$internalReference} for bill {$billData['bill_number']}", 'INFO');
+        writeLog("PayStack payment processed successfully: {$internalReference} for bill {$billData['bill_number']}, New balance: {$balanceAfterPayment['remaining_balance']}", 'INFO');
         
         return [
             'success' => true, 
             'message' => 'Payment processed successfully', 
             'payment_id' => $paymentId,
-            'internal_reference' => $internalReference
+            'internal_reference' => $internalReference,
+            'balance_after' => $balanceAfterPayment['remaining_balance'],
+            'fully_paid' => $balanceAfterPayment['is_fully_paid']
         ];
         
     } catch (Exception $e) {
@@ -394,7 +396,7 @@ function processPaystackPayment($paymentReference, $billId) {
     }
 }
 
-// Handle PayStack callback/webhook (this should be called from payment_success.php or a webhook endpoint)
+// Handle PayStack callback/webhook
 if (isset($_GET['process_paystack_payment']) && isset($_GET['reference']) && isset($_GET['bill_id'])) {
     header('Content-Type: application/json');
     
@@ -407,72 +409,59 @@ if (isset($_GET['process_paystack_payment']) && isset($_GET['reference']) && iss
     exit();
 }
 
-// Debug payment processing (add ?debug_payment=1 to URL)
+// Debug payment processing
 if (isset($_GET['debug_payment']) && $_GET['debug_payment'] == '1' && isset($_GET['bill_id'])) {
     header('Content-Type: text/plain');
     
     $billId = (int)$_GET['bill_id'];
     
-    echo "=== PAYMENT DEBUG INFO ===\n";
+    echo "=== PAYMENT DEBUG INFO (FIXED CALCULATION) ===\n";
     echo "Bill ID: " . $billId . "\n";
     echo "Time: " . date('Y-m-d H:i:s') . "\n\n";
     
     try {
         $db = new Database();
         
-        // Check bill exists with account info
-        $billQuery = "
-            SELECT 
-                b.*,
-                CASE 
-                    WHEN b.bill_type = 'Business' THEN bs.business_name
-                    WHEN b.bill_type = 'Property' THEN p.owner_name
-                END as account_name,
-                CASE 
-                    WHEN b.bill_type = 'Business' THEN bs.amount_payable
-                    WHEN b.bill_type = 'Property' THEN p.amount_payable
-                END as account_total_payable
-            FROM bills b
-            LEFT JOIN businesses bs ON b.bill_type = 'Business' AND b.reference_id = bs.business_id
-            LEFT JOIN properties p ON b.bill_type = 'Property' AND b.reference_id = p.property_id
-            WHERE b.bill_id = ?
-        ";
-        $bill = $db->fetchRow($billQuery, [$billId]);
+        // Check bill exists
+        $bill = $db->fetchRow("SELECT * FROM bills WHERE bill_id = ?", [$billId]);
         echo "Bill Found: " . ($bill ? 'YES' : 'NO') . "\n";
         if ($bill) {
             echo "Bill Number: " . $bill['bill_number'] . "\n";
+            echo "Bill Type: " . $bill['bill_type'] . "\n";
+            echo "Bill Year: " . $bill['billing_year'] . "\n";
+            echo "Bill Amount Payable: " . $bill['amount_payable'] . " (This is the remaining balance)\n";
             echo "Bill Status: " . $bill['status'] . "\n";
-            echo "Bill Amount Payable: " . $bill['amount_payable'] . "\n";
-            echo "Account Name: " . $bill['account_name'] . "\n";
-            echo "Account Total Payable: " . $bill['account_total_payable'] . "\n";
         }
         echo "\n";
         
-        // Check recent payments
+        // Check recent payments for this bill
         $payments = $db->fetchAll("
-            SELECT p.* FROM payments p 
-            INNER JOIN bills b ON p.bill_id = b.bill_id 
-            WHERE b.bill_type = ? AND b.reference_id = ? 
-            ORDER BY p.payment_date DESC 
+            SELECT * FROM payments 
+            WHERE bill_id = ? 
+            ORDER BY payment_date DESC 
             LIMIT 5
-        ", [$bill['bill_type'], $bill['reference_id']]);
-        echo "Recent Account Payments: " . count($payments) . "\n";
+        ", [$billId]);
+        echo "Bill Payments: " . count($payments) . "\n";
         foreach ($payments as $payment) {
             echo "- Ref: " . $payment['payment_reference'] . 
-                 ", PayStack: " . ($payment['paystack_reference'] ?? 'N/A') .
                  ", Status: " . $payment['payment_status'] . 
                  ", Amount: " . $payment['amount_paid'] . 
                  ", Date: " . $payment['payment_date'] . "\n";
         }
         echo "\n";
         
-        // Check account balance
-        $balance = calculateAccountRemainingBalance($bill['reference_id'], $bill['bill_type'], $bill['account_total_payable']);
-        echo "Account Balance Info:\n";
-        echo "- Total Paid: " . $balance['total_paid'] . "\n";
-        echo "- Remaining: " . $balance['remaining_balance'] . "\n";
-        echo "- Percentage: " . $balance['payment_percentage'] . "%\n";
-        echo "- Fully Paid: " . ($balance['is_fully_paid'] ? 'YES' : 'NO') . "\n";
+        // Get balance using FIXED calculation
+        if ($bill) {
+            $balance = calculateRemainingBalance($bill['reference_id'], $bill['bill_type']);
+            echo "FIXED Balance Calculation:\n";
+            echo "- Has Current Bill: " . ($balance['has_current_bill'] ? 'YES' : 'NO') . "\n";
+            echo "- Bill Year: " . $balance['current_bill_year'] . "\n";
+            echo "- Original Bill Amount: " . $balance['original_bill_amount'] . "\n";
+            echo "- Total Paid: " . $balance['bill_payments'] . "\n";
+            echo "- Remaining Balance: " . $balance['remaining_balance'] . " (from bill.amount_payable)\n";
+            echo "- Payment Percentage: " . number_format($balance['payment_percentage'], 2) . "%\n";
+            echo "- Fully Paid: " . ($balance['is_fully_paid'] ? 'YES' : 'NO') . "\n";
+        }
         
     } catch (Exception $e) {
         echo "ERROR: " . $e->getMessage() . "\n";
@@ -640,7 +629,7 @@ try {
         ]
     );
     
-    // Get bill details with account information
+    // Get bill details
     $billQuery = "
         SELECT 
             b.bill_id,
@@ -670,11 +659,7 @@ try {
             CASE 
                 WHEN b.bill_type = 'Business' THEN bs.telephone
                 WHEN b.bill_type = 'Property' THEN p.telephone
-            END as telephone,
-            CASE 
-                WHEN b.bill_type = 'Business' THEN bs.amount_payable
-                WHEN b.bill_type = 'Property' THEN p.amount_payable
-            END as account_total_payable
+            END as telephone
         FROM bills b
         LEFT JOIN businesses bs ON b.bill_type = 'Business' AND b.reference_id = bs.business_id
         LEFT JOIN properties p ON b.bill_type = 'Property' AND b.reference_id = p.property_id
@@ -689,19 +674,15 @@ try {
         exit();
     }
     
-    // Calculate remaining balance for this account - ACCOUNT LEVEL ONLY
-    $balanceInfo = calculateAccountRemainingBalance(
-        $billData['reference_id'], 
-        $billData['bill_type'], 
-        $billData['account_total_payable']
-    );
+    // Calculate remaining balance using FIXED method - from current year bill
+    $balanceInfo = calculateRemainingBalance($billData['reference_id'], $billData['bill_type']);
     
     // Get recent payment history for this account
     $paymentHistory = getRecentPaymentHistory($billData['reference_id'], $billData['bill_type']);
     
-    // Check if account is payable
-    if ($balanceInfo['remaining_balance'] <= 0) {
-        setFlashMessage('info', 'This account has been paid in full.');
+    // Check if bill is payable
+    if (!$balanceInfo['has_current_bill'] || $balanceInfo['remaining_balance'] <= 0) {
+        setFlashMessage('info', 'This bill has been paid in full or no current bill exists.');
         header('Location: view_bill.php?bill_id=' . $billId);
         exit();
     }
@@ -723,7 +704,7 @@ includeHeader();
         <div class="balance-alert balance-outstanding">
             <div class="alert-icon">💳</div>
             <div class="alert-content">
-                <h3>Ready to Pay</h3>
+                <h3>Ready to Pay - <?php echo $balanceInfo['current_bill_year']; ?> Bill</h3>
                 <div class="alert-amount">₵ <?php echo number_format($balanceInfo['remaining_balance'], 2); ?></div>
                 <p>Outstanding balance for <?php echo htmlspecialchars($billData['bill_number']); ?></p>
             </div>
@@ -736,7 +717,7 @@ includeHeader();
                     <div class="progress-fill" style="width: <?php echo min($balanceInfo['payment_percentage'], 100); ?>%"></div>
                 </div>
                 <div class="progress-details">
-                    <span class="paid-amount">Paid: ₵ <?php echo number_format($balanceInfo['total_paid'], 2); ?></span>
+                    <span class="paid-amount">Paid: ₵ <?php echo number_format($balanceInfo['bill_payments'], 2); ?></span>
                     <span class="remaining-amount">Remaining: ₵ <?php echo number_format($balanceInfo['remaining_balance'], 2); ?></span>
                 </div>
             </div>
@@ -764,7 +745,7 @@ includeHeader();
             
             <div class="payment-title">
                 <h1>💳 Make Payment</h1>
-                <p>Secure online payment for your <?php echo strtolower($billData['bill_type']); ?> account</p>
+                <p>Secure online payment for your <?php echo strtolower($billData['bill_type']); ?> bill</p>
             </div>
         </div>
 
@@ -780,7 +761,7 @@ includeHeader();
             <!-- Bill Summary Card -->
             <div class="bill-summary-card">
                 <div class="bill-summary-header">
-                    <h3>📄 Account Summary</h3>
+                    <h3>📄 Bill Summary</h3>
                     <span class="bill-number"><?php echo htmlspecialchars($billData['bill_number']); ?></span>
                 </div>
                 
@@ -798,12 +779,12 @@ includeHeader();
                         <span class="summary-value"><?php echo $billData['billing_year']; ?></span>
                     </div>
                     <div class="summary-row">
-                        <span class="summary-label">Total Account Payable:</span>
-                        <span class="summary-value">₵ <?php echo number_format($billData['account_total_payable'], 2); ?></span>
+                        <span class="summary-label">Original Bill:</span>
+                        <span class="summary-value">₵ <?php echo number_format($balanceInfo['original_bill_amount'], 2); ?></span>
                     </div>
                     <div class="summary-row">
                         <span class="summary-label">Amount Paid:</span>
-                        <span class="summary-value paid">₵ <?php echo number_format($balanceInfo['total_paid'], 2); ?></span>
+                        <span class="summary-value paid">₵ <?php echo number_format($balanceInfo['bill_payments'], 2); ?></span>
                     </div>
                     <div class="summary-row outstanding">
                         <span class="summary-label"><strong>Outstanding Balance:</strong></span>
@@ -2123,7 +2104,7 @@ const paystackConfig = {
     testMode: <?php echo $paystackTestMode ? 'true' : 'false'; ?>
 };
 
-// Bill Data - ACCOUNT LEVEL
+// Bill Data with FIXED balance calculation
 const billData = {
     billId: <?php echo $billId; ?>,
     billNumber: '<?php echo htmlspecialchars($billData['bill_number']); ?>',
@@ -2131,9 +2112,11 @@ const billData = {
     accountName: '<?php echo htmlspecialchars($billData['account_name']); ?>',
     accountType: '<?php echo htmlspecialchars($billData['bill_type']); ?>',
     referenceId: <?php echo $billData['reference_id']; ?>,
-    totalPayable: <?php echo $billData['account_total_payable']; ?>,
+    billingYear: <?php echo $billData['billing_year']; ?>,
     remainingBalance: <?php echo $balanceInfo['remaining_balance']; ?>,
-    totalPaid: <?php echo $balanceInfo['total_paid']; ?>
+    billPayments: <?php echo $balanceInfo['bill_payments']; ?>,
+    originalAmount: <?php echo $balanceInfo['original_bill_amount']; ?>,
+    paymentPercentage: <?php echo $balanceInfo['payment_percentage']; ?>
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -2278,7 +2261,7 @@ function updateRemainingBalance() {
         // Update color based on whether it will be fully paid
         if (remainingAfter <= 0) {
             remainingElement.style.color = '#38a169';
-            remainingElement.parentElement.innerHTML = 'This will fully pay your account! ✅';
+            remainingElement.parentElement.innerHTML = 'This will fully pay your bill! ✅';
         } else {
             remainingElement.style.color = '#d69e2e';
             remainingElement.parentElement.innerHTML = `Remaining balance after payment: <span id="remainingAfterPayment">₵ ${remainingAfter.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>`;
@@ -2526,6 +2509,7 @@ function processPayment() {
             account_number: billData.accountNumber,
             account_type: billData.accountType,
             reference_id: billData.referenceId,
+            billing_year: billData.billingYear,
             payer_name: paymentData.payerName,
             payer_phone: paymentData.payerPhone,
             remaining_balance: billData.remainingBalance,
@@ -2618,14 +2602,17 @@ function showPrivacy() {
     alert('Privacy Policy\n\n• Your personal information is protected\n• Payment data is encrypted and secure\n• We do not share your information with third parties\n• Transaction records are kept for audit purposes\n• Contact us for data protection inquiries');
 }
 
-// Initialize balance tracking - ACCOUNT LEVEL
-console.log('💳 Payment Page Initialized (Account Level):', {
+// Initialize balance tracking with FIXED calculation
+console.log('✅ FIXED: Payment Page Initialized with Correct Balance Calculation:', {
     billNumber: billData.billNumber,
     accountNumber: billData.accountNumber,
     accountType: billData.accountType,
-    accountTotalPayable: billData.totalPayable,
-    totalPaid: billData.totalPaid,
-    remainingBalance: billData.remainingBalance
+    billingYear: billData.billingYear,
+    originalBillAmount: billData.originalAmount,
+    billPayments: billData.billPayments,
+    remainingBalance: billData.remainingBalance,
+    paymentPercentage: billData.paymentPercentage + '%',
+    calculation: 'Balance from bill.amount_payable (updated by triggers)'
 });
 </script>
 

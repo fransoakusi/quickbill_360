@@ -1,7 +1,7 @@
 <?php
 /**
  * Payment Recording Page for QUICKBILL 305
- * Revenue Officer interface for recording payments
+ * Revenue Officer interface for recording payments - FIXED VERSION
  */
 
 // Define application constant
@@ -97,11 +97,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     SELECT 'property' as type, property_id as id, property_number as account_number, 
                            owner_name as name, owner_name, telephone, amount_payable, location, 'Active' as status
                     FROM properties 
-                    WHERE (property_number LIKE ? OR owner_name LIKE ? OR telephone LIKE ?)
+                    WHERE (property_number LIKE ? OR account_number LIKE ? OR owner_name LIKE ? OR telephone LIKE ?)
                     ORDER BY owner_name
                 ";
                 
-                $properties = $db->fetchAll($propertyQuery, [$searchPattern, $searchPattern, $searchPattern]);
+                $properties = $db->fetchAll($propertyQuery, [$searchPattern, $searchPattern, $searchPattern, $searchPattern]);
                 
                 // Safely combine results
                 $searchResults = [];
@@ -150,30 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
                 
                 if ($selectedAccount) {
-                    // Calculate remaining balance (outstanding amount after all payments)
-                    $totalPaymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as total_paid
-                                          FROM payments p 
-                                          INNER JOIN bills b ON p.bill_id = b.bill_id 
-                                          WHERE b.bill_type = ? AND b.reference_id = ? 
-                                          AND p.payment_status = 'Successful'";
-                    $totalPaymentsResult = $db->fetchRow($totalPaymentsQuery, [ucfirst($accountType), $accountId]);
-                    $totalPaid = $totalPaymentsResult['total_paid'] ?? 0;
-                    
-                    // Calculate remaining balance: amount payable minus total successful payments
-                    $remainingBalance = max(0, $selectedAccount['amount_payable'] - $totalPaid);
-                    
-                    // Get payment summary
-                    $paymentSummary = $db->fetchRow("
-                        SELECT 
-                            COALESCE(SUM(CASE WHEN p.payment_status = 'Successful' THEN p.amount_paid ELSE 0 END), 0) as total_paid,
-                            COUNT(CASE WHEN p.payment_status = 'Successful' THEN 1 END) as successful_payments,
-                            COUNT(*) as total_transactions
-                        FROM payments p
-                        JOIN bills b ON p.bill_id = b.bill_id
-                        WHERE b.bill_type = ? AND b.reference_id = ?
-                    ", [ucfirst($accountType), $accountId]);
-                    
-                    // Get current year bill
+                    // Get current year bill first
                     $currentYear = date('Y');
                     $currentBill = $db->fetchRow("
                         SELECT * FROM bills 
@@ -184,6 +161,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     if (!$currentBill) {
                         $error = 'No bill found for this account in the current year.';
                         $selectedAccount = null;
+                    } else {
+                        // FIX: Use the bill's amount_payable directly - this is the correct remaining balance for the current year
+                        $remainingBalance = floatval($currentBill['amount_payable']);
+                        
+                        // Get payment summary for this account (all years)
+                        $paymentSummary = $db->fetchRow("
+                            SELECT 
+                                COALESCE(SUM(CASE WHEN p.payment_status = 'Successful' THEN p.amount_paid ELSE 0 END), 0) as total_paid,
+                                COUNT(CASE WHEN p.payment_status = 'Successful' THEN 1 END) as successful_payments,
+                                COUNT(*) as total_transactions
+                            FROM payments p
+                            JOIN bills b ON p.bill_id = b.bill_id
+                            WHERE b.bill_type = ? AND b.reference_id = ?
+                        ", [ucfirst($accountType), $accountId]);
+                        
+                        $totalPaid = $paymentSummary['total_paid'] ?? 0;
                     }
                 } else {
                     $error = 'Account not found or inactive.';
@@ -213,8 +206,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $error = 'Invalid bill selected.';
         } elseif ($amountPaid <= 0) {
             $error = 'Please enter a valid payment amount.';
-        } elseif ($amountPaid > $remainingBalance && $remainingBalance > 0) {
-            $error = 'Payment amount cannot exceed the remaining balance of ₵ ' . number_format($remainingBalance, 2);
         } elseif (empty($paymentMethod)) {
             $error = 'Please select a payment method.';
         } else {
@@ -225,188 +216,183 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 if (!$bill) {
                     $error = 'Bill not found.';
                 } else {
-                    // Get selected account details for audit logging
-                    if ($bill['bill_type'] === 'Business') {
-                        $auditAccount = $db->fetchRow("
-                            SELECT business_id as id, account_number, business_name as name, owner_name
-                            FROM businesses WHERE business_id = ?
-                        ", [$bill['reference_id']]);
+                    // Re-calculate remaining balance to validate
+                    $currentRemainingBalance = floatval($bill['amount_payable']);
+                    
+                    if ($amountPaid > $currentRemainingBalance && $currentRemainingBalance > 0) {
+                        $error = 'Payment amount cannot exceed the remaining balance of ₵ ' . number_format($currentRemainingBalance, 2);
                     } else {
-                        $auditAccount = $db->fetchRow("
-                            SELECT property_id as id, property_number as account_number, owner_name as name, owner_name
-                            FROM properties WHERE property_id = ?
-                        ", [$bill['reference_id']]);
-                    }
-                    
-                    // Generate payment reference
-                    $paymentReference = 'PAY' . date('Ymd') . strtoupper(substr(uniqid(), -6));
-                    
-                    try {
-                        // Begin transaction for data consistency
-                        $db->beginTransaction();
+                        // Get selected account details for audit logging
+                        if ($bill['bill_type'] === 'Business') {
+                            $auditAccount = $db->fetchRow("
+                                SELECT business_id as id, account_number, business_name as name, owner_name
+                                FROM businesses WHERE business_id = ?
+                            ", [$bill['reference_id']]);
+                        } else {
+                            $auditAccount = $db->fetchRow("
+                                SELECT property_id as id, property_number as account_number, owner_name as name, owner_name
+                                FROM properties WHERE property_id = ?
+                            ", [$bill['reference_id']]);
+                        }
                         
-                        // Insert payment record
-                        $insertSql = "
-                            INSERT INTO payments (
-                                payment_reference, bill_id, amount_paid, payment_method, 
-                                payment_channel, transaction_id, payment_status, 
-                                processed_by, notes, payment_date
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-                        ";
+                        // Generate payment reference
+                        $paymentReference = 'PAY' . date('Ymd') . strtoupper(substr(uniqid(), -6));
                         
-                        $stmt = $db->execute($insertSql, [
-                            $paymentReference,
-                            $billId,
-                            $amountPaid,
-                            $paymentMethod,
-                            $paymentChannel,
-                            $transactionId,
-                            'Successful',
-                            $currentUser['user_id'],
-                            $notes
-                        ]);
-                        
-                        if ($stmt) {
-                            // Get the inserted payment ID
-                            $paymentId = $db->lastInsertId();
+                        try {
+                            // Begin transaction for data consistency
+                            $db->beginTransaction();
                             
-                            // Update bill status
-                            $newAmountPayable = $bill['amount_payable'] - $amountPaid;
-                            $billStatus = $newAmountPayable <= 0 ? 'Paid' : 'Partially Paid';
+                            // Insert payment record
+                            $insertSql = "
+                                INSERT INTO payments (
+                                    payment_reference, bill_id, amount_paid, payment_method, 
+                                    payment_channel, transaction_id, payment_status, 
+                                    processed_by, notes, payment_date
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                            ";
                             
-                            $updateBillSql = "UPDATE bills SET status = ? WHERE bill_id = ?";
-                            $db->execute($updateBillSql, [$billStatus, $billId]);
+                            $stmt = $db->execute($insertSql, [
+                                $paymentReference,
+                                $billId,
+                                $amountPaid,
+                                $paymentMethod,
+                                $paymentChannel,
+                                $transactionId,
+                                'Successful',
+                                $currentUser['user_id'],
+                                $notes
+                            ]);
                             
-                            // Update account payable amount
-                            if ($bill['bill_type'] === 'Business') {
-                                $updateAccountSql = "
-                                    UPDATE businesses 
-                                    SET amount_payable = amount_payable - ?, 
-                                        previous_payments = previous_payments + ?
-                                    WHERE business_id = ?
-                                ";
-                                $db->execute($updateAccountSql, [$amountPaid, $amountPaid, $bill['reference_id']]);
-                            } else {
-                                $updateAccountSql = "
-                                    UPDATE properties 
-                                    SET amount_payable = amount_payable - ?, 
-                                        previous_payments = previous_payments + ?
-                                    WHERE property_id = ?
-                                ";
-                                $db->execute($updateAccountSql, [$amountPaid, $amountPaid, $bill['reference_id']]);
-                            }
-                            
-                            // Enhanced audit logging for payment recording
-                            try {
-                                $auditData = [
-                                    'payment_reference' => $paymentReference,
-                                    'bill_id' => $billId,
-                                    'bill_number' => $bill['bill_number'] ?? 'N/A',
-                                    'billing_year' => $bill['billing_year'] ?? date('Y'),
-                                    'account_type' => $bill['bill_type'],
-                                    'account_id' => $bill['reference_id'],
-                                    'account_name' => $auditAccount['name'] ?? 'Unknown',
-                                    'account_number' => $auditAccount['account_number'] ?? 'N/A',
-                                    'account_owner' => $auditAccount['owner_name'] ?? 'Unknown',
-                                    'amount_paid' => $amountPaid,
-                                    'payment_method' => $paymentMethod,
-                                    'payment_channel' => $paymentChannel,
-                                    'transaction_id' => $transactionId,
-                                    'previous_balance' => $remainingBalance + $amountPaid,
-                                    'new_balance' => max(0, $remainingBalance),
-                                    'bill_amount_payable_before' => $bill['amount_payable'],
-                                    'bill_amount_payable_after' => $newAmountPayable,
-                                    'bill_status_updated' => $billStatus,
-                                    'payment_status' => 'Successful',
-                                    'processed_by_id' => $currentUser['user_id'],
-                                    'processed_by_name' => $userDisplayName,
-                                    'notes' => $notes,
-                                    'timestamp' => date('Y-m-d H:i:s')
-                                ];
+                            if ($stmt) {
+                                // Get the inserted payment ID
+                                $paymentId = $db->lastInsertId();
                                 
-                                $db->execute(
-                                    "INSERT INTO audit_logs (user_id, action, table_name, record_id, new_values, ip_address, user_agent, created_at)
-                                     VALUES (?, 'PAYMENT_RECORDED', 'payments', ?, ?, ?, ?, NOW())",
-                                    [
-                                        $currentUser['user_id'], 
-                                        $paymentId,
-                                        json_encode($auditData),
-                                        $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', 
-                                        $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
-                                    ]
-                                );
+                                // Update bill status
+                                $newAmountPayable = $bill['amount_payable'] - $amountPaid;
+                                $newAmountPayable = max(0, $newAmountPayable); // Ensure non-negative
+                                $billStatus = $newAmountPayable <= 0 ? 'Paid' : 'Partially Paid';
                                 
-                                // Also log bill status update if applicable
-                                if ($billStatus === 'Paid') {
-                                    $billAuditData = [
+                                $updateBillSql = "UPDATE bills SET amount_payable = ?, status = ? WHERE bill_id = ?";
+                                $db->execute($updateBillSql, [$newAmountPayable, $billStatus, $billId]);
+                                
+                                // Update account payable amount
+                                if ($bill['bill_type'] === 'Business') {
+                                    $updateAccountSql = "
+                                        UPDATE businesses 
+                                        SET amount_payable = amount_payable - ?, 
+                                            previous_payments = previous_payments + ?
+                                        WHERE business_id = ?
+                                    ";
+                                    $db->execute($updateAccountSql, [$amountPaid, $amountPaid, $bill['reference_id']]);
+                                } else {
+                                    $updateAccountSql = "
+                                        UPDATE properties 
+                                        SET amount_payable = amount_payable - ?, 
+                                            previous_payments = previous_payments + ?
+                                        WHERE property_id = ?
+                                    ";
+                                    $db->execute($updateAccountSql, [$amountPaid, $amountPaid, $bill['reference_id']]);
+                                }
+                                
+                                // Enhanced audit logging for payment recording
+                                try {
+                                    $auditData = [
+                                        'payment_reference' => $paymentReference,
                                         'bill_id' => $billId,
                                         'bill_number' => $bill['bill_number'] ?? 'N/A',
-                                        'previous_status' => $bill['status'] ?? 'Pending',
-                                        'new_status' => $billStatus,
-                                        'final_payment_reference' => $paymentReference,
-                                        'final_payment_amount' => $amountPaid,
-                                        'total_amount_paid' => $bill['amount_payable'],
+                                        'billing_year' => $bill['billing_year'] ?? date('Y'),
                                         'account_type' => $bill['bill_type'],
                                         'account_id' => $bill['reference_id'],
-                                        'completed_by' => $userDisplayName,
-                                        'completion_timestamp' => date('Y-m-d H:i:s')
+                                        'account_name' => $auditAccount['name'] ?? 'Unknown',
+                                        'account_number' => $auditAccount['account_number'] ?? 'N/A',
+                                        'account_owner' => $auditAccount['owner_name'] ?? 'Unknown',
+                                        'amount_paid' => $amountPaid,
+                                        'payment_method' => $paymentMethod,
+                                        'payment_channel' => $paymentChannel,
+                                        'transaction_id' => $transactionId,
+                                        'previous_balance' => $currentRemainingBalance,
+                                        'new_balance' => $newAmountPayable,
+                                        'bill_amount_payable_before' => $bill['amount_payable'],
+                                        'bill_amount_payable_after' => $newAmountPayable,
+                                        'bill_status_updated' => $billStatus,
+                                        'payment_status' => 'Successful',
+                                        'processed_by_id' => $currentUser['user_id'],
+                                        'processed_by_name' => $userDisplayName,
+                                        'notes' => $notes,
+                                        'timestamp' => date('Y-m-d H:i:s')
                                     ];
                                     
                                     $db->execute(
                                         "INSERT INTO audit_logs (user_id, action, table_name, record_id, new_values, ip_address, user_agent, created_at)
-                                         VALUES (?, 'BILL_FULLY_PAID', 'bills', ?, ?, ?, ?, NOW())",
+                                         VALUES (?, 'PAYMENT_RECORDED', 'payments', ?, ?, ?, ?, NOW())",
                                         [
                                             $currentUser['user_id'], 
-                                            $billId,
-                                            json_encode($billAuditData),
+                                            $paymentId,
+                                            json_encode($auditData),
                                             $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', 
                                             $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
                                         ]
                                     );
+                                    
+                                    // Also log bill status update if applicable
+                                    if ($billStatus === 'Paid') {
+                                        $billAuditData = [
+                                            'bill_id' => $billId,
+                                            'bill_number' => $bill['bill_number'] ?? 'N/A',
+                                            'previous_status' => $bill['status'] ?? 'Pending',
+                                            'new_status' => $billStatus,
+                                            'final_payment_reference' => $paymentReference,
+                                            'final_payment_amount' => $amountPaid,
+                                            'total_amount_paid' => $bill['amount_payable'],
+                                            'account_type' => $bill['bill_type'],
+                                            'account_id' => $bill['reference_id'],
+                                            'completed_by' => $userDisplayName,
+                                            'completion_timestamp' => date('Y-m-d H:i:s')
+                                        ];
+                                        
+                                        $db->execute(
+                                            "INSERT INTO audit_logs (user_id, action, table_name, record_id, new_values, ip_address, user_agent, created_at)
+                                             VALUES (?, 'BILL_FULLY_PAID', 'bills', ?, ?, ?, ?, NOW())",
+                                            [
+                                                $currentUser['user_id'], 
+                                                $billId,
+                                                json_encode($billAuditData),
+                                                $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', 
+                                                $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
+                                            ]
+                                        );
+                                    }
+                                    
+                                } catch (Exception $auditError) {
+                                    // Log audit failure but don't fail the payment
+                                    error_log("Failed to log payment audit: " . $auditError->getMessage());
                                 }
                                 
-                            } catch (Exception $auditError) {
-                                // Log audit failure but don't fail the payment
-                                error_log("Failed to log payment audit: " . $auditError->getMessage());
-                                // Could also log this to database if needed
-                                try {
-                                    $db->execute(
-                                        "INSERT INTO system_logs (level, message, context, created_at) VALUES (?, ?, ?, NOW())",
-                                        ['ERROR', 'Payment audit logging failed', json_encode([
-                                            'payment_id' => $paymentId,
-                                            'payment_reference' => $paymentReference,
-                                            'error' => $auditError->getMessage()
-                                        ])]
-                                    );
-                                } catch (Exception $logError) {
-                                    // Final fallback - just continue with payment processing
-                                }
+                                // Commit the transaction
+                                $db->commit();
+                                
+                                $newRemainingBalance = $newAmountPayable;
+                                $success = "Payment recorded successfully! Reference: {$paymentReference}. " . 
+                                         ($newRemainingBalance <= 0 ? "Account fully paid!" : "Remaining balance: ₵ " . number_format($newRemainingBalance, 2));
+                                $paymentProcessed = true;
+                                
+                                // Clear selected account to prevent duplicate submissions
+                                $selectedAccount = null;
+                                $currentBill = null;
+                                $remainingBalance = 0;
+                                
+                            } else {
+                                $db->rollback();
+                                $error = 'Failed to record payment. Please try again.';
                             }
                             
-                            // Commit the transaction
-                            $db->commit();
-                            
-                            $newRemainingBalance = $remainingBalance - $amountPaid;
-                            $success = "Payment recorded successfully! Reference: {$paymentReference}. " . 
-                                     ($newRemainingBalance <= 0 ? "Account fully paid!" : "Remaining balance: ₵ " . number_format($newRemainingBalance, 2));
-                            $paymentProcessed = true;
-                            
-                            // Clear selected account to prevent duplicate submissions
-                            $selectedAccount = null;
-                            $currentBill = null;
-                            $remainingBalance = 0;
-                            
-                        } else {
-                            $db->rollback();
-                            $error = 'Failed to record payment. Please try again.';
+                        } catch (Exception $e) {
+                            // Rollback transaction on error
+                            if ($db->getConnection()->inTransaction()) {
+                                $db->rollback();
+                            }
+                            $error = 'Payment recording failed: ' . $e->getMessage();
                         }
-                        
-                    } catch (Exception $e) {
-                        // Rollback transaction on error
-                        if ($db->getConnection()->inTransaction()) {
-                            $db->rollback();
-                        }
-                        $error = 'Payment recording failed: ' . $e->getMessage();
                     }
                 }
                 
@@ -1245,16 +1231,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <h4>
                         <i class="fas fa-balance-scale"></i>
                         <span class="icon-balance" style="display: none;"></span>
-                        <?php echo $remainingBalance <= 0 ? 'Account Fully Paid' : 'Outstanding Balance'; ?>
+                        <?php echo $remainingBalance <= 0 ? 'Account Fully Paid' : 'Current Bill Balance (' . $currentBill['billing_year'] . ')'; ?>
                     </h4>
                     <div class="balance-amount">
                         ₵ <?php echo number_format($remainingBalance, 2); ?>
                     </div>
                     <div class="balance-subtitle">
                         <?php if ($remainingBalance > 0): ?>
-                            This amount needs to be paid to clear the account
+                            Outstanding balance for <?php echo $currentBill['billing_year']; ?> bill
                         <?php else: ?>
-                            ✅ All bills have been settled
+                            ✅ <?php echo $currentBill['billing_year']; ?> bill fully settled
                         <?php endif; ?>
                     </div>
                     
@@ -1404,7 +1390,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 <div class="alert alert-success fade-in">
                     <i class="fas fa-check-circle"></i>
                     <span class="icon-check" style="display: none;"></span>
-                    This account is fully paid. No outstanding balance.
+                    This account's <?php echo $currentBill['billing_year']; ?> bill is fully paid. No outstanding balance.
                 </div>
             <?php endif; ?>
         <?php endif; ?>
@@ -1415,6 +1401,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         const remainingBalance = <?php echo $remainingBalance; ?>;
         const accountName = <?php echo json_encode($selectedAccount['name'] ?? ''); ?>;
         const accountNumber = <?php echo json_encode($selectedAccount['account_number'] ?? ''); ?>;
+        const billingYear = <?php echo json_encode($currentBill['billing_year'] ?? date('Y')); ?>;
         
         // Check if Font Awesome loaded, if not show emoji icons
         document.addEventListener('DOMContentLoaded', function() {
@@ -1519,7 +1506,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             balanceContent.innerHTML = `
                 <h3 style="margin: 0 0 20px 0; color: #2d3748; display: flex; align-items: center; gap: 10px; justify-content: center;">
                     <i class="fas fa-balance-scale" style="color: #e53e3e;"></i>
-                    ⚖️ Balance Analysis
+                    ⚖️ Balance Analysis - ${billingYear}
                 </h3>
                 <div style="background: #f8fafc; padding: 25px; border-radius: 12px; margin: 20px 0;">
                     <h4 style="margin: 0 0 15px 0; color: #e53e3e; font-size: 18px;">${accountName}</h4>
@@ -1550,13 +1537,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                 background: ${remainingBalance > 0 ? '#fef3c7' : '#d1fae5'}; 
                                 padding: 20px; border-radius: 12px; margin-top: 20px;">
                         <h4 style="margin: 0 0 10px 0; color: ${remainingBalance > 0 ? '#92400e' : '#065f46'};">
-                            ${remainingBalance > 0 ? '⚠️ Outstanding Balance' : '✅ Account Status'}
+                            ${remainingBalance > 0 ? '⚠️ Current Bill Balance (' + billingYear + ')' : '✅ Account Status'}
                         </h4>
                         <div style="font-size: 36px; font-weight: bold; color: ${remainingBalance > 0 ? '#92400e' : '#065f46'}; margin: 15px 0;">
                             ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}
                         </div>
                         <p style="margin: 10px 0 0 0; color: ${remainingBalance > 0 ? '#92400e' : '#065f46'};">
-                            ${remainingBalance > 0 ? 'This amount needs to be paid to clear the account' : 'All bills have been fully settled'}
+                            ${remainingBalance > 0 ? 'Outstanding balance for ' + billingYear + ' bill' : billingYear + ' bill fully settled'}
                         </p>
                     </div>
                 </div>
@@ -1631,7 +1618,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         console.log('✅ Payment recording page initialized successfully');
         if (remainingBalance >= 0) {
-            console.log(`💰 Remaining Balance: ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`);
+            console.log(`💰 Current Bill Balance (${billingYear}): ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`);
         }
     </script>
 </body>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Properties Management - View Property Profile with Bill Serving Status
+ * Properties Management - View Property Profile with Bill Serving Status - FIXED VERSION
  * QUICKBILL 305 - Admin Panel
  */
 
@@ -142,7 +142,29 @@ try {
         exit();
     }
     
-    // Calculate remaining balance (outstanding amount after all payments)
+    // FIX: Calculate remaining balance correctly - get current year's bill first
+    $currentYear = date('Y');
+    $currentBill = $db->fetchRow("
+        SELECT bill_id, amount_payable, billing_year, status
+        FROM bills 
+        WHERE bill_type = 'Property' AND reference_id = ? AND billing_year = ?
+        ORDER BY generated_at DESC 
+        LIMIT 1
+    ", [$propertyId, $currentYear]);
+    
+    if ($currentBill) {
+        // FIX: Use the bill's amount_payable directly - this is the correct remaining balance for the current year
+        $remainingBalance = floatval($currentBill['amount_payable']);
+        $hasCurrentBill = true;
+        $currentBillYear = $currentBill['billing_year'];
+    } else {
+        // No bill for current year, use property's amount payable
+        $remainingBalance = floatval($property['amount_payable']);
+        $hasCurrentBill = false;
+        $currentBillYear = $currentYear;
+    }
+    
+    // Get total paid across all years for reference
     $totalPaymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as total_paid
                           FROM payments p 
                           INNER JOIN bills b ON p.bill_id = b.bill_id 
@@ -150,9 +172,6 @@ try {
                           AND p.payment_status = 'Successful'";
     $totalPaymentsResult = $db->fetchRow($totalPaymentsQuery, [$propertyId]);
     $totalPaid = $totalPaymentsResult['total_paid'] ?? 0;
-    
-    // Calculate remaining balance: amount payable minus total successful payments
-    $remainingBalance = max(0, $property['amount_payable'] - $totalPaid);
     
     // Get billing history with serving information
     $billsQuery = "SELECT b.*, 
@@ -188,6 +207,8 @@ try {
         'total_payments' => count($payments),
         'total_paid' => array_sum(array_column($payments, 'amount_paid')),
         'remaining_balance' => $remainingBalance,
+        'current_bill_year' => $currentBillYear,
+        'has_current_bill' => $hasCurrentBill,
         'last_payment' => !empty($payments) ? $payments[0]['payment_date'] : null,
         'served_bills' => count(array_filter($bills, fn($b) => $b['served_status'] === 'Served')),
         'pending_delivery' => count(array_filter($bills, fn($b) => $b['served_status'] === 'Not Served'))
@@ -1638,7 +1659,7 @@ try {
                         <span class="icon-balance" style="display: none;"></span>
                     </div>
                     <div class="stat-value">₵ <?php echo number_format($remainingBalance, 2); ?></div>
-                    <div class="stat-label">Remaining Balance</div>
+                    <div class="stat-label"><?php echo $currentBillYear; ?> Bill Balance</div>
                 </div>
 
                 <div class="stat-card warning">
@@ -1972,18 +1993,18 @@ try {
                             <h4>
                                 <i class="fas fa-balance-scale"></i>
                                 <span class="icon-balance" style="display: none;"></span>
-                                <?php echo $remainingBalance <= 0 ? 'Property Fully Paid' : 'Outstanding Balance'; ?>
+                                <?php echo $remainingBalance <= 0 ? 'Property Fully Paid' : 'Current Bill Balance (' . $currentBillYear . ')'; ?>
                             </h4>
                             <div class="balance-amount">
                                 ₵ <?php echo number_format($remainingBalance, 2); ?>
                             </div>
                             <?php if ($remainingBalance > 0): ?>
                                 <p style="margin: 10px 0 0 0; font-size: 14px; color: #92400e;">
-                                    This amount needs to be paid
+                                    Outstanding for <?php echo $currentBillYear; ?> bill
                                 </p>
                             <?php else: ?>
                                 <p style="margin: 10px 0 0 0; font-size: 14px; color: #065f46;">
-                                    All bills have been settled
+                                    <?php echo $hasCurrentBill ? $currentBillYear . ' bill fully settled' : 'All bills have been settled'; ?>
                                 </p>
                             <?php endif; ?>
                         </div>
@@ -2115,6 +2136,8 @@ try {
         const propertyName = <?php echo json_encode($property['owner_name']); ?>;
         const propertyNumber = <?php echo json_encode($property['property_number']); ?>;
         const remainingBalance = <?php echo $remainingBalance; ?>;
+        const currentBillYear = <?php echo $currentBillYear; ?>;
+        const hasCurrentBill = <?php echo $hasCurrentBill ? 'true' : 'false'; ?>;
         
         // Google Maps callback function
         window.initMap = function() {
@@ -2176,8 +2199,8 @@ try {
                     streetViewControlOptions: {
                         position: google.maps.ControlPosition.BOTTOM_RIGHT
                     },
-                    fullscreenControl: false, // We'll add our own
-                    mapTypeControl: false // We'll add our own
+                    fullscreenControl: false,
+                    mapTypeControl: false
                 };
                 
                 propertyMap = new google.maps.Map(document.getElementById('propertyMap'), mapOptions);
@@ -2211,7 +2234,7 @@ try {
                         <p style="margin: 5px 0; color: #64748b; font-size: 14px;"><strong>Structure:</strong> <?php echo htmlspecialchars($property['structure']); ?></p>
                         <p style="margin: 5px 0; color: #64748b; font-size: 14px;"><strong>Rooms:</strong> <?php echo htmlspecialchars($property['number_of_rooms']); ?></p>
                         <p style="margin: 5px 0; font-size: 14px; ${remainingBalance > 0 ? 'color: #dc2626; font-weight: bold;' : 'color: #059669; font-weight: bold;'}">
-                            <strong>Balance:</strong> ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}
+                            <strong>${currentBillYear} Balance:</strong> ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}
                         </p>
                         <div style="background: #f8fafc; padding: 8px; border-radius: 6px; margin-top: 10px; font-family: monospace; font-size: 12px;">
                             <strong>Coordinates:</strong><br>
@@ -2301,16 +2324,14 @@ try {
             // Show balance status notification on page load
             if (remainingBalance > 0) {
                 setTimeout(() => {
-                    showNotification(`Outstanding balance: ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`, 'warning');
+                    showNotification(`${currentBillYear} bill balance: ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`, 'warning');
                 }, 2000);
             } else {
                 setTimeout(() => {
-                    showNotification('Property fully paid - No outstanding balance', 'success');
+                    showNotification(`${hasCurrentBill ? currentBillYear + ' bill fully paid' : 'Property fully paid'} - No outstanding balance`, 'success');
                 }, 2000);
             }
-        }
-        
-        function centerMap() {
+        }function centerMap() {
             if (propertyMap && propertyLat && propertyLng) {
                 propertyMap.setCenter({ lat: propertyLat, lng: propertyLng });
                 propertyMap.setZoom(16);
@@ -2395,7 +2416,7 @@ try {
                 });
                 
                 const fullscreenInfoWindow = new google.maps.InfoWindow({
-                    content: `<h4>${propertyName} Property</h4><p>Remaining Balance: ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>`
+                    content: `<h4>${propertyName} Property</h4><p>${currentBillYear} Balance: ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>`
                 });
                 
                 fullscreenInfoWindow.open(fullscreenMap, fullscreenMarker);
@@ -2512,7 +2533,7 @@ try {
                         </div>
                     </div>
                     <div style="margin-top: 15px; padding: 10px; border-radius: 8px; ${remainingBalance > 0 ? 'background: #fef3c7; color: #92400e;' : 'background: #d1fae5; color: #065f46;'}">
-                        <strong>Remaining Balance:</strong> ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}
+                        <strong>${currentBillYear} Bill Balance:</strong> ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
@@ -2793,7 +2814,10 @@ try {
             lastActivity = Math.floor(Date.now() / 1000);
         });
 
-        console.log('Property profile with serving status initialized successfully');
+        console.log('✅ Property profile with FIXED balance calculation initialized successfully');
+        console.log('Current bill year:', currentBillYear);
+        console.log('Current bill balance: ₵' + remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2}));
+        console.log('Has current bill:', hasCurrentBill);
         console.log('Pending deliveries:', <?php echo $stats['pending_delivery']; ?>);
         console.log('Bills served:', <?php echo $stats['served_bills']; ?>);
     </script>

@@ -53,172 +53,11 @@ $selectedYear = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 $selectedMonth = isset($_GET['month']) ? intval($_GET['month']) : 0; // 0 = all months
 $selectedUser = isset($_GET['user']) ? intval($_GET['user']) : 0; // 0 = all users
 
-// Export function - Define before data processing
-function exportCollectionReportCSV($collectionData, $dailyCollections, $collectionsByMethod, $collectionsByUser, $collectionsByBillType, $hourlyCollections, $recentCollections, $selectedYear, $selectedMonth, $selectedUser, $availableUsers, $monthlyTarget, $currentMonthPerformance) {
-    // Set headers for CSV download
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="Collection_Report_' . date('Y-m-d_H-i-s') . '.csv"');
-    
-    // Create file pointer
-    $output = fopen('php://output', 'w');
-    
-    // Add UTF-8 BOM for Excel compatibility
-    fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-    
-    // Report header
-    fputcsv($output, ['QUICKBILL 305 - COLLECTION REPORT']);
-    fputcsv($output, ['Generated on: ' . date('F j, Y g:i A')]);
-    
-    // Period information
-    $periodText = 'Report Period: ';
-    if ($selectedYear > 0) {
-        $periodText .= $selectedYear;
-        if ($selectedMonth > 0) {
-            $periodText .= ' - ' . date('F', mktime(0, 0, 0, $selectedMonth, 1));
-        }
-    } else {
-        $periodText .= 'All Years';
-    }
-    fputcsv($output, [$periodText]);
-    
-    // Filter information
-    $filterInfo = 'Filters Applied: ';
-    $filters = [];
-    if ($selectedUser > 0) {
-        $userName = 'Unknown User';
-        foreach ($availableUsers as $user) {
-            if ($user['user_id'] == $selectedUser) {
-                $userName = $user['first_name'] . ' ' . $user['last_name'];
-                break;
-            }
-        }
-        $filters[] = 'Collected By: ' . $userName;
-    }
-    if (empty($filters)) $filters[] = 'None';
-    fputcsv($output, [$filterInfo . implode(', ', $filters)]);
-    fputcsv($output, []); // Empty line
-    
-    // Monthly Target Progress (if applicable)
-    if ($monthlyTarget > 0 && $selectedYear == date('Y')) {
-        fputcsv($output, ['MONTHLY TARGET PROGRESS']);
-        fputcsv($output, ['Monthly Target', 'Current Performance', 'Progress Percentage']);
-        $progressPercentage = min(100, ($currentMonthPerformance / $monthlyTarget) * 100);
-        fputcsv($output, [
-            'GH₵ ' . number_format($monthlyTarget, 2),
-            'GH₵ ' . number_format($currentMonthPerformance, 2),
-            round($progressPercentage, 2) . '%'
-        ]);
-        fputcsv($output, []); // Empty line
-    }
-    
-    // Collection Summary
-    fputcsv($output, ['COLLECTION SUMMARY']);
-    fputcsv($output, ['Metric', 'Value']);
-    fputcsv($output, ['Total Collections', number_format($collectionData['total_collections'])]);
-    fputcsv($output, ['Total Collected Amount', 'GH₵ ' . number_format($collectionData['total_collected'], 2)]);
-    fputcsv($output, ['Average Collection', 'GH₵ ' . number_format($collectionData['avg_collection'], 2)]);
-    fputcsv($output, ['Minimum Collection', 'GH₵ ' . number_format($collectionData['min_collection'], 2)]);
-    fputcsv($output, ['Maximum Collection', 'GH₵ ' . number_format($collectionData['max_collection'], 2)]);
-    fputcsv($output, []); // Empty line
-    
-    // Daily Collections
-    if (!empty($dailyCollections)) {
-        fputcsv($output, ['DAILY COLLECTIONS (LAST 30 DAYS)']);
-        fputcsv($output, ['Date', 'Transaction Count', 'Daily Total (GH₵)']);
-        foreach ($dailyCollections as $daily) {
-            fputcsv($output, [
-                date('M j, Y', strtotime($daily['collection_date'])),
-                number_format($daily['transaction_count']),
-                number_format($daily['daily_total'], 2)
-            ]);
-        }
-        fputcsv($output, []); // Empty line
-    }
-    
-    // Collections by Payment Method
-    if (!empty($collectionsByMethod)) {
-        fputcsv($output, ['COLLECTIONS BY PAYMENT METHOD']);
-        fputcsv($output, ['Payment Method', 'Transaction Count', 'Total Amount (GH₵)', 'Average Amount (GH₵)']);
-        foreach ($collectionsByMethod as $method) {
-            fputcsv($output, [
-                $method['payment_method'],
-                number_format($method['transaction_count']),
-                number_format($method['total_amount'], 2),
-                number_format($method['avg_amount'], 2)
-            ]);
-        }
-        fputcsv($output, []); // Empty line
-    }
-    
-    // Collections by User
-    if (!empty($collectionsByUser)) {
-        fputcsv($output, ['COLLECTIONS BY USER']);
-        fputcsv($output, ['User Name', 'Role', 'Transaction Count', 'Total Collected (GH₵)', 'Average Collection (GH₵)']);
-        foreach ($collectionsByUser as $user) {
-            fputcsv($output, [
-                $user['first_name'] . ' ' . $user['last_name'],
-                $user['role_name'],
-                number_format($user['transaction_count']),
-                number_format($user['total_collected'], 2),
-                number_format($user['avg_collection'], 2)
-            ]);
-        }
-        fputcsv($output, []); // Empty line
-    }
-    
-    // Collections by Bill Type
-    if (!empty($collectionsByBillType)) {
-        fputcsv($output, ['COLLECTIONS BY BILL TYPE']);
-        fputcsv($output, ['Bill Type', 'Transaction Count', 'Total Amount (GH₵)', 'Average Amount (GH₵)']);
-        foreach ($collectionsByBillType as $billType) {
-            fputcsv($output, [
-                $billType['bill_type'],
-                number_format($billType['transaction_count']),
-                number_format($billType['total_amount'], 2),
-                number_format($billType['avg_amount'], 2)
-            ]);
-        }
-        fputcsv($output, []); // Empty line
-    }
-    
-    // Hourly Collection Patterns
-    if (!empty($hourlyCollections)) {
-        fputcsv($output, ['HOURLY COLLECTION PATTERNS']);
-        fputcsv($output, ['Hour of Day', 'Transaction Count', 'Total Amount (GH₵)']);
-        foreach ($hourlyCollections as $hourly) {
-            $hourLabel = sprintf('%02d:00 - %02d:59', $hourly['hour_of_day'], $hourly['hour_of_day']);
-            fputcsv($output, [
-                $hourLabel,
-                number_format($hourly['transaction_count']),
-                number_format($hourly['total_amount'], 2)
-            ]);
-        }
-        fputcsv($output, []); // Empty line
-    }
-    
-    // Recent Collections
-    if (!empty($recentCollections)) {
-        fputcsv($output, ['RECENT COLLECTIONS (LAST 20 TRANSACTIONS)']);
-        fputcsv($output, [
-            'Payment Reference', 'Payer Name', 'Bill Number', 'Bill Type', 
-            'Amount Paid (GH₵)', 'Payment Method', 'Collected By', 'Payment Date'
-        ]);
-        
-        foreach ($recentCollections as $collection) {
-            fputcsv($output, [
-                $collection['payment_reference'],
-                $collection['payer_name'] ?? 'N/A',
-                $collection['bill_number'],
-                $collection['bill_type'],
-                number_format($collection['amount_paid'], 2),
-                $collection['payment_method'],
-                $collection['collected_by'] ?? 'System',
-                date('M j, Y g:i A', strtotime($collection['payment_date']))
-            ]);
-        }
-    }
-    
-    fclose($output);
+// Export handling
+if (isset($_GET['export']) && $_GET['export'] === 'pdf') {
+    // Export to PDF functionality would go here
+    setFlashMessage('info', 'PDF export functionality will be implemented soon.');
+    header('Location: collection_report.php');
     exit();
 }
 
@@ -421,11 +260,6 @@ try {
     $currentMonthPerformance = 0;
     $availableYears = [];
     $availableUsers = [];
-}
-
-// Handle Export Request - This MUST come after all data is loaded
-if (isset($_GET['export']) && ($_GET['export'] === 'pdf' || $_GET['export'] === 'csv')) {
-    exportCollectionReportCSV($collectionData, $dailyCollections, $collectionsByMethod, $collectionsByUser, $collectionsByBillType, $hourlyCollections, $recentCollections, $selectedYear, $selectedMonth, $selectedUser, $availableUsers, $monthlyTarget, $currentMonthPerformance);
 }
 
 // Prepare chart data
@@ -853,28 +687,6 @@ foreach ($hourlyCollections as $hour) {
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
-        /* Export Info Alert */
-        .export-info {
-            background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
-            border: 1px solid #4fc3f7;
-            border-radius: 10px;
-            padding: 15px 20px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .export-info .info-icon {
-            color: #0277bd;
-            font-size: 20px;
-        }
-
-        .export-info .info-text {
-            color: #01579b;
-            font-weight: 500;
-        }
-
         /* Filters */
         .filters-card {
             background: white;
@@ -1159,7 +971,6 @@ foreach ($hourlyCollections as $hour) {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
             color: white;
-            text-decoration: none;
         }
 
         /* Responsive */
@@ -1380,18 +1191,10 @@ foreach ($hourlyCollections as $hour) {
                         <span class="icon-back"></span>
                         Back to Reports
                     </a>
-                    <a href="collection_report.php?<?php echo http_build_query(array_merge($_GET, ['export' => 'pdf'])); ?>" class="btn btn-success">
+                    <a href="?export=pdf&<?php echo http_build_query($_GET); ?>" class="btn btn-success">
                         <span class="icon-download"></span>
-                        Export Report
+                        Export PDF
                     </a>
-                </div>
-            </div>
-
-            <!-- Export Info -->
-            <div class="export-info">
-                <div class="info-icon">ℹ️</div>
-                <div class="info-text">
-                    <strong>Export Feature:</strong> Click "Export Report" to download a comprehensive CSV file containing collection statistics, daily trends, user performance, payment methods analysis, and detailed transaction records.
                 </div>
             </div>
 
@@ -1635,12 +1438,6 @@ foreach ($hourlyCollections as $hour) {
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title">⏰ Recent Collections</h5>
-                    <div>
-                        <a href="collection_report.php?<?php echo http_build_query(array_merge($_GET, ['export' => 'csv'])); ?>" class="btn btn-outline">
-                            <span class="icon-download"></span>
-                            Export CSV
-                        </a>
-                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">

@@ -1,6 +1,6 @@
 <?php
 /**
- * Data Collector - View Property Profile
+ * Data Collector - View Property Profile with Map & Delivery Status
  * properties/view.php
  */
 
@@ -37,10 +37,8 @@ if (!isDataCollector() && !isAdmin()) {
     exit();
 }
 
-
 // Check session expiration
 if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 5600)) {
-    // Session expired (30 minutes)
     session_unset();
     session_destroy();
     setFlashMessage('error', 'Your session has expired. Please log in again.');
@@ -56,6 +54,68 @@ $property_id = intval($_GET['id'] ?? 0);
 if ($property_id <= 0) {
     setFlashMessage('error', 'Invalid property ID.');
     header('Location: index.php');
+    exit();
+}
+
+// Handle AJAX request for updating serving status
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_serving_status') {
+    header('Content-Type: application/json');
+    
+    try {
+        $billId = intval($_POST['bill_id'] ?? 0);
+        $servedStatus = $_POST['served_status'] ?? 'Not Served';
+        $deliveryNotes = trim($_POST['delivery_notes'] ?? '');
+        
+        if (!$billId) {
+            throw new Exception('Invalid bill ID');
+        }
+        
+        $db = new Database();
+        
+        // Validate served status
+        $validStatuses = ['Not Served', 'Served', 'Attempted', 'Returned'];
+        if (!in_array($servedStatus, $validStatuses)) {
+            throw new Exception('Invalid served status');
+        }
+        
+        // Update serving status
+        $updateQuery = "UPDATE bills SET 
+                        served_status = ?, 
+                        served_by = ?, 
+                        served_at = CASE WHEN ? != 'Not Served' THEN NOW() ELSE NULL END,
+                        delivery_notes = ?
+                        WHERE bill_id = ?";
+        
+        $result = $db->execute($updateQuery, [
+            $servedStatus,
+            $servedStatus !== 'Not Served' ? $currentUser['user_id'] : null,
+            $servedStatus,
+            $deliveryNotes,
+            $billId
+        ]);
+        
+        if ($result) {
+            // Log the action
+            writeLog("Property bill serving status updated - Bill ID: $billId, Status: $servedStatus", 'INFO');
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Serving status updated successfully',
+                'status' => $servedStatus,
+                'served_at' => $servedStatus !== 'Not Served' ? date('M d, Y g:i A') : null,
+                'served_by' => $servedStatus !== 'Not Served' ? $userDisplayName : null
+            ]);
+        } else {
+            throw new Exception('Failed to update serving status');
+        }
+        
+    } catch (Exception $e) {
+        writeLog("Error updating property serving status: " . $e->getMessage(), 'ERROR');
+        echo json_encode([
+            'success' => false,
+            'message' => $e->getMessage()
+        ]);
+    }
     exit();
 }
 
@@ -85,20 +145,27 @@ try {
         exit();
     }
     
-    // Get property bills
+    // Get property bills with serving information
     $bills = $db->fetchAll("
         SELECT 
-            bill_id,
-            bill_number,
-            billing_year,
-            current_bill,
-            amount_payable,
-            status,
-            generated_at,
-            due_date
-        FROM bills 
-        WHERE bill_type = 'Property' AND reference_id = ?
-        ORDER BY billing_year DESC, generated_at DESC
+            b.bill_id,
+            b.bill_number,
+            b.billing_year,
+            b.current_bill,
+            b.amount_payable,
+            b.status,
+            b.served_status,
+            b.served_at,
+            b.delivery_notes,
+            b.generated_at,
+            b.due_date,
+            u.first_name as served_by_first_name,
+            u.last_name as served_by_last_name,
+            u.username as served_by_username
+        FROM bills b
+        LEFT JOIN users u ON b.served_by = u.user_id
+        WHERE b.bill_type = 'Property' AND b.reference_id = ?
+        ORDER BY b.billing_year DESC, b.generated_at DESC
     ", [$property_id]);
     
     // Get payment history
@@ -146,9 +213,6 @@ try {
     <!-- Bootstrap for backup -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDg1CWNtJ8BHeclYP7VfltZZLIcY3TVHaI"></script>
-    
     <style>
         * {
             margin: 0;
@@ -186,6 +250,8 @@ try {
         .icon-credit-card::before { content: "💳"; }
         .icon-user-plus::before { content: "👤➕"; }
         .icon-calculator::before { content: "🧮"; }
+        .icon-truck::before { content: "🚚"; }
+        .icon-directions::before { content: "🧭"; }
         
         /* Top Navigation */
         .top-nav {
@@ -552,11 +618,31 @@ try {
             background: #3182ce;
         }
         
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #38a169;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-xs {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+        
         /* Status Badges */
         .status-badges {
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            flex-wrap: wrap;
         }
         
         .badge {
@@ -589,6 +675,94 @@ try {
         .badge-teal {
             background: #b2f5ea;
             color: #234e52;
+        }
+        
+        /* Serving Status Badges */
+        .serving-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .serving-badge.served {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .serving-badge.not-served {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .serving-badge.attempted {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .serving-badge.returned {
+            background: #fecaca;
+            color: #991b1b;
+        }
+        
+        /* Serving Actions */
+        .serving-actions {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .serving-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .serving-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            z-index: 1000;
+            padding: 10px;
+        }
+        
+        .serving-dropdown.active .serving-dropdown-content {
+            display: block;
+        }
+        
+        .serving-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .serving-form select,
+        .serving-form input,
+        .serving-form textarea {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        .serving-form textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .serving-form-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
         }
         
         /* Content Grid */
@@ -667,6 +841,58 @@ try {
             border-radius: 8px;
             overflow: hidden;
             margin-top: 15px;
+            position: relative;
+            background: #f8fafc;
+        }
+        
+        .map-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 16px;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .map-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px dashed #f87171;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .map-control-btn {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            color: #374151;
+            font-size: 14px;
+        }
+        
+        .map-control-btn:hover {
+            background: #f3f4f6;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
         
         /* Table Styles */
@@ -753,6 +979,40 @@ try {
             border-radius: 0 0 6px 6px;
         }
         
+        /* Sync Message */
+        .sync-message {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            max-width: 350px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10000;
+            font-weight: 600;
+            transform: translateX(400px);
+            transition: transform 0.3s ease-out;
+        }
+        
+        .sync-message.show {
+            transform: translateX(0);
+        }
+        
+        .sync-message.success {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .sync-message.error {
+            background: #f56565;
+            color: white;
+        }
+        
+        .sync-message.info {
+            background: #4299e1;
+            color: white;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
@@ -795,6 +1055,12 @@ try {
                 flex-direction: column;
                 width: 100%;
             }
+            
+            .serving-dropdown-content {
+                left: 0;
+                right: auto;
+                min-width: 250px;
+            }
         }
         
         /* Animations */
@@ -805,6 +1071,11 @@ try {
         
         .fade-in {
             animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -965,6 +1236,13 @@ try {
                     </div>
                     
                     <div class="profile-actions">
+                        <?php if ($property['latitude'] && $property['longitude']): ?>
+                        <a href="#" class="btn btn-success" onclick="getDirections(); return false;">
+                            <i class="fas fa-directions"></i>
+                            <span class="icon-directions" style="display: none;"></span>
+                            Get Directions
+                        </a>
+                        <?php endif; ?>
                         <a href="edit.php?id=<?php echo $property['property_id']; ?>" class="btn btn-primary">
                             <i class="fas fa-edit"></i>
                             <span class="icon-edit" style="display: none;"></span>
@@ -1087,18 +1365,37 @@ try {
                             </div>
                             
                             <?php if ($property['latitude'] && $property['longitude']): ?>
-                                <div class="map-container" id="map"></div>
+                                <div class="map-container" id="propertyMap">
+                                    <div class="map-loading" id="mapLoading">
+                                        <i class="fas fa-spinner" style="animation: spin 1s linear infinite; font-size: 24px; margin-bottom: 10px;"></i>
+                                        <span>Loading interactive map...</span>
+                                    </div>
+                                    <div class="map-controls" style="display: none;" id="mapControls">
+                                        <button class="map-control-btn" onclick="centerMap()" title="Center on Property">
+                                            <i class="fas fa-crosshairs"></i>
+                                        </button>
+                                        <button class="map-control-btn" onclick="toggleMapType()" title="Toggle Map Type">
+                                            <i class="fas fa-layer-group"></i>
+                                        </button>
+                                        <button class="map-control-btn" onclick="fullscreenMap()" title="Fullscreen">
+                                            <i class="fas fa-expand"></i>
+                                        </button>
+                                        <button class="map-control-btn" onclick="getDirections()" title="Get Directions">
+                                            <i class="fas fa-directions"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>
                     
-                    <!-- Bills & Payments -->
+                    <!-- Billing History & Delivery Status -->
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">
                                 <i class="fas fa-file-invoice"></i>
                                 <span class="icon-file-invoice" style="display: none;"></span>
-                                Bills & Payments
+                                Billing History & Delivery Status
                             </h3>
                         </div>
                         <div class="card-body">
@@ -1111,7 +1408,8 @@ try {
                                                 <th>Bill Number</th>
                                                 <th>Amount</th>
                                                 <th>Status</th>
-                                                <th>Generated</th>
+                                                <th>Delivery Status</th>
+                                                <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1128,7 +1426,74 @@ try {
                                                             <?php echo $bill['status']; ?>
                                                         </span>
                                                     </td>
-                                                    <td><?php echo date('M j, Y', strtotime($bill['generated_at'])); ?></td>
+                                                    <td>
+                                                        <div class="serving-badge <?php echo strtolower(str_replace(' ', '-', $bill['served_status'] ?? 'Not Served')); ?>" 
+                                                             id="serving-badge-<?php echo $bill['bill_id']; ?>">
+                                                            <?php 
+                                                            $servedStatus = $bill['served_status'] ?? 'Not Served';
+                                                            $statusIcons = [
+                                                                'Served' => '<i class="fas fa-check"></i>',
+                                                                'Not Served' => '<i class="fas fa-times"></i>',
+                                                                'Attempted' => '<i class="fas fa-exclamation"></i>',
+                                                                'Returned' => '<i class="fas fa-undo"></i>'
+                                                            ];
+                                                            echo ($statusIcons[$servedStatus] ?? '') . ' ' . $servedStatus;
+                                                            ?>
+                                                        </div>
+                                                        <?php if ($bill['served_at'] && $servedStatus !== 'Not Served'): ?>
+                                                            <small style="display: block; color: #64748b; margin-top: 2px; font-size: 11px;">
+                                                                <?php echo date('M d, Y g:i A', strtotime($bill['served_at'])); ?>
+                                                            </small>
+                                                            <?php if ($bill['served_by_first_name']): ?>
+                                                                <small style="display: block; color: #64748b; font-size: 11px;">
+                                                                    by <?php echo htmlspecialchars($bill['served_by_first_name'] . ' ' . $bill['served_by_last_name']); ?>
+                                                                </small>
+                                                            <?php endif; ?>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <div class="serving-actions">
+                                                            <button class="btn btn-xs btn-success" 
+                                                                    onclick="quickServe(<?php echo $bill['bill_id']; ?>)"
+                                                                    <?php echo $servedStatus === 'Served' ? 'disabled' : ''; ?>
+                                                                    title="Mark as served">
+                                                                <i class="fas fa-check"></i>
+                                                            </button>
+                                                            
+                                                            <div class="serving-dropdown">
+                                                                <button class="btn btn-xs btn-secondary" 
+                                                                        onclick="toggleServingDropdown(<?php echo $bill['bill_id']; ?>)"
+                                                                        title="Update delivery status">
+                                                                    <i class="fas fa-ellipsis-v"></i>
+                                                                </button>
+                                                                
+                                                                <div class="serving-dropdown-content" id="serving-dropdown-<?php echo $bill['bill_id']; ?>">
+                                                                    <form class="serving-form" onsubmit="updateServingStatus(event, <?php echo $bill['bill_id']; ?>)">
+                                                                        <label style="font-size: 12px; font-weight: 600;">Delivery Status:</label>
+                                                                        <select name="served_status" required>
+                                                                            <option value="Not Served" <?php echo $servedStatus === 'Not Served' ? 'selected' : ''; ?>>Not Served</option>
+                                                                            <option value="Served" <?php echo $servedStatus === 'Served' ? 'selected' : ''; ?>>Served</option>
+                                                                            <option value="Attempted" <?php echo $servedStatus === 'Attempted' ? 'selected' : ''; ?>>Attempted</option>
+                                                                            <option value="Returned" <?php echo $servedStatus === 'Returned' ? 'selected' : ''; ?>>Returned</option>
+                                                                        </select>
+                                                                        
+                                                                        <label style="font-size: 12px; font-weight: 600;">Notes:</label>
+                                                                        <textarea name="delivery_notes" placeholder="Optional delivery notes..."><?php echo htmlspecialchars($bill['delivery_notes'] ?? ''); ?></textarea>
+                                                                        
+                                                                        <div class="serving-form-buttons">
+                                                                            <button type="button" class="btn btn-xs btn-secondary" 
+                                                                                    onclick="toggleServingDropdown(<?php echo $bill['bill_id']; ?>)">
+                                                                                Cancel
+                                                                            </button>
+                                                                            <button type="submit" class="btn btn-xs btn-primary">
+                                                                                Update
+                                                                            </button>
+                                                                        </div>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         </tbody>
@@ -1290,7 +1655,494 @@ try {
         </div>
     </div>
     
+    <!-- Load Google Maps JavaScript API -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDg1CWNtJ8BHeclYP7VfltZZLIcY3TVHaI&callback=initMapCallback&libraries=geometry"></script>
+    
     <script>
+        // Global variables
+        let propertyMap = null;
+        let propertyMarker = null;
+        let currentMapType = 'roadmap';
+        
+        const propertyData = {
+            lat: <?php echo $property['latitude'] ?? 0; ?>,
+            lng: <?php echo $property['longitude'] ?? 0; ?>,
+            owner: '<?php echo addslashes($property['owner_name']); ?>',
+            propertyNumber: '<?php echo addslashes($property['property_number']); ?>',
+            structure: '<?php echo addslashes($property['structure']); ?>',
+            rooms: <?php echo $property['number_of_rooms']; ?>,
+            propertyUse: '<?php echo addslashes($property['property_use']); ?>'
+        };
+        
+        // Google Maps callback
+        window.initMapCallback = function() {
+            console.log('Google Maps API loaded successfully');
+            if (propertyData.lat && propertyData.lng) {
+                setTimeout(() => initPropertyMap(), 500);
+            }
+        };
+        
+        // Initialize Google Map
+        function initPropertyMap() {
+            try {
+                console.log('Initializing Google Map for property coordinates:', propertyData.lat, propertyData.lng);
+                
+                const mapElement = document.getElementById('propertyMap');
+                if (!mapElement) {
+                    console.warn('Map element not found');
+                    return;
+                }
+                
+                // Hide loading indicator
+                const loadingElement = document.getElementById('mapLoading');
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+                
+                // Show controls
+                const controlsElement = document.getElementById('mapControls');
+                if (controlsElement) {
+                    controlsElement.style.display = 'flex';
+                }
+                
+                // Initialize the Google Map
+                const mapOptions = {
+                    center: { lat: propertyData.lat, lng: propertyData.lng },
+                    zoom: 16,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    zoomControl: true,
+                    zoomControlOptions: {
+                        position: google.maps.ControlPosition.BOTTOM_RIGHT
+                    },
+                    streetViewControl: true,
+                    streetViewControlOptions: {
+                        position: google.maps.ControlPosition.BOTTOM_RIGHT
+                    },
+                    fullscreenControl: false,
+                    mapTypeControl: false
+                };
+                
+                propertyMap = new google.maps.Map(mapElement, mapOptions);
+                
+                // Create custom property marker
+                propertyMarker = new google.maps.Marker({
+                    position: { lat: propertyData.lat, lng: propertyData.lng },
+                    map: propertyMap,
+                    title: propertyData.owner + "'s Property",
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 20,
+                        fillColor: '#3182ce',
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 3
+                    },
+                    animation: google.maps.Animation.BOUNCE
+                });
+                
+                // Stop bouncing after 3 seconds
+                setTimeout(() => {
+                    if (propertyMarker) {
+                        propertyMarker.setAnimation(null);
+                    }
+                }, 3000);
+                
+                // Create info window content
+                const infoWindowContent = `
+                    <div style="min-width: 200px; text-align: center; padding: 10px;">
+                        <h4 style="margin: 0 0 10px 0; color: #2d3748; font-size: 16px;">🏠 ${propertyData.owner}'s Property</h4>
+                        <p style="margin: 5px 0; color: #64748b; font-size: 14px;"><strong>Property:</strong> ${propertyData.propertyNumber}</p>
+                        <p style="margin: 5px 0; color: #64748b; font-size: 14px;"><strong>Structure:</strong> ${propertyData.structure}</p>
+                        <p style="margin: 5px 0; color: #64748b; font-size: 14px;"><strong>Rooms:</strong> ${propertyData.rooms}</p>
+                        <p style="margin: 5px 0; color: #64748b; font-size: 14px;"><strong>Use:</strong> ${propertyData.propertyUse}</p>
+                        <div style="background: #f8fafc; padding: 8px; border-radius: 6px; margin-top: 10px; font-family: monospace; font-size: 12px;">
+                            <strong>Coordinates:</strong><br>
+                            Lat: ${propertyData.lat}<br>
+                            Lng: ${propertyData.lng}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <a href="#" onclick="getDirections(); return false;" 
+                               style="
+                                   background: #3182ce; 
+                                   color: white; 
+                                   padding: 6px 12px; 
+                                   border-radius: 6px; 
+                                   text-decoration: none; 
+                                   font-size: 12px;
+                                   display: inline-block;
+                                   margin-top: 8px;
+                               ">
+                                🧭 Get Directions
+                            </a>
+                        </div>
+                    </div>
+                `;
+                
+                const infoWindow = new google.maps.InfoWindow({
+                    content: infoWindowContent
+                });
+                
+                // Open info window by default
+                infoWindow.open(propertyMap, propertyMarker);
+                
+                // Add click listener to marker
+                propertyMarker.addListener('click', () => {
+                    infoWindow.open(propertyMap, propertyMarker);
+                });
+                
+                // Add circle around property
+                new google.maps.Circle({
+                    strokeColor: '#3182ce',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: '#3182ce',
+                    fillOpacity: 0.1,
+                    map: propertyMap,
+                    center: { lat: propertyData.lat, lng: propertyData.lng },
+                    radius: 50
+                });
+                
+                console.log('✅ Google Map initialized successfully');
+                
+            } catch (error) {
+                console.error('❌ Error initializing map:', error);
+                showMapError('Failed to load map. Please check your internet connection.');
+            }
+        }
+        
+        // Center map function
+        function centerMap() {
+            if (propertyMap && propertyData.lat && propertyData.lng) {
+                propertyMap.setCenter({ lat: propertyData.lat, lng: propertyData.lng });
+                propertyMap.setZoom(16);
+                if (propertyMarker) {
+                    propertyMarker.setAnimation(google.maps.Animation.BOUNCE);
+                    setTimeout(() => {
+                        if (propertyMarker) {
+                            propertyMarker.setAnimation(null);
+                        }
+                    }, 2000);
+                }
+            }
+        }
+        
+        // Toggle map type
+        function toggleMapType() {
+            if (!propertyMap) return;
+            
+            if (currentMapType === 'roadmap') {
+                propertyMap.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+                currentMapType = 'satellite';
+            } else {
+                propertyMap.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+                currentMapType = 'roadmap';
+            }
+        }
+        
+        // Fullscreen map
+        function fullscreenMap() {
+            if (!propertyData.lat || !propertyData.lng) return;
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.9); z-index: 10000;
+                display: flex; align-items: center; justify-content: center;
+                animation: fadeIn 0.3s ease; cursor: pointer;
+            `;
+            
+            const mapContainer = document.createElement('div');
+            mapContainer.style.cssText = `
+                width: 95%; height: 90%; background: white;
+                border-radius: 15px; overflow: hidden; position: relative;
+                box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+            `;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '✕ Close';
+            closeBtn.style.cssText = `
+                position: absolute; top: 20px; right: 20px; z-index: 1001;
+                background: rgba(0,0,0,0.7); color: white; border: none;
+                padding: 12px 20px; border-radius: 8px; cursor: pointer;
+                font-weight: 600; backdrop-filter: blur(10px);
+            `;
+            
+            const directionsBtn = document.createElement('button');
+            directionsBtn.innerHTML = '🧭 Directions';
+            directionsBtn.onclick = getDirections;
+            directionsBtn.style.cssText = `
+                position: absolute; top: 20px; left: 20px; z-index: 1001;
+                background: #3182ce; color: white; border: none;
+                padding: 12px 20px; border-radius: 8px; cursor: pointer;
+                font-weight: 600;
+            `;
+            
+            const fullMapDiv = document.createElement('div');
+            fullMapDiv.style.cssText = 'width: 100%; height: 100%;';
+            fullMapDiv.id = 'fullscreenMap';
+            
+            mapContainer.appendChild(closeBtn);
+            mapContainer.appendChild(directionsBtn);
+            mapContainer.appendChild(fullMapDiv);
+            modal.appendChild(mapContainer);
+            document.body.appendChild(modal);
+            
+            // Initialize fullscreen map
+            setTimeout(() => {
+                const fullscreenMap = new google.maps.Map(fullMapDiv, {
+                    center: { lat: propertyData.lat, lng: propertyData.lng },
+                    zoom: 18,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                });
+                
+                const fullscreenMarker = new google.maps.Marker({
+                    position: { lat: propertyData.lat, lng: propertyData.lng },
+                    map: fullscreenMap,
+                    title: propertyData.owner + "'s Property",
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 25,
+                        fillColor: '#3182ce',
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 4
+                    }
+                });
+                
+                const fullscreenInfoWindow = new google.maps.InfoWindow({
+                    content: `<h4>${propertyData.owner}'s Property</h4><p>Property: ${propertyData.propertyNumber}</p>`
+                });
+                
+                fullscreenInfoWindow.open(fullscreenMap, fullscreenMarker);
+            }, 100);
+            
+            closeBtn.onclick = () => modal.remove();
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+        }
+        
+        // Get Directions function
+        function getDirections() {
+            if (!propertyData.lat || !propertyData.lng) {
+                alert('Location coordinates not available for this property.');
+                return;
+            }
+            
+            // Check if geolocation is available
+            if ('geolocation' in navigator) {
+                // Show loading message
+                showSyncMessage('info', 'Getting your location...');
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        
+                        // Open Google Maps with directions
+                        const directionsUrl = `https://www.google.com/maps/dir/${userLat},${userLng}/${propertyData.lat},${propertyData.lng}`;
+                        window.open(directionsUrl, '_blank');
+                    },
+                    (error) => {
+                        console.log('Geolocation error:', error);
+                        // If user denies location or error occurs, open Google Maps without origin
+                        const directionsUrl = `https://www.google.com/maps/dir//${propertyData.lat},${propertyData.lng}`;
+                        window.open(directionsUrl, '_blank');
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                // Geolocation not available, open Google Maps without origin
+                const directionsUrl = `https://www.google.com/maps/dir//${propertyData.lat},${propertyData.lng}`;
+                window.open(directionsUrl, '_blank');
+            }
+        }
+        
+        // Show map error
+        function showMapError(message) {
+            const mapContainer = document.getElementById('propertyMap');
+            if (mapContainer) {
+                mapContainer.innerHTML = `
+                    <div class="map-loading map-error">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 32px; margin-bottom: 10px;"></i>
+                        <span>⚠️</span>
+                        <br>
+                        ${message}
+                        <br><br>
+                        <button onclick="location.reload()" style="
+                            background: #3182ce; 
+                            color: white; 
+                            border: none; 
+                            padding: 8px 16px; 
+                            border-radius: 6px; 
+                            cursor: pointer;
+                        ">
+                            🔄 Try Again
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Quick serve function
+        function quickServe(billId) {
+            const confirmed = confirm('Mark this bill as served?');
+            if (!confirmed) return;
+            
+            const button = event.target.closest('button');
+            const originalHtml = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            button.disabled = true;
+            
+            updateServingStatusAjax(billId, 'Served', '', button, originalHtml);
+        }
+        
+        // Toggle serving dropdown
+        function toggleServingDropdown(billId) {
+            const dropdown = document.getElementById('serving-dropdown-' + billId).closest('.serving-dropdown');
+            const isActive = dropdown.classList.contains('active');
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.serving-dropdown.active').forEach(d => {
+                if (d !== dropdown) d.classList.remove('active');
+            });
+            
+            // Toggle current dropdown
+            dropdown.classList.toggle('active');
+        }
+        
+        // Update serving status form submission
+        function updateServingStatus(event, billId) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const servedStatus = formData.get('served_status');
+            const deliveryNotes = formData.get('delivery_notes');
+            
+            // Show loading state
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalHtml = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            submitButton.disabled = true;
+            
+            updateServingStatusAjax(billId, servedStatus, deliveryNotes, submitButton, originalHtml);
+        }
+        
+        // AJAX function to update serving status
+        function updateServingStatusAjax(billId, servedStatus, deliveryNotes, buttonElement, originalHtml) {
+            const formData = new FormData();
+            formData.append('action', 'update_serving_status');
+            formData.append('bill_id', billId);
+            formData.append('served_status', servedStatus);
+            formData.append('delivery_notes', deliveryNotes);
+
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the badge
+                    updateServingBadge(billId, data.status, data.served_at, data.served_by);
+                    
+                    // Show success message
+                    showSyncMessage('success', 'Serving status updated successfully!');
+                    
+                    // Close dropdown if open
+                    const dropdown = document.getElementById('serving-dropdown-' + billId);
+                    if (dropdown) {
+                        dropdown.closest('.serving-dropdown').classList.remove('active');
+                    }
+                    
+                } else {
+                    showSyncMessage('error', 'Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showSyncMessage('error', 'An error occurred while updating serving status.');
+            })
+            .finally(() => {
+                // Restore button state
+                if (buttonElement) {
+                    buttonElement.innerHTML = originalHtml;
+                    buttonElement.disabled = servedStatus === 'Served';
+                }
+            });
+        }
+        
+        // Update serving badge in the table
+        function updateServingBadge(billId, status, servedAt, servedBy) {
+            const badge = document.getElementById('serving-badge-' + billId);
+            if (!badge) return;
+            
+            const parentTd = badge.closest('td');
+            
+            // Update badge class and content
+            badge.className = 'serving-badge ' + status.toLowerCase().replace(' ', '-');
+            
+            const statusIcons = {
+                'Served': '<i class="fas fa-check"></i>',
+                'Not Served': '<i class="fas fa-times"></i>',
+                'Attempted': '<i class="fas fa-exclamation"></i>',
+                'Returned': '<i class="fas fa-undo"></i>'
+            };
+            
+            badge.innerHTML = (statusIcons[status] || '') + ' ' + status;
+            
+            // Remove existing timestamp and user info
+            const existingSmall = parentTd.querySelectorAll('small');
+            existingSmall.forEach(el => el.remove());
+            
+            // Add new timestamp and user info if served
+            if (status !== 'Not Served' && servedAt) {
+                const timeElement = document.createElement('small');
+                timeElement.style.cssText = 'display: block; color: #64748b; margin-top: 2px; font-size: 11px;';
+                timeElement.textContent = servedAt;
+                parentTd.appendChild(timeElement);
+                
+                if (servedBy) {
+                    const userElement = document.createElement('small');
+                    userElement.style.cssText = 'display: block; color: #64748b; font-size: 11px;';
+                    userElement.textContent = 'by ' + servedBy;
+                    parentTd.appendChild(userElement);
+                }
+            }
+        }
+        
+        // Show sync messages
+        function showSyncMessage(type, message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `sync-message ${type}`;
+            messageDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <div>${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                messageDiv.classList.remove('show');
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
         // Check if Font Awesome loaded, if not show emoji icons
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
@@ -1354,6 +2206,14 @@ try {
                 dropdown.classList.remove('show');
                 profile.classList.remove('active');
             }
+            
+            // Close serving dropdowns when clicking outside
+            const activeDropdowns = document.querySelectorAll('.serving-dropdown.active');
+            activeDropdowns.forEach(dropdown => {
+                if (!dropdown.contains(event.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
         });
 
         // Close sidebar when clicking outside in mobile view
@@ -1368,59 +2228,23 @@ try {
                 localStorage.setItem('sidebarHidden', true);
             }
         });
-
-        // Initialize map if coordinates are available
-        <?php if ($property['latitude'] && $property['longitude']): ?>
-        function initMap() {
-            const propertyLocation = {
-                lat: <?php echo $property['latitude']; ?>,
-                lng: <?php echo $property['longitude']; ?>
-            };
-            
-            const map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 16,
-                center: propertyLocation,
-                mapTypeId: 'satellite'
-            });
-            
-            const marker = new google.maps.Marker({
-                position: propertyLocation,
-                map: map,
-                title: '<?php echo addslashes($property['owner_name'] . "'s Property"); ?>',
-                icon: {
-                    url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-                }
-            });
-            
-            const infoWindow = new google.maps.InfoWindow({
-                content: `
-                    <div style="padding: 10px;">
-                        <h6 style="margin-bottom: 5px; color: #2d3748;">
-                            <?php echo addslashes($property['owner_name']); ?>'s Property
-                        </h6>
-                        <p style="margin-bottom: 5px; font-size: 12px; color: #718096;">
-                            Property: <?php echo addslashes($property['property_number']); ?>
-                        </p>
-                        <p style="margin-bottom: 5px; font-size: 12px; color: #718096;">
-                            <?php echo addslashes($property['structure']); ?> - <?php echo $property['number_of_rooms']; ?> rooms
-                        </p>
-                        <p style="margin-bottom: 0; font-size: 12px; color: #718096;">
-                            <?php echo addslashes($property['property_use']); ?>
-                        </p>
-                    </div>
-                `
-            });
-            
-            marker.addListener('click', function() {
-                infoWindow.open(map, marker);
-            });
-        }
         
-        // Initialize map when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            initMap();
+        // Mobile responsiveness for map
+        window.addEventListener('resize', function() {
+            if (propertyMap) {
+                setTimeout(() => {
+                    google.maps.event.trigger(propertyMap, 'resize');
+                    if (propertyData.lat && propertyData.lng) {
+                        propertyMap.setCenter({ 
+                            lat: propertyData.lat, 
+                            lng: propertyData.lng 
+                        });
+                    }
+                }, 300);
+            }
         });
-        <?php endif; ?>
+        
+        console.log('Property view with map and delivery status initialized');
     </script>
 </body>
 </html>

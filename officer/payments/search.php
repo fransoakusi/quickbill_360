@@ -2,7 +2,7 @@
 /**
  * Search Accounts Page for QUICKBILL 305
  * Officer interface for comprehensive account searches and management
- * Enhanced with outstanding balance calculation and proper page linking
+ * FIXED: Outstanding balance calculation using current year bill amount_payable
  */
 
 // Define application constant
@@ -72,27 +72,75 @@ try {
     }
 }
 
-// Function to calculate remaining balance for an account
-function calculateRemainingBalance($db, $accountType, $accountId, $amountPayable) {
+// FIXED: Calculate remaining balance from current year's bill - CORRECT IMPLEMENTATION
+function calculateRemainingBalance($db, $accountType, $accountId) {
     try {
-        $totalPaymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as total_paid
-                              FROM payments p 
-                              INNER JOIN bills b ON p.bill_id = b.bill_id 
-                              WHERE b.bill_type = ? AND b.reference_id = ? 
-                              AND p.payment_status = 'Successful'";
-        $totalPaymentsResult = $db->fetchRow($totalPaymentsQuery, [ucfirst($accountType), $accountId]);
-        $totalPaid = $totalPaymentsResult['total_paid'] ?? 0;
+        $currentYear = date('Y');
         
+        // Get current year's bill - the amount_payable field is the correct remaining balance
+        $billQuery = "SELECT bill_id, amount_payable, billing_year, status
+                     FROM bills 
+                     WHERE bill_type = ? AND reference_id = ? AND billing_year = ?
+                     ORDER BY generated_at DESC 
+                     LIMIT 1";
+        
+        $currentBill = $db->fetchRow($billQuery, [ucfirst($accountType), $accountId, $currentYear]);
+        
+        if ($currentBill) {
+            // The bill's amount_payable IS the remaining balance (updated by triggers when payments are made)
+            $remainingBalance = floatval($currentBill['amount_payable']);
+            
+            // Get total payments for this specific bill to show payment progress
+            $paymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as bill_payments
+                             FROM payments p 
+                             WHERE p.bill_id = ? AND p.payment_status = 'Successful'";
+            
+            $paymentsResult = $db->fetchRow($paymentsQuery, [$currentBill['bill_id']]);
+            $billPayments = floatval($paymentsResult['bill_payments'] ?? 0);
+            
+            // Get the original bill amount (before any payments)
+            $originalAmount = $remainingBalance + $billPayments;
+            
+            // Calculate payment percentage based on the current year's bill
+            $paymentPercentage = $originalAmount > 0 ? ($billPayments / $originalAmount) * 100 : 0;
+            
+            return [
+                'has_current_bill' => true,
+                'current_bill_year' => $currentBill['billing_year'],
+                'bill_id' => $currentBill['bill_id'],
+                'bill_status' => $currentBill['status'],
+                'remaining_balance' => $remainingBalance,
+                'bill_payments' => $billPayments,
+                'original_bill_amount' => $originalAmount,
+                'payment_percentage' => $paymentPercentage,
+                'is_fully_paid' => $remainingBalance <= 0
+            ];
+        }
+        
+        // No current year bill exists
         return [
-            'remaining_balance' => max(0, $amountPayable - $totalPaid),
-            'total_paid' => $totalPaid,
-            'amount_payable' => $amountPayable
+            'has_current_bill' => false,
+            'current_bill_year' => $currentYear,
+            'bill_id' => null,
+            'bill_status' => null,
+            'remaining_balance' => 0,
+            'bill_payments' => 0,
+            'original_bill_amount' => 0,
+            'payment_percentage' => 0,
+            'is_fully_paid' => true
         ];
+        
     } catch (Exception $e) {
         return [
-            'remaining_balance' => $amountPayable,
-            'total_paid' => 0,
-            'amount_payable' => $amountPayable
+            'has_current_bill' => false,
+            'current_bill_year' => date('Y'),
+            'bill_id' => null,
+            'bill_status' => null,
+            'remaining_balance' => 0,
+            'bill_payments' => 0,
+            'original_bill_amount' => 0,
+            'payment_percentage' => 0,
+            'is_fully_paid' => true
         ];
     }
 }
@@ -114,14 +162,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $searchResults = [];
                 
                 if ($debugMode) {
-                    $debugInfo .= "Searching for '{$searchTerm}' in '{$searchType}' accounts. ";
+                    $debugInfo .= "Searching for '{$searchTerm}' in '{$searchType}' accounts using FIXED balance calculation. ";
                 }
                 
                 // Search businesses
                 if ($searchType === 'all' || $searchType === 'business') {
                     $businessQuery = "
                         SELECT 'business' as type, business_id as id, account_number, business_name as name, 
-                               owner_name, telephone, amount_payable, exact_location as location, status,
+                               owner_name, telephone, exact_location as location, status,
                                business_type, category, zone_id, sub_zone_id, created_at, updated_at
                         FROM businesses 
                         WHERE (account_number LIKE ? OR business_name LIKE ? OR owner_name LIKE ? OR telephone LIKE ?)
@@ -131,15 +179,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     
                     $businesses = $db->fetchAll($businessQuery, [$searchPattern, $searchPattern, $searchPattern, $searchPattern]);
                     if ($businesses !== false && is_array($businesses)) {
-                        // Calculate remaining balance for each business
+                        // Calculate remaining balance for each business using FIXED method
                         foreach ($businesses as &$business) {
-                            $balanceInfo = calculateRemainingBalance($db, 'business', $business['id'], $business['amount_payable']);
+                            $balanceInfo = calculateRemainingBalance($db, 'business', $business['id']);
                             $business['remaining_balance'] = $balanceInfo['remaining_balance'];
-                            $business['total_paid'] = $balanceInfo['total_paid'];
+                            $business['bill_payments'] = $balanceInfo['bill_payments'];
+                            $business['original_bill_amount'] = $balanceInfo['original_bill_amount'];
+                            $business['payment_percentage'] = $balanceInfo['payment_percentage'];
+                            $business['has_current_bill'] = $balanceInfo['has_current_bill'];
+                            $business['current_bill_year'] = $balanceInfo['current_bill_year'];
                         }
                         $searchResults = array_merge($searchResults, $businesses);
                         if ($debugMode) {
-                            $debugInfo .= "Found " . count($businesses) . " businesses with balance calculations. ";
+                            $debugInfo .= "Found " . count($businesses) . " businesses with FIXED balance calculations. ";
                         }
                     } else {
                         if ($debugMode) {
@@ -152,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 if ($searchType === 'all' || $searchType === 'property') {
                     $propertyQuery = "
                         SELECT 'property' as type, property_id as id, property_number as account_number, 
-                               owner_name as name, owner_name, telephone, amount_payable, location, 'Active' as status,
+                               owner_name as name, owner_name, telephone, location, 'Active' as status,
                                structure, property_use, number_of_rooms, zone_id, created_at, updated_at
                         FROM properties 
                         WHERE (property_number LIKE ? OR owner_name LIKE ? OR telephone LIKE ?)
@@ -161,15 +213,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     
                     $properties = $db->fetchAll($propertyQuery, [$searchPattern, $searchPattern, $searchPattern]);
                     if ($properties !== false && is_array($properties)) {
-                        // Calculate remaining balance for each property
+                        // Calculate remaining balance for each property using FIXED method
                         foreach ($properties as &$property) {
-                            $balanceInfo = calculateRemainingBalance($db, 'property', $property['id'], $property['amount_payable']);
+                            $balanceInfo = calculateRemainingBalance($db, 'property', $property['id']);
                             $property['remaining_balance'] = $balanceInfo['remaining_balance'];
-                            $property['total_paid'] = $balanceInfo['total_paid'];
+                            $property['bill_payments'] = $balanceInfo['bill_payments'];
+                            $property['original_bill_amount'] = $balanceInfo['original_bill_amount'];
+                            $property['payment_percentage'] = $balanceInfo['payment_percentage'];
+                            $property['has_current_bill'] = $balanceInfo['has_current_bill'];
+                            $property['current_bill_year'] = $balanceInfo['current_bill_year'];
                         }
                         $searchResults = array_merge($searchResults, $properties);
                         if ($debugMode) {
-                            $debugInfo .= "Found " . count($properties) . " properties with balance calculations. ";
+                            $debugInfo .= "Found " . count($properties) . " properties with FIXED balance calculations. ";
                         }
                     } else {
                         if ($debugMode) {
@@ -206,7 +262,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
                 
                 if ($debugMode) {
-                    $debugInfo .= "Total results: " . count($searchResults) . ". ";
+                    $debugInfo .= "Total results: " . count($searchResults) . " (using bill.amount_payable as balance source). ";
                 }
                 
             } catch (Exception $e) {
@@ -229,7 +285,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
         $accountId = intval($viewData[1]);
         
         if ($debugMode) {
-            $debugInfo .= "Fetching {$accountType} details for ID {$accountId}. ";
+            $debugInfo .= "Fetching {$accountType} details for ID {$accountId} with FIXED balance calculation. ";
         }
         
         try {
@@ -249,16 +305,20 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                 
                 if ($accountDetails !== false && $accountDetails !== null && !empty($accountDetails)) {
                     $accountDetails['type'] = 'business';
-                    // Calculate detailed balance information
-                    $balanceInfo = calculateRemainingBalance($db, 'business', $accountId, $accountDetails['amount_payable']);
+                    // Calculate detailed balance information using FIXED method
+                    $balanceInfo = calculateRemainingBalance($db, 'business', $accountId);
+                    $accountDetails['has_current_bill'] = $balanceInfo['has_current_bill'];
+                    $accountDetails['current_bill_year'] = $balanceInfo['current_bill_year'];
                     $accountDetails['remaining_balance'] = $balanceInfo['remaining_balance'];
-                    $accountDetails['total_paid'] = $balanceInfo['total_paid'];
-                    $accountDetails['payment_progress'] = $accountDetails['amount_payable'] > 0 ? 
-                        ($balanceInfo['total_paid'] / $accountDetails['amount_payable']) * 100 : 100;
+                    $accountDetails['bill_payments'] = $balanceInfo['bill_payments'];
+                    $accountDetails['original_bill_amount'] = $balanceInfo['original_bill_amount'];
+                    $accountDetails['payment_percentage'] = $balanceInfo['payment_percentage'];
+                    $accountDetails['is_fully_paid'] = $balanceInfo['is_fully_paid'];
                     
                     if ($debugMode) {
                         $debugInfo .= "Business found: " . $accountDetails['business_name'] . 
-                                     ". Remaining balance: " . $accountDetails['remaining_balance'] . ". ";
+                                     ". FIXED Remaining balance: " . $accountDetails['remaining_balance'] . 
+                                     " (from {$balanceInfo['current_bill_year']} bill.amount_payable). ";
                     }
                 } else {
                     $accountDetails = null;
@@ -282,16 +342,20 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                 
                 if ($accountDetails !== false && $accountDetails !== null && !empty($accountDetails)) {
                     $accountDetails['type'] = 'property';
-                    // Calculate detailed balance information
-                    $balanceInfo = calculateRemainingBalance($db, 'property', $accountId, $accountDetails['amount_payable']);
+                    // Calculate detailed balance information using FIXED method
+                    $balanceInfo = calculateRemainingBalance($db, 'property', $accountId);
+                    $accountDetails['has_current_bill'] = $balanceInfo['has_current_bill'];
+                    $accountDetails['current_bill_year'] = $balanceInfo['current_bill_year'];
                     $accountDetails['remaining_balance'] = $balanceInfo['remaining_balance'];
-                    $accountDetails['total_paid'] = $balanceInfo['total_paid'];
-                    $accountDetails['payment_progress'] = $accountDetails['amount_payable'] > 0 ? 
-                        ($balanceInfo['total_paid'] / $accountDetails['amount_payable']) * 100 : 100;
+                    $accountDetails['bill_payments'] = $balanceInfo['bill_payments'];
+                    $accountDetails['original_bill_amount'] = $balanceInfo['original_bill_amount'];
+                    $accountDetails['payment_percentage'] = $balanceInfo['payment_percentage'];
+                    $accountDetails['is_fully_paid'] = $balanceInfo['is_fully_paid'];
                     
                     if ($debugMode) {
                         $debugInfo .= "Property found: " . $accountDetails['owner_name'] . 
-                                     ". Remaining balance: " . $accountDetails['remaining_balance'] . ". ";
+                                     ". FIXED Remaining balance: " . $accountDetails['remaining_balance'] . 
+                                     " (from {$balanceInfo['current_bill_year']} bill.amount_payable). ";
                     }
                 } else {
                     $accountDetails = null;
@@ -1106,7 +1170,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
         <?php if ($debugMode && !empty($debugInfo)): ?>
             <button class="debug-toggle" onclick="toggleDebugInfo()">🔧 Hide Debug Info</button>
             <div class="debug-info fade-in" id="debugInfo" style="display: block;">
-                <strong>🐛 Debug Information:</strong><br>
+                <strong>🐛 Debug Information (FIXED Balance Calculation):</strong><br>
                 <?php echo $debugInfo; ?>
             </div>
         <?php endif; ?>
@@ -1125,24 +1189,15 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
             <h4>
                 <i class="fas fa-info-circle"></i>
                 <span class="icon-info" style="display: none;"></span>
-                Officer Search & Management Tool
+                Officer Search & Management Tool - FIXED Balance Calculation
             </h4>
             <ul>
-                <li><strong>Account Number:</strong> Enter exact account number (e.g., BIZ000001, PROP000001)</li>
+                <li><strong>Account Number:</strong> Enter exact account number (e.g., BIZ00002, PROP00001)</li>
                 <li><strong>Name:</strong> Search by business name or property owner name</li>
                 <li><strong>Phone:</strong> Search by contact telephone number</li>
                 <li><strong>Filter:</strong> Choose to search all accounts, businesses only, or properties only</li>
-                <li><strong>Balance:</strong> Outstanding balance shows remaining amount after all successful payments</li>
+                <li><strong>Balance Calculation:</strong> Outstanding balance shows remaining amount from current year (<?php echo date('Y'); ?>) bill (updated by payment triggers)</li>
                 <li><strong>Actions:</strong> View details, record payments, and edit accounts</li>
-                <?php if (!$debugMode): ?>
-                <li><strong>Debug:</strong> Add ?debug=1 to URL for detailed debugging information</li>
-                <?php endif; ?>
-                <?php if ($debugMode): ?>
-                <li><strong>Quick Tests:</strong> 
-                    <a href="?view=business:6&debug=1" style="color: #4299e1;">Test Business ID 6</a> | 
-                    <a href="?view=property:4&debug=1" style="color: #4299e1;">Test Property ID 4</a>
-                </li>
-                <?php endif; ?>
             </ul>
         </div>
 
@@ -1219,16 +1274,20 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                             <tbody>
                                 <?php foreach ($searchResults as $result): ?>
                                     <?php 
-                                    $remainingBalance = $result['remaining_balance'] ?? $result['amount_payable'];
-                                    $totalPaid = $result['total_paid'] ?? 0;
-                                    $amountPayable = $result['amount_payable'];
+                                    $remainingBalance = $result['remaining_balance'] ?? 0;
+                                    $billPayments = $result['bill_payments'] ?? 0;
+                                    $hasBill = $result['has_current_bill'] ?? false;
                                     
                                     // Determine status based on remaining balance
-                                    if ($remainingBalance <= 0) {
+                                    if (!$hasBill) {
+                                        $status = 'no-bill';
+                                        $statusText = 'No Bill';
+                                        $statusClass = 'status-pending';
+                                    } elseif ($remainingBalance <= 0) {
                                         $status = 'paid';
                                         $statusText = 'Paid';
                                         $statusClass = 'status-paid';
-                                    } elseif ($totalPaid > 0) {
+                                    } elseif ($billPayments > 0) {
                                         $status = 'partial';
                                         $statusText = 'Partial';
                                         $statusClass = 'status-partial';
@@ -1263,13 +1322,17 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                                         </td>
                                         <td>
                                             <div class="balance-display">
-                                                <?php if ($remainingBalance > 0): ?>
+                                                <?php if (!$hasBill): ?>
+                                                    <span class="balance-main" style="color: #718096;">
+                                                        No <?php echo $result['current_bill_year']; ?> Bill
+                                                    </span>
+                                                <?php elseif ($remainingBalance > 0): ?>
                                                     <span class="balance-main amount-highlight">
                                                         <?php echo formatCurrency($remainingBalance); ?>
                                                     </span>
-                                                    <?php if ($totalPaid > 0): ?>
+                                                    <?php if ($billPayments > 0): ?>
                                                         <span class="balance-detail" style="color: #38a169;">
-                                                            Paid: <?php echo formatCurrency($totalPaid); ?>
+                                                            Paid: <?php echo formatCurrency($billPayments); ?>
                                                         </span>
                                                     <?php endif; ?>
                                                 <?php else: ?>
@@ -1279,7 +1342,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                                                         Fully Paid
                                                     </span>
                                                     <span class="balance-detail" style="color: #38a169;">
-                                                        Total: <?php echo formatCurrency($totalPaid); ?>
+                                                        Total: <?php echo formatCurrency($billPayments); ?>
                                                     </span>
                                                 <?php endif; ?>
                                             </div>
@@ -1298,7 +1361,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                                                     <span class="icon-eye" style="display: none;"></span>
                                                     View
                                                 </a>
-                                                <?php if ($remainingBalance > 0): ?>
+                                                <?php if ($hasBill && $remainingBalance > 0): ?>
                                                     <a href="record.php?account=<?php echo $result['type']; ?>:<?php echo $result['id']; ?>" 
                                                        class="action-btn payment">
                                                         <i class="fas fa-cash-register"></i>
@@ -1466,60 +1529,83 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                 return;
             }
             
+            const hasBill = data.has_current_bill || false;
+            const billYear = data.current_bill_year || new Date().getFullYear();
             const remainingBalance = data.remaining_balance || 0;
-            const totalPaid = data.total_paid || 0;
-            const amountPayable = data.amount_payable || 0;
-            const paymentProgress = data.payment_progress || 0;
+            const billPayments = data.bill_payments || 0;
+            const originalAmount = data.original_bill_amount || 0;
+            const paymentPercentage = data.payment_percentage || 0;
             
-            let detailsHtml = `
-                <!-- Outstanding Balance Highlight -->
-                <div class="balance-highlight ${remainingBalance <= 0 ? 'paid' : ''} ${remainingBalance > 0 ? 'pulse' : ''}">
-                    <h4>
-                        <i class="fas fa-balance-scale"></i>
-                        <span class="icon-balance" style="display: none;"></span>
-                        ${remainingBalance <= 0 ? 'Account Fully Paid' : 'Outstanding Balance'}
-                    </h4>
-                    <div class="balance-amount">
-                        ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}
-                    </div>
-                    <div class="balance-subtitle">
-                        ${remainingBalance > 0 ? 'This amount needs to be paid to clear the account' : '✅ All bills have been settled'}
-                    </div>
-                </div>
-                
-                <!-- Payment Progress -->
-                <div class="payment-progress">
-                    <div class="progress-header">
-                        <h4 style="margin: 0; color: #2d3748; display: flex; align-items: center; gap: 10px;">
-                            <i class="fas fa-chart-line"></i>
-                            <span class="icon-info" style="display: none;"></span>
-                            Payment Summary
+            let detailsHtml = '';
+            
+            if (!hasBill) {
+                detailsHtml += `
+                    <div class="balance-highlight" style="background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%); border-color: #94a3b8;">
+                        <h4 style="color: #475569;">
+                            <i class="fas fa-info-circle"></i>
+                            No ${billYear} Bill Generated
                         </h4>
-                        <span style="font-weight: 600; color: #4299e1;">${paymentProgress.toFixed(1)}% Complete</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar" style="width: ${Math.min(paymentProgress, 100)}%;"></div>
-                    </div>
-                    <div class="progress-stats">
-                        <div class="progress-stat">
-                            <div class="progress-stat-value">₵ ${amountPayable.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
-                            <div class="progress-stat-label">Total Payable</div>
+                        <div class="balance-amount" style="color: #475569;">
+                            No Active Bill
                         </div>
-                        <div class="progress-stat">
-                            <div class="progress-stat-value">₵ ${totalPaid.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
-                            <div class="progress-stat-label">Total Paid</div>
-                        </div>
-                        <div class="progress-stat">
-                            <div class="progress-stat-value">₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
-                            <div class="progress-stat-label">Remaining</div>
-                        </div>
-                        <div class="progress-stat">
-                            <div class="progress-stat-value">${data.successful_payments || 0}</div>
-                            <div class="progress-stat-label">Payments Made</div>
+                        <div class="balance-subtitle" style="color: #475569;">
+                            This account does not have a bill for ${billYear}
                         </div>
                     </div>
-                </div>
-                
+                `;
+            } else {
+                detailsHtml += `
+                    <!-- Outstanding Balance Highlight -->
+                    <div class="balance-highlight ${remainingBalance <= 0 ? 'paid' : ''} ${remainingBalance > 0 ? 'pulse' : ''}">
+                        <h4>
+                            <i class="fas fa-balance-scale"></i>
+                            <span class="icon-balance" style="display: none;"></span>
+                            ${remainingBalance <= 0 ? billYear + ' Bill Fully Paid' : billYear + ' Outstanding Balance'}
+                        </h4>
+                        <div class="balance-amount">
+                            ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}
+                        </div>
+                        <div class="balance-subtitle">
+                            ${remainingBalance > 0 ? 'From ' + billYear + ' bill (updated by payment triggers)' : '✅ ' + billYear + ' bill has been settled'}
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Progress -->
+                    <div class="payment-progress">
+                        <div class="progress-header">
+                            <h4 style="margin: 0; color: #2d3748; display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-chart-line"></i>
+                                <span class="icon-info" style="display: none;"></span>
+                                ${billYear} Payment Summary
+                            </h4>
+                            <span style="font-weight: 600; color: #4299e1;">${paymentPercentage.toFixed(1)}% Complete</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${Math.min(paymentPercentage, 100)}%;"></div>
+                        </div>
+                        <div class="progress-stats">
+                            <div class="progress-stat">
+                                <div class="progress-stat-value">₵ ${originalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                                <div class="progress-stat-label">Original Bill</div>
+                            </div>
+                            <div class="progress-stat">
+                                <div class="progress-stat-value">₵ ${billPayments.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                                <div class="progress-stat-label">Paid on Bill</div>
+                            </div>
+                            <div class="progress-stat">
+                                <div class="progress-stat-value">₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                                <div class="progress-stat-label">Remaining</div>
+                            </div>
+                            <div class="progress-stat">
+                                <div class="progress-stat-value">${data.successful_payments || 0}</div>
+                                <div class="progress-stat-label">All-Time Payments</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            detailsHtml += `
                 <!-- Account Information -->
                 <div class="account-info-grid">
                     <div class="info-item">
@@ -1594,7 +1680,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                         <span class="info-value">${data.exact_location || data.location || 'N/A'}</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">Total Bills</span>
+                        <span class="info-label">Total Bills (All Years)</span>
                         <span class="info-value">${data.total_bills || 0}</span>
                     </div>
                     <div class="info-item">
@@ -1617,7 +1703,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                 
                 <!-- Action Buttons -->
                 <div style="display: flex; gap: 10px; justify-content: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e2e8f0; flex-wrap: wrap;">
-                    ${remainingBalance > 0 ? `
+                    ${hasBill && remainingBalance > 0 ? `
                         <a href="record.php?account=${data.type}:${data.business_id || data.property_id}" 
                            style="background: #38a169; color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; min-width: 140px; justify-content: center;"
                            onmouseover="this.style.background='#2f855a'; this.style.transform='translateY(-2px)'"
@@ -1626,11 +1712,16 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
                             <span class="icon-money" style="display: none;"></span>
                             Record Payment
                         </a>
-                    ` : `
+                    ` : hasBill ? `
                         <div style="background: #c6f6d5; color: #276749; padding: 12px 20px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; min-width: 140px; justify-content: center;">
                             <i class="fas fa-check-circle"></i>
                             <span class="icon-check" style="display: none;"></span>
-                            Account Fully Paid
+                            ${billYear} Bill Fully Paid
+                        </div>
+                    ` : `
+                        <div style="background: #e2e8f0; color: #475569; padding: 12px 20px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; min-width: 140px; justify-content: center;">
+                            <i class="fas fa-info-circle"></i>
+                            No ${billYear} Bill
                         </div>
                     `}
                     <button onclick="closeModal()" style="background: #94a3b8; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; min-width: 140px; justify-content: center;"
@@ -1703,7 +1794,7 @@ if (isset($_GET['view']) && !empty($_GET['view'])) {
             }
         }, 10000);
 
-        console.log('✅ Officer search accounts page initialized successfully with updated page links');
+        console.log('✅ FIXED: Officer search accounts page initialized with correct balance calculation from current year bill.amount_payable');
     </script>
 </body>
-</html>
+</html>  y/''

@@ -228,7 +228,7 @@ try {
                 <div class="lock-icon">🔒</div>
                 <h1 class="restriction-title">System Restricted.</h1>
                 <p class="restriction-message">
-                    The system is currently under restriction. Access has been temporarily suspended for all users.Contact KabTech Consulting :0545041428
+                    The system is currently under restriction. Access has been temporarily suspended for all users. Contact KabTech Consulting: 0545041428
                 </p>
                 
                 <div class="restriction-details">
@@ -237,11 +237,10 @@ try {
                     <p><strong>Ends:</strong> <?php echo $endDateTime; ?></p>
                     <p><strong>Status:</strong> Active Restriction</p>
                     <p><strong>Access Level:</strong> Super Admin Only.</p>
-                
                 </div>
                 
                 <a href="../auth/logout.php" class="logout-btn">
-                    🚪 Logout
+                    Logout
                 </a>
                 
                 <p class="contact-info">
@@ -268,22 +267,22 @@ try {
                 $warningType = 'critical';
                 $warningClass = 'restriction-warning-critical';
                 if ($daysUntilStart === 0) {
-                    $warningMessage = "🚨 CRITICAL: System restriction starts TODAY at midnight ({$startDate})";
+                    $warningMessage = "CRITICAL: System restriction starts TODAY at midnight ({$startDate}) - Make Your Annual Maintenance fee to prevent System Restrictions";
                 } else {
-                    $warningMessage = "🚨 CRITICAL: System restriction starts TOMORROW ({$startDate})";
+                    $warningMessage = "CRITICAL: System restriction starts TOMORROW ({$startDate}) -Make Your Annual Maintenance fee to prevent System Restrictions";
                 }
             } elseif ($daysUntilStart <= 3) {
                 $warningType = 'urgent';
                 $warningClass = 'restriction-warning-urgent';
-                $warningMessage = "⚠️ URGENT: System restriction starts in {$daysUntilStart} days on {$startDate}";
+                $warningMessage = "URGENT: System restriction starts in {$daysUntilStart} days on {$startDate} - Make Your Annual Maintenance fee to prevent System Restrictions";
             } elseif ($daysUntilStart <= 7) {
                 $warningType = 'warning';
                 $warningClass = 'restriction-warning-warning';
-                $warningMessage = "⚠️ WARNING: System restriction starts in {$daysUntilStart} days on {$startDate}";
+                $warningMessage = "WARNING: System restriction starts in {$daysUntilStart} days on {$startDate} - Make Your Annual Maintenance fee to prevent System Restrictions";
             } else {
                 $warningType = 'notice';
                 $warningClass = 'restriction-warning-notice';
-                $warningMessage = "📢 NOTICE: System restriction scheduled in {$daysUntilStart} days on {$startDate}";
+                $warningMessage = "NOTICE: System restriction scheduled in {$daysUntilStart} days on {$startDate} - Make Your Annual Maintenance fee to prevent System Restrictions";
             }
         }
     } elseif ($restrictionPhase === 'active_period' && !$isSystemRestricted) {
@@ -291,13 +290,13 @@ try {
         $showWarning = true;
         $warningType = 'pending';
         $warningClass = 'restriction-warning-pending';
-        $warningMessage = "⏳ RESTRICTION PERIOD: System is in restriction period but not yet enforced. Ends {$endDate}";
+        $warningMessage = "RESTRICTION PERIOD: System is in restriction period but not yet enforced. Ends {$endDate}";
     } elseif ($restrictionPhase === 'expired') {
         // Restriction has expired but is still marked as active
         $showWarning = true;
         $warningType = 'expired';
         $warningClass = 'restriction-warning-expired';
-        $warningMessage = "📋 INFO: Restriction period ended on {$endDate}. Contact admin to clear.";
+        $warningMessage = "INFO: Restriction period ended on {$endDate}. Contact admin to clear.";
     }
     
     if ($showWarning) {
@@ -391,10 +390,27 @@ try {
                 font-weight: normal;
             }
             
+            .maintenance-notice {
+                background: rgba(255, 255, 255, 0.15);
+                border-radius: 8px;
+                padding: 10px 15px;
+                margin-top: 10px;
+                font-size: 13px;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                animation: glowPulse 2s infinite;
+            }
+            
+            @keyframes glowPulse {
+                0%, 100% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+                50% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.5); }
+            }
+            
             .countdown-display {
                 font-size: 16px;
                 font-weight: bold;
-                margin-top: 5px;
+                margin-top: 10px;
                 display: flex;
                 justify-content: center;
                 gap: 15px;
@@ -445,11 +461,11 @@ try {
             
             /* Adjust body padding when warning is shown */
             body.warning-shown {
-                padding-top: 90px;
+                padding-top: 120px;
             }
             
             .container.warning-shown {
-                margin-top: 170px;
+                margin-top: 200px;
             }
             
             /* Mobile adjustments */
@@ -463,6 +479,12 @@ try {
                     font-size: 11px;
                 }
                 
+                .maintenance-notice {
+                    font-size: 12px;
+                    padding: 8px 12px;
+                    margin-top: 8px;
+                }
+                
                 .countdown-display {
                     font-size: 14px;
                     gap: 10px;
@@ -473,11 +495,11 @@ try {
                 }
                 
                 body.warning-shown {
-                    padding-top: 80px;
+                    padding-top: 100px;
                 }
                 
                 .container.warning-shown {
-                    margin-top: 160px;
+                    margin-top: 180px;
                 }
             }
         </style>

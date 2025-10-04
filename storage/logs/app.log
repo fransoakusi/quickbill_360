@@ -719,3 +719,41 @@
 [2025-09-02 12:47:02] [INFO] Property deleted: Joojo Megas property (ID: 10) and related records: 1 payment record(s), 1 bill record(s) by user admin
 [2025-09-02 12:47:14] [INFO] Business deleted: KabTech (ID: 28) and related records: 1 bill record(s) by user admin
 [2025-09-02 12:47:22] [INFO] Business deleted: KabTech Consulting (ID: 26) and related records: 1 payment record(s), 1 bill record(s) by user admin
+[2025-09-17 20:36:11] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-09-17 20:36:11] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-09-17 20:37:54] [INFO] Business created: MTN Ghana (ID: 31) by user admin
+[2025-09-17 20:38:06] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-09-17 20:38:06] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-10-02 10:52:01] [DEBUG] Account search attempt - Number: BIZ000028, Type: Business
+[2025-10-02 10:52:01] [DEBUG] Business found: KabTech
+[2025-10-02 10:52:01] [DEBUG] Bill found: BILL2025B000028
+[2025-10-02 10:52:01] [DEBUG] Account search successful with valid bill
+[2025-10-02 10:52:14] [INFO] Payment recorded: GHS 105 for KabTech (BIZ000028) via Cash by user admin
+[2025-10-02 11:00:13] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-10-02 11:00:13] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-10-04 10:26:25] [DEBUG] Account search attempt - Number: BIZ-CZ01-GA02-0001, Type: Business
+[2025-10-04 10:26:25] [DEBUG] Account not found - Number: BIZ-CZ01-GA02-0001, Type: Business
+[2025-10-04 10:26:44] [DEBUG] Account search attempt - Number: BIZ000028, Type: Business
+[2025-10-04 10:26:44] [DEBUG] Business found: KabTech
+[2025-10-04 10:26:44] [DEBUG] Bill found: BILL2025B000028 with amount_payable: 605.00
+[2025-10-04 10:26:44] [DEBUG] Account search successful with valid bill. Remaining balance: GHS 605
+[2025-10-04 10:26:59] [INFO] Payment recorded: GHS 5 for KabTech (BIZ000028) via Cash by user admin
+[2025-10-04 10:27:36] [DEBUG] Account search attempt - Number: BIZ000028, Type: Business
+[2025-10-04 10:27:36] [DEBUG] Business found: KabTech
+[2025-10-04 10:27:36] [DEBUG] Bill found: BILL2025B000028 with amount_payable: 600.00
+[2025-10-04 10:27:36] [DEBUG] Account search successful with valid bill. Remaining balance: GHS 600
+[2025-10-04 15:10:45] [INFO] Bill serving status updated - Bill ID: 48, Status: Served
+[2025-10-04 18:52:03] [DEBUG] Account search attempt - Number: BIZ000028, Type: Business
+[2025-10-04 18:52:03] [DEBUG] Business found: KabTech
+[2025-10-04 18:52:03] [DEBUG] Bill found: BILL2025B000028 with amount_payable: 605.00
+[2025-10-04 18:52:03] [DEBUG] Account search successful with valid bill. Remaining balance: GHS 605
+[2025-10-04 18:52:35] [INFO] Payment recorded: GHS 100 for KabTech (BIZ000028) via Cash by user admin
+[2025-10-04 18:52:52] [DEBUG] Account search attempt - Number: BIZ000028, Type: Business
+[2025-10-04 18:52:52] [DEBUG] Business found: KabTech
+[2025-10-04 18:52:52] [DEBUG] Bill found: BILL2025B000028 with amount_payable: 505.00
+[2025-10-04 18:52:52] [DEBUG] Account search successful with valid bill. Remaining balance: GHS 505
+[2025-10-04 19:12:32] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-10-04 19:12:32] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-10-04 19:12:48] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-10-04 19:13:08] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null
+[2025-10-04 19:13:08] [ERROR] Failed to log public activity: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'user_id' cannot be null

@@ -1,6 +1,6 @@
 <?php
 /**
- * Officer - Record Payment
+ * Officer - Record Payment - FIXED VERSION
  * Allows officers to record payments for businesses and properties
  */
 
@@ -66,6 +66,8 @@ $paymentSummary = null;
 $error = '';
 $success = '';
 $paymentProcessed = false;
+$currentBillYear = date('Y');
+$hasCurrentBill = false;
 
 // Database connection
 try {
@@ -156,40 +158,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
                 
                 if ($selectedAccount) {
-                    // Calculate remaining balance (outstanding amount after all payments)
-                    $totalPaymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as total_paid
-                                          FROM payments p 
-                                          INNER JOIN bills b ON p.bill_id = b.bill_id 
-                                          WHERE b.bill_type = ? AND b.reference_id = ? 
-                                          AND p.payment_status = 'Successful'";
-                    $totalPaymentsResult = $db->fetchRow($totalPaymentsQuery, [ucfirst($accountType), $accountId]);
-                    $totalPaid = $totalPaymentsResult['total_paid'] ?? 0;
-                    
-                    // Calculate remaining balance: amount payable minus total successful payments
-                    $remainingBalance = max(0, $selectedAccount['amount_payable'] - $totalPaid);
-                    
-                    // Get payment summary
-                    $paymentSummary = $db->fetchRow("
-                        SELECT 
-                            COALESCE(SUM(CASE WHEN p.payment_status = 'Successful' THEN p.amount_paid ELSE 0 END), 0) as total_paid,
-                            COUNT(CASE WHEN p.payment_status = 'Successful' THEN 1 END) as successful_payments,
-                            COUNT(*) as total_transactions
-                        FROM payments p
-                        JOIN bills b ON p.bill_id = b.bill_id
-                        WHERE b.bill_type = ? AND b.reference_id = ?
-                    ", [ucfirst($accountType), $accountId]);
-                    
-                    // Get current year bill
+                    // FIX: Calculate remaining balance correctly - get current year's bill first
                     $currentYear = date('Y');
                     $currentBill = $db->fetchRow("
-                        SELECT * FROM bills 
+                        SELECT bill_id, amount_payable, billing_year, status
+                        FROM bills 
                         WHERE bill_type = ? AND reference_id = ? AND billing_year = ?
-                        ORDER BY generated_at DESC LIMIT 1
+                        ORDER BY generated_at DESC 
+                        LIMIT 1
                     ", [ucfirst($accountType), $accountId, $currentYear]);
                     
-                    if (!$currentBill) {
-                        $error = 'No bill found for this account in the current year.';
+                    if ($currentBill) {
+                        // FIX: Use the bill's amount_payable directly - this is the correct remaining balance for the current year
+                        $remainingBalance = floatval($currentBill['amount_payable']);
+                        $hasCurrentBill = true;
+                        $currentBillYear = $currentBill['billing_year'];
+                    } else {
+                        // No bill for current year
+                        $error = 'No bill found for this account in the current year (' . $currentYear . '). Please generate bills first.';
                         $selectedAccount = null;
+                        $remainingBalance = 0;
+                        $hasCurrentBill = false;
+                        $currentBillYear = $currentYear;
+                    }
+                    
+                    if ($selectedAccount && $currentBill) {
+                        // Get total paid across all years for reference
+                        $totalPaymentsQuery = "SELECT COALESCE(SUM(p.amount_paid), 0) as total_paid
+                                              FROM payments p 
+                                              INNER JOIN bills b ON p.bill_id = b.bill_id 
+                                              WHERE b.bill_type = ? AND b.reference_id = ? 
+                                              AND p.payment_status = 'Successful'";
+                        $totalPaymentsResult = $db->fetchRow($totalPaymentsQuery, [ucfirst($accountType), $accountId]);
+                        $totalPaid = $totalPaymentsResult['total_paid'] ?? 0;
+                        
+                        // Get payment summary
+                        $paymentSummary = $db->fetchRow("
+                            SELECT 
+                                COALESCE(SUM(CASE WHEN p.payment_status = 'Successful' THEN p.amount_paid ELSE 0 END), 0) as total_paid,
+                                COUNT(CASE WHEN p.payment_status = 'Successful' THEN 1 END) as successful_payments,
+                                COUNT(*) as total_transactions
+                            FROM payments p
+                            JOIN bills b ON p.bill_id = b.bill_id
+                            WHERE b.bill_type = ? AND b.reference_id = ?
+                        ", [ucfirst($accountType), $accountId]);
                     }
                 } else {
                     $error = 'Account not found or inactive.';
@@ -276,12 +288,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             // Get the inserted payment ID
                             $paymentId = $db->lastInsertId();
                             
-                            // Update bill status
-                            $newAmountPayable = $bill['amount_payable'] - $amountPaid;
+                            // Update bill status and amount_payable
+                            $newAmountPayable = floatval($bill['amount_payable']) - $amountPaid;
+                            $newAmountPayable = max(0, $newAmountPayable); // Ensure non-negative
                             $billStatus = $newAmountPayable <= 0 ? 'Paid' : 'Partially Paid';
                             
-                            $updateBillSql = "UPDATE bills SET status = ? WHERE bill_id = ?";
-                            $db->execute($updateBillSql, [$billStatus, $billId]);
+                            $updateBillSql = "UPDATE bills SET amount_payable = ?, status = ? WHERE bill_id = ?";
+                            $db->execute($updateBillSql, [$newAmountPayable, $billStatus, $billId]);
                             
                             // Update account payable amount
                             if ($bill['bill_type'] === 'Business') {
@@ -318,8 +331,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                     'payment_method' => $paymentMethod,
                                     'payment_channel' => $paymentChannel,
                                     'transaction_id' => $transactionId,
-                                    'previous_balance' => $remainingBalance + $amountPaid,
-                                    'new_balance' => max(0, $remainingBalance),
+                                    'previous_balance' => $bill['amount_payable'],
+                                    'new_balance' => $newAmountPayable,
                                     'bill_amount_payable_before' => $bill['amount_payable'],
                                     'bill_amount_payable_after' => $newAmountPayable,
                                     'bill_status_updated' => $billStatus,
@@ -374,27 +387,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             } catch (Exception $auditError) {
                                 // Log audit failure but don't fail the payment
                                 error_log("Failed to log payment audit: " . $auditError->getMessage());
-                                // Could also log this to database if needed
-                                try {
-                                    $db->execute(
-                                        "INSERT INTO system_logs (level, message, context, created_at) VALUES (?, ?, ?, NOW())",
-                                        ['ERROR', 'Payment audit logging failed', json_encode([
-                                            'payment_id' => $paymentId,
-                                            'payment_reference' => $paymentReference,
-                                            'error' => $auditError->getMessage()
-                                        ])]
-                                    );
-                                } catch (Exception $logError) {
-                                    // Final fallback - just continue with payment processing
-                                }
                             }
                             
                             // Commit the transaction
                             $db->commit();
                             
-                            $newRemainingBalance = $remainingBalance - $amountPaid;
+                            $newRemainingBalance = $newAmountPayable;
                             $success = "Payment recorded successfully! Reference: {$paymentReference}. " . 
-                                     ($newRemainingBalance <= 0 ? "Account fully paid!" : "Remaining balance: ₵ " . number_format($newRemainingBalance, 2));
+                                     ($newRemainingBalance <= 0 ? "Account fully paid for {$currentBillYear}!" : "Remaining {$currentBillYear} balance: ₵ " . number_format($newRemainingBalance, 2));
                             $paymentProcessed = true;
                             
                             // Clear selected account to prevent duplicate submissions
@@ -1592,19 +1592,19 @@ $csrfToken = generateCSRFToken();
                             <div class="payment-stats">
                                 <div class="payment-stat">
                                     <div class="payment-stat-value">₵ <?php echo number_format($paymentSummary['total_paid'] ?? 0, 2); ?></div>
-                                    <div class="payment-stat-label">Total Paid</div>
+                                    <div class="payment-stat-label">Total Paid (All Years)</div>
                                 </div>
                                 <div class="payment-stat">
                                     <div class="payment-stat-value">₵ <?php echo number_format($remainingBalance, 2); ?></div>
-                                    <div class="payment-stat-label">Remaining</div>
+                                    <div class="payment-stat-label"><?php echo $currentBillYear; ?> Balance</div>
                                 </div>
                                 <div class="payment-stat">
                                     <div class="payment-stat-value"><?php echo $paymentSummary['successful_payments'] ?? 0; ?></div>
-                                    <div class="payment-stat-label">Payments</div>
+                                    <div class="payment-stat-label">Total Payments</div>
                                 </div>
                                 <div class="payment-stat">
                                     <div class="payment-stat-value"><?php echo number_format(($paymentSummary['total_paid'] / max($selectedAccount['amount_payable'], 1)) * 100, 1); ?>%</div>
-                                    <div class="payment-stat-label">Progress</div>
+                                    <div class="payment-stat-label">Overall Progress</div>
                                 </div>
                             </div>
                         </div>
@@ -1671,16 +1671,16 @@ $csrfToken = generateCSRFToken();
                             <h4>
                                 <i class="fas fa-balance-scale"></i>
                                 <span class="icon-balance" style="display: none;"></span>
-                                <?php echo $remainingBalance <= 0 ? 'Account Fully Paid' : 'Outstanding Balance'; ?>
+                                <?php echo $remainingBalance <= 0 ? 'Account Fully Paid for ' . $currentBillYear : $currentBillYear . ' Bill Balance'; ?>
                             </h4>
                             <div class="balance-amount">
                                 ₵ <?php echo number_format($remainingBalance, 2); ?>
                             </div>
                             <div class="balance-subtitle">
                                 <?php if ($remainingBalance > 0): ?>
-                                    This amount needs to be paid to clear the account
+                                    Outstanding for <?php echo $currentBillYear; ?> bill
                                 <?php else: ?>
-                                    All bills have been settled
+                                    <?php echo $hasCurrentBill ? $currentBillYear . ' bill fully settled' : 'All bills have been settled'; ?>
                                 <?php endif; ?>
                             </div>
                             
@@ -1750,13 +1750,13 @@ $csrfToken = generateCSRFToken();
                             <h3 style="margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-credit-card" style="color: #38a169;"></i>
                                 <span class="icon-money" style="display: none;"></span>
-                                Record Payment
+                                Record Payment for <?php echo $currentBillYear; ?>
                             </h3>
 
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle"></i>
                                 <span class="icon-info" style="display: none;"></span>
-                                Maximum payment amount: ₵ <?php echo number_format($remainingBalance, 2); ?>
+                                Maximum payment amount for <?php echo $currentBillYear; ?>: ₵ <?php echo number_format($remainingBalance, 2); ?>
                             </div>
 
                             <form method="POST" id="paymentForm">
@@ -1830,7 +1830,7 @@ $csrfToken = generateCSRFToken();
                         <div class="alert alert-success fade-in">
                             <i class="fas fa-check-circle"></i>
                             <span class="icon-check" style="display: none;"></span>
-                            This account is fully paid. No outstanding balance.
+                            This account is fully paid for <?php echo $currentBillYear; ?>. No outstanding balance.
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>
@@ -1843,6 +1843,8 @@ $csrfToken = generateCSRFToken();
         const remainingBalance = <?php echo $remainingBalance; ?>;
         const accountName = <?php echo json_encode($selectedAccount['name'] ?? ''); ?>;
         const accountNumber = <?php echo json_encode($selectedAccount['account_number'] ?? ''); ?>;
+        const currentBillYear = <?php echo $currentBillYear; ?>;
+        const hasCurrentBill = <?php echo $hasCurrentBill ? 'true' : 'false'; ?>;
         
         document.addEventListener('DOMContentLoaded', function() {
             // Check if Font Awesome loaded, if not show emoji icons
@@ -1875,7 +1877,7 @@ $csrfToken = generateCSRFToken();
                     const value = parseFloat(this.value);
                     
                     if (value > remainingBalance) {
-                        this.setCustomValidity(`Payment amount cannot exceed the remaining balance of ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`);
+                        this.setCustomValidity(`Payment amount cannot exceed the ${currentBillYear} balance of ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`);
                     } else {
                         this.setCustomValidity('');
                     }
@@ -1884,9 +1886,9 @@ $csrfToken = generateCSRFToken();
                     if (value > 0) {
                         const newBalance = remainingBalance - value;
                         if (newBalance <= 0) {
-                            submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Complete Payment (Full Settlement)';
+                            submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Complete Payment (Full Settlement for ' + currentBillYear + ')';
                         } else {
-                            submitBtn.innerHTML = `<i class="fas fa-check-circle"></i> Record Payment (₵ ${newBalance.toLocaleString('en-US', {minimumFractionDigits: 2})} remaining)`;
+                            submitBtn.innerHTML = `<i class="fas fa-check-circle"></i> Record Payment (₵ ${newBalance.toLocaleString('en-US', {minimumFractionDigits: 2})} remaining for ${currentBillYear})`;
                         }
                     } else {
                         submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Record Payment';
@@ -2000,35 +2002,6 @@ $csrfToken = generateCSRFToken();
                     e.preventDefault();
                     showBalanceDetails();
                 }
-                // Alt + 1-6 for quick navigation
-                if (e.altKey) {
-                    switch(e.key) {
-                        case '1':
-                            e.preventDefault();
-                            window.location.href = '../businesses/add.php';
-                            break;
-                        case '2':
-                            e.preventDefault();
-                            window.location.href = '../properties/add.php';
-                            break;
-                        case '3':
-                            e.preventDefault();
-                            window.location.href = '../payments/record.php';
-                            break;
-                        case '4':
-                            e.preventDefault();
-                            window.location.href = '../billing/generate.php';
-                            break;
-                        case '5':
-                            e.preventDefault();
-                            window.location.href = '../payments/search.php';
-                            break;
-                        case '6':
-                            e.preventDefault();
-                            window.location.href = '../map/businesses.php';
-                            break;
-                    }
-                }
             });
         });
 
@@ -2050,7 +2023,7 @@ $csrfToken = generateCSRFToken();
             `;
             
             const amountPayable = <?php echo $selectedAccount['amount_payable'] ?? 0; ?>;
-            const totalPaid = <?php echo $totalPaid; ?>;
+            const totalPaid = <?php echo $totalPaid ?? 0; ?>;
             const paymentProgress = amountPayable > 0 ? (totalPaid / amountPayable) * 100 : 100;
             
             balanceContent.innerHTML = `
@@ -2070,14 +2043,14 @@ $csrfToken = generateCSRFToken();
                             </div>
                         </div>
                         <div style="text-align: left;">
-                            <strong style="color: #2d3748;">Total Paid:</strong>
+                            <strong style="color: #2d3748;">Total Paid (All Years):</strong>
                             <div style="font-size: 24px; font-weight: bold; color: #059669; margin-top: 5px;">
                                 ₵ ${totalPaid.toLocaleString('en-US', {minimumFractionDigits: 2})}
                             </div>
                         </div>
                     </div>
                     <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                        <strong style="color: #2d3748;">Payment Progress:</strong>
+                        <strong style="color: #2d3748;">Overall Payment Progress:</strong>
                         <div style="background: #e2e8f0; height: 12px; border-radius: 6px; margin: 10px 0; overflow: hidden;">
                             <div style="background: linear-gradient(90deg, #10b981, #059669); height: 100%; width: ${Math.min(paymentProgress, 100)}%; transition: width 1s ease;"></div>
                         </div>
@@ -2087,13 +2060,13 @@ $csrfToken = generateCSRFToken();
                                 background: ${remainingBalance > 0 ? '#fef3c7' : '#d1fae5'}; 
                                 padding: 20px; border-radius: 12px; margin-top: 20px;">
                         <h4 style="margin: 0 0 10px 0; color: ${remainingBalance > 0 ? '#92400e' : '#065f46'};">
-                            ${remainingBalance > 0 ? 'Outstanding Balance' : 'Account Status'}
+                            ${remainingBalance > 0 ? currentBillYear + ' Outstanding Balance' : 'Account Status'}
                         </h4>
                         <div style="font-size: 36px; font-weight: bold; color: ${remainingBalance > 0 ? '#92400e' : '#065f46'}; margin: 15px 0;">
                             ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}
                         </div>
                         <p style="margin: 10px 0 0 0; color: ${remainingBalance > 0 ? '#92400e' : '#065f46'};">
-                            ${remainingBalance > 0 ? 'This amount needs to be paid to clear the account' : 'All bills have been fully settled'}
+                            ${remainingBalance > 0 ? 'Outstanding for ' + currentBillYear + ' bill' : (hasCurrentBill ? currentBillYear + ' bill fully settled' : 'All bills have been settled')}
                         </p>
                     </div>
                 </div>
@@ -2142,10 +2115,12 @@ $csrfToken = generateCSRFToken();
             }
         }
 
-        console.log('Payment recording page initialized successfully');
+        console.log('✅ Officer payment recording page with FIXED balance calculation initialized successfully');
+        console.log('Current bill year:', currentBillYear);
         if (remainingBalance >= 0) {
-            console.log(`Remaining Balance: ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`);
+            console.log(`${currentBillYear} Bill Balance: ₵ ${remainingBalance.toLocaleString('en-US', {minimumFractionDigits: 2})}`);
         }
+        console.log('Has current bill:', hasCurrentBill);
     </script>
 </body>
 </html>
