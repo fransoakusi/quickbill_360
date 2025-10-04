@@ -1,1 +1,11 @@
  
+# Ignore logs
+storage/logs/*.log
+
+# Ignore generated QR codes
+assets/qr_codes/*.png
+
+# Ignore system/cache
+/vendor/
+/node_modules/
+*.env
